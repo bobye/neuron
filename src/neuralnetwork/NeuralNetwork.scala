@@ -1,7 +1,10 @@
+// Created by: Jianbo Ye, Penn State University jxy198@psu.edu
+// Last Updates: Mar 2014
+// Copyright under MIT License
 package neuralnetwork
 
 /********************************************************************************************/
-// Numerical classes and their operation 
+// Numerical classes and their operations 
 abstract trait Scalar extends Vector
 abstract trait Vector {
   def concatenate (that : Vector) : Vector
@@ -39,10 +42,18 @@ object IndentityFunction extends Function {
   def apply(x:Vector) = x
 }
 
+/********************************************************************************************/
+// Graph data structure
+abstract trait DirectedGraph
+abstract trait AcyclicDirectedGraph extends DirectedGraph
+abstract trait BinaryTree extends AcyclicDirectedGraph
+// more to added
+
+
 
 /********************************************************************************************/
 // Highest level classes for Neural Network
-abstract trait Workspace {
+abstract trait Workspace {// 
   implicit class Helper[T1<:Operationable](x:T1) {
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
@@ -147,8 +158,8 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
 }
 
 /********************************************************************************************/
-// basic neural network elements
-class SingleLayerNeuralNetwork (val func: Function, override val dimension: Int)
+// Basic neural network elements (Only two for now)
+class SingleLayerNeuralNetwork (val func: Function /** Pointwise Function **/, override val dimension: Int) 
 	extends SelfTransform (dimension) {
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
 }
