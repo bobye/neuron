@@ -5,45 +5,45 @@ package neuralnetwork
 
 /********************************************************************************************/
 // Numerical classes and their operations 
-import breeze.linalg._
+import breeze.linalg.DenseVector
+import breeze.linalg.DenseMatrix
 
-abstract trait Scalar extends Vector
-abstract trait Vector {
-  def concatenate (that : Vector) : Vector
-  def divide(n: Int) : (Vector, Vector)
-  def -(that:Vector): Vector
-  def +(that:Vector): Vector
-  def DOT(that: Vector): Vector
-}
-trait Weight {
-  def *(x:Vector):Vector
-  def Mult(x:Vector) = this * x
-  def TransMult(x:Vector): Vector
-}
 
-object NullVector extends Vector {
-  def concatenate(that: Vector) = that
-  def divide(n: Int) = (NullVector, NullVector)
-  def -(that:Vector) = NullVector
-  def +(that:Vector) = NullVector
-  def DOT(that:Vector) = NullVector
+class NeuronVector (val data: DenseVector[Float]){
+  def this(n:Int) = this(DenseVector.zeros[Float] (n))
+  def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
+  def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 to num-1)), new NeuronVector(this.data(num to -1)))
+
+  def -(that:NeuronVector): NeuronVector = new NeuronVector(this.data - that.data)
+  def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
+  def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
+}
+class Weight (val data:DenseMatrix[Float]){
+  def this(rows:Int, cols:Int) = this (DenseMatrix.zeros[Float](rows, cols))
+  def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
+  def Mult(x:NeuronVector) = this * x
+  def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
 }
 
-object NullWeight extends Weight {
-  def *(x:Vector) = NullVector
-  def TransMult(x:Vector) = NullVector
+object NullVector extends NeuronVector (0)
+
+object NullWeight extends Weight (0,0)
+
+abstract trait NeuronFunction {
+  def grad(x:NeuronVector): NeuronVector
+  def apply(x:NeuronVector): NeuronVector
 }
 
-abstract trait Function {
-  def grad(x:Vector): Vector
-  def apply(x:Vector): Vector
+object IndentityFunction extends NeuronFunction {
+  def grad(x:NeuronVector): NeuronVector = new NeuronVector(DenseVector.ones[Float](x.data.length))
+  def apply(x:NeuronVector) = x
 }
-
-object IndentityFunction extends Function {
-  def grad(x:Vector): Vector = NullVector
-  def apply(x:Vector) = x
+/*
+object SigmoidFunction extends NeuronFunction {
+  def grad(x:NeuronVector): NeuronVector
+  def apply(x:NeuronVector): NeuronVector
 }
-
+*/
 /********************************************************************************************/
 // Graph data structure
 abstract trait DirectedGraph
@@ -55,7 +55,7 @@ abstract trait BinaryTree extends AcyclicDirectedGraph
 
 /********************************************************************************************/
 // Highest level classes for Neural Network
-abstract trait Workspace {// 
+abstract trait Workspace{// 
   implicit class Helper[T1<:Operationable](x:T1) {
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
@@ -80,11 +80,11 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def inputDimension = NN.inputDimension
   def outputDimension= NN.outputDimension
   def create() = this // self reference
-  def apply (x: Vector) : Vector
+  def apply (x: NeuronVector) : NeuronVector
   
   def init(rand: => Weight) : InstanceOfNeuralNetwork
-  def backpropagate(eta: Vector): Vector
-  def train (x: Vector, y: Vector) : InstanceOfNeuralNetwork = {
+  def backpropagate(eta: NeuronVector): NeuronVector
+  def train (x: NeuronVector, y: NeuronVector) : InstanceOfNeuralNetwork = {
     backpropagate(apply(x) - y)
     this
   }
@@ -113,8 +113,8 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   
   val firstInstance = NN.first.create()
   val secondInstance = NN.second.create()
-  def apply (x: Vector)  = {
-    var (first, second) = x.divide(NN.first.inputDimension)
+  def apply (x: NeuronVector)  = {
+    var (first, second) = x.splice(NN.first.inputDimension)
     firstInstance(first) concatenate secondInstance(second)
   }
   def init(rand: => Weight) = {
@@ -122,8 +122,8 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
     secondInstance.init(rand)
     this // do nothing
   }
-  def backpropagate(eta: Vector) = {
-    var (firstEta, secondEta) = eta.divide(NN.first.inputDimension)
+  def backpropagate(eta: NeuronVector) = {
+    var (firstEta, secondEta) = eta.splice(NN.first.inputDimension)
     firstInstance.backpropagate(firstEta) concatenate secondInstance.backpropagate(secondEta)
   }
   
@@ -144,7 +144,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
 	extends InstanceOfNeuralNetwork (NN) {
   val firstInstance  = NN.first.create()
   val secondInstance = NN.second.create()  
-  def apply (x: Vector) = {
+  def apply (x: NeuronVector) = {
     firstInstance(secondInstance(x)) // need to multiply W
   }
   def init(rand: => Weight) = {
@@ -153,7 +153,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
     this
   }
   
-  def backpropagate(eta: Vector) ={
+  def backpropagate(eta: NeuronVector) ={
     secondInstance.backpropagate(firstInstance.backpropagate(eta))
   }
   override def toString() = firstInstance.toString + " * (" + secondInstance.toString + ")"
@@ -161,19 +161,19 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
 
 /********************************************************************************************/
 // Basic neural network elements (Only two for now)
-class SingleLayerNeuralNetwork (val func: Function /** Pointwise Function **/, override val dimension: Int) 
+class SingleLayerNeuralNetwork (val func: NeuronFunction /** Pointwise Function **/, override val dimension: Int) 
 	extends SelfTransform (dimension) {
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
 }
 class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetwork) 
 	extends InstanceOfSelfTransform (NN) { 
-  private var gradient: Vector = NullVector
-  def apply (x: Vector) = {
+  private var gradient: NeuronVector = new NeuronVector(NN.dimension)
+  def apply (x: NeuronVector) = {
     gradient = NN.func.grad(x)
     NN.func(x)
   }
   def init(rand: => Weight) = {this}
-  def backpropagate(eta: Vector) = eta DOT gradient
+  def backpropagate(eta: NeuronVector) = eta DOT gradient
 }
 
 class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int) 
@@ -182,13 +182,13 @@ class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int)
 }
 class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 	extends InstanceOfNeuralNetwork(NN) {
-  private var W: Weight = NullWeight
-  def apply (x: Vector) = W*x
+  private var W: Weight = new Weight(NN.outputDimension, NN.inputDimension)
+  def apply (x: NeuronVector) = W*x
   def init(rand: => Weight) = {
     W = rand
     this
   }
-  def backpropagate(eta:Vector) = W TransMult eta
+  def backpropagate(eta:NeuronVector) = W TransMult eta
 }
 
 /********************************************************************************************/
@@ -201,7 +201,7 @@ abstract trait Encoder extends Operationable with EncodeClass{
 } 
 abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass{
   val encoder: InstanceOfNeuralNetwork
-  def encode(x:Vector): Vector = encoder(x)
+  def encode(x:NeuronVector): NeuronVector = encoder(x)
 }
 
 // It implicitly requires the dimensional constraints
@@ -219,9 +219,9 @@ class InstanceOfEncoderNeuralNetwork [T1<: Encoder, T2<: InstanceOfEncoder] // T
 		(override val NN: EncoderNeuralNetwork[T1], val INN: T2) 
 	extends InstanceOfNeuralNetwork (INN.NN) {
   override val outputDimension = INN.encodeDimension
-  def apply (x:Vector) = INN.encode(x)
+  def apply (x:NeuronVector) = INN.encode(x)
   def init(rand: =>Weight) = INN.init(rand)
-  def backpropagate(eta:Vector) = INN.encoder.backpropagate(eta)
+  def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
 }
 
 // AutoEncoder
@@ -237,18 +237,18 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
-  def apply (x:Vector) = threeLayers(x)
+  def apply (x:NeuronVector) = threeLayers(x)
   def init(rand: => Weight) = {
     threeLayers.init(rand)
     this
   }
-  def backpropagate(eta:Vector) = threeLayers.backpropagate(eta)
+  def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
 }
 
-class SingleLayerAutoEncoder (val func:Function) (override val dimension:Int, val hiddenDimension:Int) 
+class SingleLayerAutoEncoder (val func:NeuronFunction) (override val dimension:Int, val hiddenDimension:Int) 
 	extends AutoEncoder(dimension, new SingleLayerNeuralNetwork(func, hiddenDimension))
 
-class RecursiveSingleLayerAE (override val func:Function) (val wordLength: Int) 
+class RecursiveSingleLayerAE (override val func:NeuronFunction) (val wordLength: Int) 
 	extends SingleLayerAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
   override def create() : InstanceOfRecursiveSingleLayerAE = new InstanceOfRecursiveSingleLayerAE(this)
 }
@@ -268,8 +268,8 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val topLayer = finalLayer.create()
-  def apply (x:Vector) = {
-    var (_, context) = x.divide(NN.codeLength)
+  def apply (x:NeuronVector) = {
+    var (_, context) = x.splice(NN.codeLength)
     topLayer(encoder(x) concatenate context) concatenate context
   } 
   def init(rand: => Weight) = {
@@ -277,18 +277,18 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     topLayer.init(rand)
     this
   }
-  def backpropagate(eta:Vector) = {
-    var (eta_31, _) = eta.divide(NN.codeLength)
-    var (eta_21, _) = topLayer.backpropagate(eta_31).divide(NN.hidden.outputDimension)
+  def backpropagate(eta:NeuronVector) = {
+    var (eta_31, _) = eta.splice(NN.codeLength)
+    var (eta_21, _) = topLayer.backpropagate(eta_31).splice(NN.hidden.outputDimension)
     encoder.backpropagate(eta_21)
   }
   
 }
 
-class SingleLayerCAE(val func: Function) (override val codeLength: Int, override val contextLength:Int, val hiddenDimension: Int)
+class SingleLayerCAE(val func: NeuronFunction) (override val codeLength: Int, override val contextLength:Int, val hiddenDimension: Int)
 	extends ContextAwareAutoEncoder(codeLength, contextLength, new SingleLayerNeuralNetwork(func, hiddenDimension))
 
-class RecursiveSingleLayerCAE (override val func: Function) (val wordLength:Int, override val contextLength: Int)
+class RecursiveSingleLayerCAE (override val func: NeuronFunction) (val wordLength:Int, override val contextLength: Int)
 	extends SingleLayerCAE(func)(wordLength*2, contextLength, wordLength) with RecursiveEncoder {
   override def create(): InstanceOfRecursiveSingleLayerCAE = new InstanceOfRecursiveSingleLayerCAE(this)
 }
