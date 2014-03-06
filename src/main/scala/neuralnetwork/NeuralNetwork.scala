@@ -5,6 +5,8 @@ package neuralnetwork
 
 /********************************************************************************************/
 // Numerical classes and their operations 
+import breeze.linalg._
+
 abstract trait Scalar extends Vector
 abstract trait Vector {
   def concatenate (that : Vector) : Vector
