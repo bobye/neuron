@@ -18,8 +18,13 @@ object FeedForward extends Optimizable with Workspace{
 	
 	// setup Optimizable members
 	nn = e.create(); println(nn);
-	xData = Array(new NeuronVector(nn.inputDimension, new Uniform(-1,1))) // only one sample
-	yData = Array(new NeuronVector(nn.outputDimension, new Uniform(-1,1)))
+	val numOfSamples = 100
+	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
+	for (i<- 0 until numOfSamples) {
+	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
+	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
+	}
+	
 
 	
 

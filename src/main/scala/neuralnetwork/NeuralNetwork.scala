@@ -163,13 +163,13 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    for {i <- 0 until size} yield {
-    var x = xData(i); var y = yData(i)
     nn.setWeights(System.currentTimeMillis().hashCode.toString, w)
-    var z = nn(x) - y
-    totalCost = totalCost + z.euclideanSqrNorm
-    nn.backpropagate(z)
-    dW += nn.getDerativeOfWeights(System.currentTimeMillis().hashCode.toString)
+    for {i <- 0 until size} {
+      
+      var z = nn(xData(i)) - yData(i)
+      totalCost = totalCost + z.euclideanSqrNorm
+      nn.backpropagate(z)
+      dW += nn.getDerativeOfWeights(((i+1)*(System.currentTimeMillis()%1000000)).toString)
     }
     /*
      * End parallel loop
