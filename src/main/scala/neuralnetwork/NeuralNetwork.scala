@@ -36,7 +36,7 @@ class NeuronVector (val data: DenseVector[Double]) {
 }
 class Weight (val data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
-  //def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand))
+  //def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
@@ -49,7 +49,8 @@ class Weight (val data:DenseMatrix[Double]){
 }
 
 class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
-  def this(n:Int) = this(DenseVector.zeros[Double](n))	
+  def this(n:Int) = this(DenseVector.zeros[Double](n))
+  def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
   var ptr : Int = 0
   def reset(): Null = {ptr = 0; null}
   def apply(W:Weight, b:NeuronVector): Int = {
@@ -57,9 +58,8 @@ class WeightVector (override val data: DenseVector[Double]) extends NeuronVector
     var cols = W.data.cols
     
     W.data := (data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols))
-    //new Weight((data(ptr-rows*cols until ptr).asDenseMatrix.reshape(rows, cols)))
     ptr = ptr + rows * cols
-    b.data := data(ptr until rows)
+    b.data := data(ptr until ptr + rows)
     ptr = ptr + rows
     ptr
   }
@@ -140,29 +140,37 @@ abstract trait Memorable extends InstanceOfNeuralNetwork {
 
 /** Implement batch mode training **/
 abstract trait Optimizable {
-  var nn: InstanceOfNeuralNetwork
-  var xData : Array[NeuronVector]
-  var yData : Array[NeuronVector]
+  var nn: InstanceOfNeuralNetwork = null
+  var xData : Array[NeuronVector] = null
+  var yData : Array[NeuronVector] = null
+  
+  def initMemory() : InstanceOfNeuralNetwork = {
+    val seed = System.currentTimeMillis().hashCode.toString
+    nn.init(seed).allocate(seed)
+  }
+  
+  def getRandomWeightVector (rand: Rand[Double]) : WeightVector = {
+    val wlength = nn.getWeights(System.currentTimeMillis().hashCode.toString).length // get dimension of weights
+    new WeightVector(wlength, rand)
+  }
   
   def getObjAndGrad (w: WeightVector): (Double, NeuronVector) = {
     val size = xData.length
-    assert(size >= 1)
-    val dimension = xData(0).length
+    assert(size >= 1 && size == yData.length)
     var totalCost:Double = 0.0
-    val dW = new NeuronVector (dimension)
+    val dW = new NeuronVector (w.length)
     /*
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
-     *  ...
      */
-    
-    var x = xData(0); var y = yData(0)
+    for {i <- 0 until size} yield {
+    var x = xData(i); var y = yData(i)
     nn.setWeights(System.currentTimeMillis().hashCode.toString, w)
     var z = nn(x) - y
     totalCost = totalCost + z.euclideanSqrNorm
     nn.backpropagate(z)
     dW += nn.getDerativeOfWeights(System.currentTimeMillis().hashCode.toString)
-
+    }
     /*
      * End parallel loop
      */
@@ -294,7 +302,7 @@ class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = second.inputDimension
   def outputDimension= first.outputDimension 
   def create(): InstanceOfChainNeuralNetwork[Type1, Type2] = new InstanceOfChainNeuralNetwork(this)
-  override def toString() = first.toString + " * (" + second.toString + ")" 
+  override def toString() = "(" + first.toString + ") * (" + second.toString + ")" 
 }
 
 class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
@@ -309,7 +317,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
   def backpropagate(eta: NeuronVector) ={
     secondInstance.backpropagate(firstInstance.backpropagate(eta))
   }
-  override def toString() = firstInstance.toString + " * (" + secondInstance.toString + ")"
+  override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"
 }
 
 /********************************************************************************************/
@@ -397,7 +405,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      dW.vec / numOfMirrors
+      (dW.vec concatenate db) / numOfMirrors
     } else {
       NullVector
     }
