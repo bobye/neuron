@@ -8,11 +8,14 @@ package neuralnetwork
 import breeze.generic._
 import breeze.linalg._
 import breeze.numerics._
+
+import breeze.stats.distributions._
 //import breeze.math._
 
 class NeuronVector (val data: DenseVector[Double]) {
   val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
+  def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 
@@ -28,9 +31,11 @@ class NeuronVector (val data: DenseVector[Double]) {
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
   def set(x:Double) : Null = {data:=x; null}
+  //override def toString() = data.toString
 }
 class Weight (val data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
+  //def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand))
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
@@ -43,6 +48,7 @@ class Weight (val data:DenseMatrix[Double]){
 }
 
 class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
+  def this(n:Int) = this(DenseVector.zeros[Double](n))	
   var ptr : Int = 0
   def reset(): Null = {ptr = 0; null}
   def apply(W:Weight, b:NeuronVector): Int = {
@@ -178,9 +184,7 @@ abstract class InstanceOfSelfTransform (override val NN: SelfTransform) extends 
 
 // basic operation to derive hierarchy structures
 abstract class MergedNeuralNetwork [Type1 <:Operationable, Type2 <:Operationable] 
-		(val first:Type1, val second:Type2) extends Operationable{
-  def inputDimension = first.inputDimension + second.inputDimension
-  def outputDimension= first.outputDimension+ second.outputDimension  
+		(val first:Type1, val second:Type2) extends Operationable{ 
 }
 
 abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Operationable]
@@ -231,6 +235,8 @@ class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		( override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1,Type2](first,second) {
   type Instance = InstanceOfJointNeuralNetwork[Type1,Type2]
+  def inputDimension = first.inputDimension + second.inputDimension
+  def outputDimension= first.outputDimension+ second.outputDimension 
   def create(): InstanceOfJointNeuralNetwork[Type1, Type2] = new InstanceOfJointNeuralNetwork(this)
   override def toString() = "(" + first.toString + " + " + second.toString + ")"
 }
@@ -258,6 +264,8 @@ class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		(override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1, Type2] (first, second) {
   type Instance = InstanceOfChainNeuralNetwork[Type1,Type2]
+  def inputDimension = second.inputDimension
+  def outputDimension= first.outputDimension 
   def create(): InstanceOfChainNeuralNetwork[Type1, Type2] = new InstanceOfChainNeuralNetwork(this)
   override def toString() = first.toString + " * (" + second.toString + ")" 
 }
