@@ -11,13 +11,21 @@ import breeze.numerics._
 //import breeze.math._
 
 class NeuronVector (val data: DenseVector[Double]) {
+  val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 
   def -(that:NeuronVector): NeuronVector = new NeuronVector(this.data - that.data)
   def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
+  def *(x:Double) : NeuronVector = new NeuronVector(this.data * x)
+  def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
+  def +=(that: NeuronVector): Null = {
+    this.data :+= that.data
+    null
+  }
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
+  def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
   def set(x:Double) : Null = {data:=x; null}
 }
@@ -26,19 +34,26 @@ class Weight (val data:DenseMatrix[Double]){
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
-  def vec = new NeuronVector(data.toDenseVector)
+  def +=(that:Weight): Null = {
+    this.data :+= that.data
+    null
+  }
+  def vec = new NeuronVector(data.toDenseVector) // make copy
+  def set(x: Double) : Null={data:=x; null}
 }
 
 class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
   var ptr : Int = 0
   def reset(): Null = {ptr = 0; null}
-  def apply(W:Weight): Int = {
+  def apply(W:Weight, b:NeuronVector): Int = {
     var rows = W.data.rows
     var cols = W.data.cols
     
     W.data := (data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols))
     //new Weight((data(ptr-rows*cols until ptr).asDenseMatrix.reshape(rows, cols)))
     ptr = ptr + rows * cols
+    b.data := data(ptr until rows)
+    ptr = ptr + rows
     ptr
   }
   def set(wv: NeuronVector): Int = {
@@ -50,6 +65,7 @@ class WeightVector (override val data: DenseVector[Double]) extends NeuronVector
 
 
 object NullVector extends NeuronVector (0)
+object OneVector extends NeuronVector(DenseVector(1.0)) 
 
 object NullWeight extends Weight (0,0)
 
@@ -94,11 +110,13 @@ abstract trait BinaryTree extends AcyclicDirectedGraph
 /********************************************************************************************/
 // Highest level classes for Neural Network
 abstract trait Workspace{// 
-  implicit class Helper[T1<:Operationable](x:T1) {
+  implicit class Helper[T1<:Operationable](x:T1) { 
+    // Two basic operations to support combination 
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
   } 
 }
+/** Operationable is a generic trait that supports operations **/
 abstract trait Operationable extends Workspace {
   def inputDimension:Int
   def outputDimension:Int
@@ -108,14 +126,19 @@ abstract trait Operationable extends Workspace {
   	 "[" + inputDimension + "," + outputDimension + "]";
 }
 
-// Class for neural network template
+abstract trait Memorable extends InstanceOfNeuralNetwork {
+  var numOfMirrors:Int = 0
+  //type arrayOfData[T<:NeuronVector] = Array[T]
+}
+
+/** Class for template of neural network **/
 abstract class NeuralNetwork (val inputDimension:Int, val outputDimension:Int) extends Operationable{
   type InstanceType <: InstanceOfNeuralNetwork
   def create() : InstanceOfNeuralNetwork 
   override def toString() = "?" + toStringGeneric
 }
 
-// Class for neural network instance, which can be applied and trained
+/** Class for instance of neural network, which can be applied and trained **/
 abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operationable {
   type StructureType <: Operationable
   // basic topological structure
@@ -132,16 +155,17 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def getDerativeOfWeights(seed:String) : NeuronVector
   
   // dynamic operations
-  def init() : InstanceOfNeuralNetwork
+  def init(seed:String) : InstanceOfNeuralNetwork = {this} // default: do nothing
+  def allocate(seed:String) : InstanceOfNeuralNetwork = {this} // 
   def backpropagate(eta: NeuronVector): NeuronVector
   
-  
+  /*
   def train (x: NeuronVector, y: NeuronVector) : InstanceOfNeuralNetwork = {
     // it has many things to do
     backpropagate(apply(x) - y)
     this
   }
-  
+  */
   // display
   override def toString() = "#" + toStringGeneric
 }
@@ -168,15 +192,16 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
   
   override def setWeights(seed:String, w: WeightVector) : InstanceOfMergedNeuralNetwork[Type1, Type2] = {
     if (status != seed) {
+      status = seed
       firstInstance.setWeights(seed, w)
       secondInstance.setWeights(seed, w)
     } else {
-      status = seed
     }
     this
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
+      status = seed
       firstInstance.getWeights(seed) concatenate secondInstance.getWeights(seed)
     }else {
       NullVector
@@ -184,15 +209,21 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
   }
   def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
+      status = seed
       firstInstance.getDerativeOfWeights(seed) concatenate secondInstance.getDerativeOfWeights(seed)
     } else {
       NullVector
     }
   }
-  def init() = {
-    firstInstance.init()
-    secondInstance.init()
+  override def init(seed:String) = {
+    firstInstance.init(seed)
+    secondInstance.init(seed)
     this // do nothing
+  }
+  override def allocate(seed:String) = {
+    firstInstance.allocate(seed)
+    secondInstance.allocate(seed)
+    this
   }
   
 }
@@ -254,7 +285,7 @@ class SingleLayerNeuralNetwork (val func: NeuronFunction /** Pointwise Function 
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
 }
 class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetwork) 
-	extends InstanceOfSelfTransform (NN) { 
+	extends InstanceOfSelfTransform (NN) with Memorable { 
   type StructureType = SingleLayerNeuralNetwork
   
   def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {this}
@@ -262,11 +293,41 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   def getDerativeOfWeights(seed:String) : NeuronVector = {NullVector}
   
   private var gradient: NeuronVector = new NeuronVector(NN.dimension)
+  
+  var mirrorIndex :Int = 0
   def apply (x: NeuronVector) = {
-    gradient = NN.func.grad(x)
-    NN.func(x)
+    assert (x.length == inputDimension)
+    inputBuffer(mirrorIndex) = x
+    gradientBuffer(mirrorIndex) = NN.func.grad(x)
+    outputBuffer(mirrorIndex) = NN.func(x)
+    var cIndex = mirrorIndex
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors
+    outputBuffer(cIndex)
   }
-  def init() = {this}
+  override def init(seed:String) = {
+    if (status != seed) {
+      status = seed
+      numOfMirrors = 1 // find a new instance
+      mirrorIndex = 0
+    }
+    else {      
+      numOfMirrors = numOfMirrors + 1
+    }
+    this
+  }
+  
+  var inputBuffer  = Array [NeuronVector]()
+  var outputBuffer = Array [NeuronVector]()
+  var gradientBuffer= Array [NeuronVector] ()
+  override def allocate(seed:String) ={
+    if (status == seed) {
+      inputBuffer = new Array[NeuronVector] (numOfMirrors)
+      outputBuffer= new Array[NeuronVector] (numOfMirrors)
+      gradientBuffer= new Array[NeuronVector] (numOfMirrors)
+      status = "" // reset status to make sure *Buffer are allocated only once
+    } else {} 
+    this
+  }
   def backpropagate(eta: NeuronVector) = eta DOT gradient
 }
 
@@ -276,19 +337,20 @@ class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int)
   def create(): InstanceOfLinearNeuralNetwork = new InstanceOfLinearNeuralNetwork(this)
 }
 class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
-	extends InstanceOfNeuralNetwork(NN) {
+	extends InstanceOfNeuralNetwork(NN) with Memorable {
   type StructureType = LinearNeuralNetwork
   def setWeights(seed:String, wv:WeightVector) : InstanceOfLinearNeuralNetwork = {
     if (status != seed) {
       status = seed
-      wv(W)
+      wv(W, b) // get optimized weights
+      dW.set(0.0) // reset derivative of weights
     }
     this
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      W.vec
+      W.vec concatenate b 
     }else {
       NullVector
     }
@@ -296,19 +358,53 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      dW.vec
+      dW.vec / numOfMirrors
     } else {
       NullVector
     }
   }
-  
-  private val W: Weight = new Weight(outputDimension, inputDimension)
-  private val dW:Weight = new Weight(outputDimension, inputDimension)
-  def apply (x: NeuronVector) = W*x
-  def init() = {
+  var mirrorIndex :Int = 0
+  override def init(seed:String) = {
+    if (status != seed) {
+      status = seed
+      numOfMirrors = 1
+      mirrorIndex  = 0
+    }
+    else {      
+      numOfMirrors = numOfMirrors + 1
+      //println(numOfMirrors)
+    }
     this
   }
-  def backpropagate(eta:NeuronVector) = W TransMult eta
+  var inputBuffer  = Array [NeuronVector]()
+  var outputBuffer = Array [NeuronVector]()
+  override def allocate(seed:String) ={
+    if (status == seed) {
+      inputBuffer = new Array[NeuronVector] (numOfMirrors)
+      outputBuffer= new Array[NeuronVector] (numOfMirrors)
+      status = ""
+    } else {}
+    this
+  }  
+  private val W: Weight = new Weight(outputDimension, inputDimension) 
+  private val b: NeuronVector = new NeuronVector (outputDimension)
+  private val dW:Weight = new Weight(outputDimension, inputDimension)
+  private val db:NeuronVector = new NeuronVector (outputDimension)
+  def apply (x: NeuronVector) = {
+    assert (x.length == inputDimension)
+    inputBuffer(mirrorIndex) = x
+    outputBuffer(mirrorIndex) = W* x + b
+    var cIndex = mirrorIndex
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors
+    outputBuffer(cIndex)
+  }
+
+  def backpropagate(eta:NeuronVector) = {
+    dW+= inputBuffer(mirrorIndex) CROSS eta
+    db+= eta
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors
+    W TransMult eta
+  }
 }
 
 /********************************************************************************************/
@@ -347,7 +443,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   
   override val outputDimension = INN.encodeDimension
   def apply (x:NeuronVector) = INN.encode(x)
-  def init() = INN.init()
+  override def init(seed:String) = INN.init(seed)
   def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
   
   def setWeights(seed:String, w:WeightVector) = INN.setWeights(seed, w)
@@ -371,8 +467,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
   def apply (x:NeuronVector) = threeLayers(x)
-  def init() = {
-    threeLayers.init()
+  override def init(seed:String) = {
+    threeLayers.init(seed)
     this
   }
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
@@ -411,9 +507,9 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     var (_, context) = x.splice(NN.codeLength)
     topLayer(encoder(x) concatenate context) concatenate context
   } 
-  def init() = {
-    encoder.init()
-    topLayer.init()
+  override def init(seed:String) = {
+    encoder.init(seed)
+    topLayer.init(seed)
     this
   }
   def backpropagate(eta:NeuronVector) = {
