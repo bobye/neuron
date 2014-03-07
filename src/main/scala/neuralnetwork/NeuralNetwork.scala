@@ -27,6 +27,7 @@ class NeuronVector (val data: DenseVector[Double]) {
     this.data :+= that.data
     null
   }
+  def euclideanNorm = norm(data)
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
@@ -137,6 +138,11 @@ abstract trait Memorable extends InstanceOfNeuralNetwork {
   //type arrayOfData[T<:NeuronVector] = Array[T]
 }
 
+abstract trait Optimizable {
+  def obj(w:WeightVector) : Double
+  def grad : NeuronVector // should be in the same length of w
+}
+
 /** Class for template of neural network **/
 abstract class NeuralNetwork (val inputDimension:Int, val outputDimension:Int) extends Operationable{
   type InstanceType <: InstanceOfNeuralNetwork
@@ -164,14 +170,25 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def init(seed:String) : InstanceOfNeuralNetwork = {this} // default: do nothing
   def allocate(seed:String) : InstanceOfNeuralNetwork = {this} // 
   def backpropagate(eta: NeuronVector): NeuronVector
-  
   /*
+  class toOptimize(x:NeuronVector, y:NeuronVector) extends Optimizable {
+  	def obj(w:WeightVector) : Double = {
+  	  setWeights(System.currentTimeMillis().hashCode().toString, w) // set new weights
+  	  val z = apply(x) - y	 // compute output and buffers
+  	  backpropagate(z) 
+  	  z.euclideanNorm
+  	}
+  	def grad : NeuronVector = {
+  	  getDerativeOfWeights(System.currentTimeMillis().hashCode().toString)
+  	}
+  }
   def train (x: NeuronVector, y: NeuronVector) : InstanceOfNeuralNetwork = {
     // it has many things to do
-    backpropagate(apply(x) - y)
+    
     this
   }
   */
+  
   // display
   override def toString() = "#" + toStringGeneric
 }
@@ -336,7 +353,11 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     } else {} 
     this
   }
-  def backpropagate(eta: NeuronVector) = eta DOT gradient
+  def backpropagate(eta: NeuronVector) = {
+    val cIndex = mirrorIndex 
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors
+    eta DOT gradientBuffer(cIndex)
+  }
 }
 
 class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int) 

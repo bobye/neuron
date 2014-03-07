@@ -15,6 +15,8 @@ object FeedForward extends Workspace{
 	val d = (b PLUS c) TIMES a2
 	val e = (d PLUS d)
 	val f = e.create()
+	//val f = a.create()
+	
 	
 	//println(f)
 	f.init("f").allocate("f")
@@ -24,7 +26,9 @@ object FeedForward extends Workspace{
 	wv.set(new NeuronVector(wvlength, new Uniform(-1,1))) // initialize randomly
 	f.setWeights("1s", wv)
 	val input = new NeuronVector(f.inputDimension, new Uniform(-1,1))
-	println(input.length, f(input))
+	val output = new NeuronVector(f.outputDimension, new Uniform(-1,1))
+	println(input.length)
+	println(f.backpropagate(f(input) - output))
     
     
     val s = new RecursiveSingleLayerCAE(SigmoidFunction)(10, 7).create()
