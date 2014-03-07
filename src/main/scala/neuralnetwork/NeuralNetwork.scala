@@ -27,7 +27,7 @@ class NeuronVector (val data: DenseVector[Double]) {
     this.data :+= that.data
     null
   }
-  def euclideanNorm = norm(data)
+  def euclideanSqrNorm = {var z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
@@ -132,15 +132,43 @@ abstract trait Operationable extends Workspace {
   def toStringGeneric(): String = this.hashCode().toString +
   	 "[" + inputDimension + "," + outputDimension + "]";
 }
-
+/** Memorable NN is instance that keep internal buffers **/
 abstract trait Memorable extends InstanceOfNeuralNetwork {
   var numOfMirrors:Int = 0
   //type arrayOfData[T<:NeuronVector] = Array[T]
 }
 
+/** Implement batch mode training **/
 abstract trait Optimizable {
-  def obj(w:WeightVector) : Double
-  def grad : NeuronVector // should be in the same length of w
+  var nn: InstanceOfNeuralNetwork
+  var xData : Array[NeuronVector]
+  var yData : Array[NeuronVector]
+  
+  def getObjAndGrad (w: WeightVector): (Double, NeuronVector) = {
+    val size = xData.length
+    assert(size >= 1)
+    val dimension = xData(0).length
+    var totalCost:Double = 0.0
+    val dW = new NeuronVector (dimension)
+    /*
+     * Compute objective and gradients in batch mode
+     * which can be run in parallel 
+     *  ...
+     */
+    
+    var x = xData(0); var y = yData(0)
+    nn.setWeights(System.currentTimeMillis().hashCode.toString, w)
+    var z = nn(x) - y
+    totalCost = totalCost + z.euclideanSqrNorm
+    nn.backpropagate(z)
+    dW += nn.getDerativeOfWeights(System.currentTimeMillis().hashCode.toString)
+
+    /*
+     * End parallel loop
+     */
+    
+    (totalCost/size, dW/size)
+  }
 }
 
 /** Class for template of neural network **/
@@ -170,24 +198,6 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def init(seed:String) : InstanceOfNeuralNetwork = {this} // default: do nothing
   def allocate(seed:String) : InstanceOfNeuralNetwork = {this} // 
   def backpropagate(eta: NeuronVector): NeuronVector
-  /*
-  class toOptimize(x:NeuronVector, y:NeuronVector) extends Optimizable {
-  	def obj(w:WeightVector) : Double = {
-  	  setWeights(System.currentTimeMillis().hashCode().toString, w) // set new weights
-  	  val z = apply(x) - y	 // compute output and buffers
-  	  backpropagate(z) 
-  	  z.euclideanNorm
-  	}
-  	def grad : NeuronVector = {
-  	  getDerativeOfWeights(System.currentTimeMillis().hashCode().toString)
-  	}
-  }
-  def train (x: NeuronVector, y: NeuronVector) : InstanceOfNeuralNetwork = {
-    // it has many things to do
-    
-    this
-  }
-  */
   
   // display
   override def toString() = "#" + toStringGeneric
