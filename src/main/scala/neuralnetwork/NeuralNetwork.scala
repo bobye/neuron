@@ -299,6 +299,7 @@ class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		(override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1, Type2] (first, second) {
   type Instance = InstanceOfChainNeuralNetwork[Type1,Type2]
+  assert(first.inputDimension == second.outputDimension) 
   def inputDimension = second.inputDimension
   def outputDimension= first.outputDimension 
   def create(): InstanceOfChainNeuralNetwork[Type1, Type2] = new InstanceOfChainNeuralNetwork(this)
