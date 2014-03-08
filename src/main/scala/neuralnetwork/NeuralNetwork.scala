@@ -32,6 +32,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
   def set(x:Double) : Null = {data:=x; null}
+  def copy(): NeuronVector = new NeuronVector(data.copy)
   //override def toString() = data.toString
 }
 class Weight (val data:DenseMatrix[Double]){
@@ -57,10 +58,10 @@ class WeightVector (override val data: DenseVector[Double]) extends NeuronVector
     var rows = W.data.rows
     var cols = W.data.cols
     
-    W.data := (data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols))
-    ptr = ptr + rows * cols
+    W.data := data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
+    ptr = (ptr + rows * cols) % length
     b.data := data(ptr until ptr + rows)
-    ptr = ptr + rows
+    ptr = (ptr + rows) % length
     ptr
   }
   def set(wv: NeuronVector): Int = {
@@ -68,6 +69,7 @@ class WeightVector (override val data: DenseVector[Double]) extends NeuronVector
     data := wv.data
     0
   }
+  override def copy(): WeightVector = new WeightVector(data.copy)
 }
 
 
@@ -101,7 +103,7 @@ object dsgm extends UFunc with MappingUFunc{
 }
   
 object SigmoidFunction extends NeuronFunction {
-  def grad(x:NeuronVector): NeuronVector = new NeuronVector(dsgm(x.data))
+  def grad(x:NeuronVector): NeuronVector = new NeuronVector(dsgm(x.data)) // can be simplified, if apply() is applied first
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(sigmoid(x.data))
 }
 
@@ -144,6 +146,8 @@ abstract trait Optimizable {
   var xData : Array[NeuronVector] = null
   var yData : Array[NeuronVector] = null
   
+  final var randomGenerator = new scala.util.Random
+  
   def initMemory() : InstanceOfNeuralNetwork = {
     val seed = System.currentTimeMillis().hashCode.toString
     nn.init(seed).allocate(seed)
@@ -152,6 +156,17 @@ abstract trait Optimizable {
   def getRandomWeightVector (rand: Rand[Double]) : WeightVector = {
     val wlength = nn.getWeights(System.currentTimeMillis().hashCode.toString).length // get dimension of weights
     new WeightVector(wlength, rand)
+  }
+  
+  def getObj(w: WeightVector) : Double = { // doesnot compute gradient or backpropagation
+    val size = xData.length
+    assert (size >= 1 && size == yData.length)
+    var totalCost: Double = 0.0
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    for (i <- 0 until size) {
+      totalCost = totalCost + (nn(xData(i))-yData(i)).euclideanSqrNorm/2.0
+    }
+    totalCost/size
   }
   
   def getObjAndGrad (w: WeightVector): (Double, NeuronVector) = {
@@ -163,13 +178,13 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    nn.setWeights(System.currentTimeMillis().hashCode.toString, w)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     for {i <- 0 until size} {
       
       var z = nn(xData(i)) - yData(i)
-      totalCost = totalCost + z.euclideanSqrNorm
+      totalCost = totalCost + z.euclideanSqrNorm/2.0
       nn.backpropagate(z)
-      dW += nn.getDerativeOfWeights(((i+1)*(System.currentTimeMillis()%1000000)).toString)
+      dW += nn.getDerativeOfWeights((((i+1)*System.currentTimeMillis())%1000000).toString)
     }
     /*
      * End parallel loop
@@ -406,7 +421,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      (dW.vec concatenate db) / numOfMirrors
+      (dW.vec concatenate db) // / numOfMirrors
     } else {
       NullVector
     }
@@ -448,7 +463,10 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 
   def backpropagate(eta:NeuronVector) = {
-    dW+= inputBuffer(mirrorIndex) CROSS eta
+    if (mirrorIndex == 0) { // start a new backpropagation
+      dW.set(0.0); db.set(0.0)
+    }
+    dW+= eta CROSS inputBuffer(mirrorIndex)
     db+= eta
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
     W TransMult eta
