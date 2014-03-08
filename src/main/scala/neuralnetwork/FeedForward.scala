@@ -17,7 +17,7 @@ object FeedForward extends Optimizable with Workspace{
 	val e = (d PLUS d) 
 	
 	// setup Optimizable members
-	nn = e.create(); println(nn);
+	nn = e.create(); println(nn); // print structure
 	val numOfSamples = 100
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
 	for (i<- 0 until numOfSamples) {
@@ -42,7 +42,12 @@ object FeedForward extends Optimizable with Workspace{
     val (obj2, grad2) = getApproximateObjAndGrad(w)
 	println(System.currentTimeMillis() - time, obj2, grad2.data)
 	
-	println(train(w))
+	// train
+	time = System.currentTimeMillis()
+	val (obj3, w2) = train(w)
+	println(System.currentTimeMillis() - time, obj3)
+	println(w.data)
+	println(w2.data)
 	
 
   }

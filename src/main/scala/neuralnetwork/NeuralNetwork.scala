@@ -140,9 +140,12 @@ abstract trait Memorable extends InstanceOfNeuralNetwork {
 
 /** Implement batch mode training **/
 abstract trait Optimizable {
+  /*************************************/
+  // To be specified 
   var nn: InstanceOfNeuralNetwork = null
   var xData : Array[NeuronVector] = null
   var yData : Array[NeuronVector] = null
+  /*************************************/
   
   final var randomGenerator = new scala.util.Random
   
