@@ -8,6 +8,7 @@ package neuralnetwork
 import breeze.generic._
 import breeze.linalg._
 import breeze.numerics._
+import breeze.optimize._
 
 import breeze.stats.distributions._
 //import breeze.math._
@@ -23,10 +24,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
   def *(x:Double) : NeuronVector = new NeuronVector(this.data * x)
   def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
-  def +=(that: NeuronVector): Null = {
-    this.data :+= that.data
-    null
-  }
+  def +=(that: NeuronVector): Null = {this.data :+= that.data; null}
   def euclideanSqrNorm = {var z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
@@ -191,6 +189,36 @@ abstract trait Optimizable {
      */
     
     (totalCost/size, dW/size)
+  }
+  
+  def getApproximateObjAndGrad (w: WeightVector) : (Double, NeuronVector) = {
+    // Compute gradient using numerical approximation
+    var dW = w.copy()
+    for (i<- 0 until w.length) {
+	  val epsilon = 0.00001
+	  val w2 = w.copy
+	  w2.data(i) = w.data(i) + epsilon
+	  val cost1 = getObj(w2)
+	  w2.data(i) = w.data(i) - epsilon
+	  val cost2 = getObj(w2)
+	  
+	  dW.data(i) = (cost1 - cost2) / (2*epsilon)
+	}
+    (getObj(w), dW)
+  }
+  
+
+  // train neural network using first order minimizer (L-BFGS)
+  def train(w: WeightVector): (Double, WeightVector) = {
+   val f = new DiffFunction[DenseVector[Double]] {
+	  def calculate(x: DenseVector[Double]) = {
+	    val (obj, grad) = getObjAndGrad(new WeightVector(x))
+	    (obj, grad.data)
+	  }    
+    }
+    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=100, m=3)
+	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
+    (f(w2.data), w2)
   }
 }
 

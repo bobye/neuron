@@ -18,7 +18,7 @@ object FeedForward extends Optimizable with Workspace{
 	
 	// setup Optimizable members
 	nn = e.create(); println(nn);
-	val numOfSamples = 2
+	val numOfSamples = 100
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
 	for (i<- 0 until numOfSamples) {
 	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
@@ -34,23 +34,16 @@ object FeedForward extends Optimizable with Workspace{
     
     // compute objective and gradient
     var time = System.currentTimeMillis();
-	var (obj, grad) = getObjAndGrad(w)
-	println(System.currentTimeMillis() - time, grad.data)
+	val (obj, grad) = getObjAndGrad(w)
+	println(System.currentTimeMillis() - time, obj, grad.data)
 	
-	//gradient checking
+	// gradient checking
 	time = System.currentTimeMillis()
-	var grad2 = grad.copy()
-	for (i<- 0 until w.length) {
-	  val epsilon = 0.00001
-	  val w2 = w.copy
-	  w2.data(i) = w.data(i) + epsilon
-	  val cost1 = getObj(w2)
-	  w2.data(i) = w.data(i) - epsilon
-	  val cost2 = getObj(w2)
-	  
-	  grad2.data(i) = (cost1 - cost2) / (2*epsilon)
-	}
-	println(System.currentTimeMillis() - time, grad2.data)
+    val (obj2, grad2) = getApproximateObjAndGrad(w)
+	println(System.currentTimeMillis() - time, obj2, grad2.data)
+	
+	println(train(w))
+	
 
   }
 
