@@ -99,10 +99,32 @@ object dsgm extends UFunc with MappingUFunc{
       }
     }
 }
+
+class KLdiv (rho:Double) extends UFunc with MappingUFunc {
+  implicit object implDouble extends Impl [Double, Double] {
+    def apply(a: Double) = {
+      rho * log(rho/a) + (1-rho) * log((1-rho)/(1-a))
+    }
+  }
+}
+class dKLd (rho:Double) extends UFunc with MappingUFunc {
+  implicit object implDouble extends Impl [Double, Double] {
+    def apply(a: Double) = {
+      - rho/a + (1-rho)/(1-a)
+    }
+  }
+}
   
 object SigmoidFunction extends NeuronFunction {
   def grad(x:NeuronVector): NeuronVector = new NeuronVector(dsgm(x.data)) // can be simplified, if apply() is applied first
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(sigmoid(x.data))
+}
+
+class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
+  object dKLdfunc extends dKLd(rho)
+  object KLdiv extends KLdiv(rho)
+  def grad(x:NeuronVector): NeuronVector = new NeuronVector(dKLdfunc(x.data))
+  def apply(x:NeuronVector): NeuronVector = new NeuronVector(KLdiv(x.data))
 }
 
 /********************************************************************************************/
@@ -211,7 +233,13 @@ abstract trait Optimizable {
   }
   
 
-  // train neural network using first order minimizer (L-BFGS)
+  /*
+   * Train neural network using first order minimizer (L-BFGS)
+   * Please NOTE there is no regularization penalty in training 
+   * But it is possible to add them in the future: 
+   *  (1) L1 or L2 on weights
+   *  (2) sparsity parameter
+   */ 
   def train(w: WeightVector): (Double, WeightVector) = {
    val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
@@ -368,15 +396,18 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
 }
 
 /********************************************************************************************/
-// Basic neural network elements (Only two for now)
+// Basic neural network elements
+
+/** SingleLayerNeuralNetwork is sigmoid functional layer 
+ *  that takes in signals and transform them to activations [0,1] **/
 class SingleLayerNeuralNetwork (val func: NeuronFunction /** Pointwise Function **/, override val dimension: Int) 
 	extends SelfTransform (dimension) {
-  type InstanceType = InstanceOfSingleLayerNeuralNetwork
+  type InstanceType <: InstanceOfSingleLayerNeuralNetwork
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
 }
 class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetwork) 
 	extends InstanceOfSelfTransform (NN) with Memorable { 
-  type StructureType = SingleLayerNeuralNetwork
+  type StructureType <: SingleLayerNeuralNetwork
   
   def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {this}
   def getWeights(seed:String) : NeuronVector = {NullVector}
@@ -390,6 +421,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     inputBuffer(mirrorIndex) = x
     gradientBuffer(mirrorIndex) = NN.func.grad(x)
     outputBuffer(mirrorIndex) = NN.func(x)
+        
     var cIndex = mirrorIndex
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
     outputBuffer(cIndex)
@@ -409,6 +441,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   var inputBuffer  = Array [NeuronVector]()
   var outputBuffer = Array [NeuronVector]()
   var gradientBuffer= Array [NeuronVector] ()
+  
   override def allocate(seed:String) ={
     if (status == seed) {
       inputBuffer = new Array[NeuronVector] (numOfMirrors)
@@ -421,10 +454,42 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   def backpropagate(eta: NeuronVector) = {
     val cIndex = mirrorIndex 
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    eta DOT gradientBuffer(cIndex)
+    eta DOT gradientBuffer(cIndex) // there is no penalty for sparsity
   }
 }
 
+/** SparseSingleLayer computes average activation and enforce sparsity penalty **/
+class SparseSingleLayerNN (override val func: NeuronFunction /** Pointwise Activation Function **/, 
+						   override val dimension: Int, 
+						   val penality: NeuronFunction, /** Sparsity Penalty Function **/ 
+						   val beta: Double)
+	extends SingleLayerNeuralNetwork (func, dimension) {
+  type InstanceType <: InstanceOfSparseSingleLayerNN
+  override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
+} 
+
+class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN) 
+	extends InstanceOfSingleLayerNeuralNetwork (NN) {
+  var totalUsage: Int = 0 // reset if weights updated
+  override def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {
+    totalUsage = 0; 
+    rho.set(0.0)
+    this
+ }
+  override def apply(x: NeuronVector) = {
+    val y = super.apply(x)
+    rho += y; totalUsage = totalUsage + 1 // for computation of average activation
+    y
+  }
+  var rho : NeuronVector = new NeuronVector(outputDimension)
+  override def backpropagate(eta: NeuronVector) = {
+    val cIndex = mirrorIndex 
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors
+    (eta + NN.penality.grad(rho) * NN.beta) DOT gradientBuffer(cIndex)
+  }
+}
+
+/** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/
 class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int) 
 	extends NeuralNetwork (inputDimension, outputDimension) {
   type InstanceType = InstanceOfLinearNeuralNetwork
