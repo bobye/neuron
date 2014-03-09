@@ -16,7 +16,7 @@ import breeze.stats.distributions._
 class NeuronVector (val data: DenseVector[Double]) {
   val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
-  def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
+  def this(n:Int, rand: Rand[Double] =  new Uniform(-1,1)) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 
@@ -176,7 +176,7 @@ abstract trait Optimizable {
     nn.init(seed).allocate(seed)
   }
   
-  def getRandomWeightVector (rand: Rand[Double]) : WeightVector = {
+  def getRandomWeightVector (rand: Rand[Double] =  new Uniform(-1,1)) : WeightVector = {
     val wlength = nn.getWeights(System.currentTimeMillis().hashCode.toString).length // get dimension of weights
     new WeightVector(wlength, rand)
   }
@@ -400,7 +400,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
 
 /** SingleLayerNeuralNetwork is sigmoid functional layer 
  *  that takes in signals and transform them to activations [0,1] **/
-class SingleLayerNeuralNetwork (val func: NeuronFunction /** Pointwise Function **/, override val dimension: Int) 
+class SingleLayerNeuralNetwork (override val dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function **/ ) 
 	extends SelfTransform (dimension) {
   type InstanceType <: InstanceOfSingleLayerNeuralNetwork
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
@@ -459,11 +459,11 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 }
 
 /** SparseSingleLayer computes average activation and enforce sparsity penalty **/
-class SparseSingleLayerNN (override val func: NeuronFunction /** Pointwise Activation Function **/, 
-						   override val dimension: Int, 
-						   val penality: NeuronFunction, /** Sparsity Penalty Function **/ 
-						   val beta: Double)
-	extends SingleLayerNeuralNetwork (func, dimension) {
+class SparseSingleLayerNN (override val dimension: Int, 
+						   override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
+						   val penality: NeuronFunction = new KL_divergenceFunction(0.2), /** Sparsity Penalty Function **/ 
+						   var beta: Double = 0.0)
+	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType <: InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
 } 
@@ -487,6 +487,8 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
     (eta + NN.penality.grad(rho) * NN.beta) DOT gradientBuffer(cIndex)
   }
+  
+  def setBeta(b: Double): Null = {NN.beta = b; null}
 }
 
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/

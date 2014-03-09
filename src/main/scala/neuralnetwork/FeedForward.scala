@@ -8,8 +8,8 @@ object FeedForward extends Optimizable with Workspace{
   def main(args: Array[String]): Unit = {
 	
     // create topology of neural network
-	val a = new SingleLayerNeuralNetwork(SigmoidFunction, 10)
-	val a2= new SingleLayerNeuralNetwork(SigmoidFunction, 20)
+	val a = new SingleLayerNeuralNetwork(10)
+	val a2= new SingleLayerNeuralNetwork(20)
 	val b = new LinearNeuralNetwork(10,10)
  
 	val c = (a TIMES b).create()
@@ -29,7 +29,7 @@ object FeedForward extends Optimizable with Workspace{
 	
 
 	initMemory()
-    val w = getRandomWeightVector(new Uniform(-1,1))	
+    val w = getRandomWeightVector()	
 	
     
     // compute objective and gradient
