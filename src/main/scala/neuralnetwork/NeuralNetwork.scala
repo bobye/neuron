@@ -564,10 +564,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
   def apply (x:NeuronVector) = threeLayers(x)
-  override def init(seed:String) = {
-    threeLayers.init(seed)
-    this
-  }
+  override def init(seed:String) = {threeLayers.init(seed); this}
+  override def allocate(seed:String) : InstanceOfNeuralNetwork = {threeLayers.allocate(seed); this}
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
   
   def setWeights(seed:String, w:WeightVector): InstanceOfAutoEncoder = { threeLayers.setWeights(seed, w); this}
@@ -609,6 +607,11 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     topLayer.init(seed)
     this
   }
+  override def allocate(seed:String) : InstanceOfNeuralNetwork = {
+    encoder.allocate(seed);
+    topLayer.allocate(seed)
+    this
+  }
   def backpropagate(eta:NeuronVector) = {
     var (eta_31, _) = eta.splice(NN.codeLength)
     var (eta_21, _) = topLayer.backpropagate(eta_31).splice(NN.hidden.outputDimension)
@@ -617,19 +620,19 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   
   def setWeights(seed:String, w:WeightVector): InstanceOfContextAwareAutoEncoder = {
     if (status != seed) {
-    	topLayer.setWeights(seed, w)
     	encoder.setWeights(seed, w)
+    	topLayer.setWeights(seed, w)
     }
     this
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
-      topLayer.getWeights(seed) concatenate encoder.getWeights(seed)
+      encoder.getWeights(seed) concatenate topLayer.getWeights(seed) 
     } else NullVector
   }
   def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
-      topLayer.getDerativeOfWeights(seed) concatenate encoder.getDerativeOfWeights(seed)
+      encoder.getDerativeOfWeights(seed) concatenate topLayer.getDerativeOfWeights(seed)  
     } else NullVector
   }
   
