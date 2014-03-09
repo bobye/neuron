@@ -74,9 +74,9 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
 class SingleLayerAutoEncoder (val func:NeuronFunction = SigmoidFunction) (override val dimension:Int, val hiddenDimension:Int) 
 	extends AutoEncoder(dimension, new SingleLayerNeuralNetwork(hiddenDimension, func))
 
-class SparseSingleLayerAE (val func: NeuronFunction = SigmoidFunction, 
-						   val penalty:NeuronFunction = new KL_divergenceFunction(.2), 
-						   val beta:Double = 0.0)
+class SparseSingleLayerAE (val beta:Double = 0.0,
+    					   val func: NeuronFunction = SigmoidFunction, 
+						   val penalty:NeuronFunction = new KL_divergenceFunction(.2))
 	(override val dimension:Int, val hiddenDimension:Int)
 	extends AutoEncoder(dimension, new SparseSingleLayerNN(hiddenDimension, func, penalty, beta))
 

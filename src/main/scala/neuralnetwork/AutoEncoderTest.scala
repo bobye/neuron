@@ -3,7 +3,8 @@ import breeze.stats.distributions._
 
 object AutoEncoderTest extends Optimizable with Workspace{
 	def main(args: Array[String]): Unit = {
-	  nn = new SingleLayerAutoEncoder()(20,10).create()
+	  //nn = new SingleLayerAutoEncoder()(20,10).create()
+	  nn = new SparseSingleLayerAE(0.)(20,10).create()
 	  val numOfSamples = 100
 	  xData = new Array(numOfSamples);
 	  for (i<- 0 until numOfSamples) {
@@ -21,12 +22,13 @@ object AutoEncoderTest extends Optimizable with Workspace{
 	  val w = getRandomWeightVector()
 	  
 	  var time = System.currentTimeMillis();
-	  val (obj, _) = getObjAndGrad(w)
-	  println(System.currentTimeMillis() - time, obj)
-	
+	  val (obj, grad) = getObjAndGrad(w)
+	  println(System.currentTimeMillis() - time, obj, grad.data)
+	  
 	  time = System.currentTimeMillis();
 	  val (obj2, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj2)
+	  
 	  //println(w2.data)
 	  
 	}

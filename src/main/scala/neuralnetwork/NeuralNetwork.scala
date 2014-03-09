@@ -202,8 +202,10 @@ abstract trait Optimizable {
      * which can be run in parallel 
      */
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    
+    // a forward pass on all the training samples
+    
     for {i <- 0 until size} {
-      
       var z = nn(xData(i)) - yData(i)
       totalCost = totalCost + z.euclideanSqrNorm/2.0
       nn.backpropagate(z)
@@ -470,25 +472,27 @@ class SparseSingleLayerNN (override val dimension: Int,
 
 class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN) 
 	extends InstanceOfSingleLayerNeuralNetwork (NN) {
-  var totalUsage: Int = 0 // reset if weights updated
+  private var totalUsage: Int = 0 // reset if weights updated
+  private var totalUsageOnUpdate: Int = 0
   override def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {
-    totalUsage = 0; 
+    totalUsage = totalUsageOnUpdate
+    totalUsageOnUpdate = 0
     rho.set(0.0)
     this
  }
   override def apply(x: NeuronVector) = {
     val y = super.apply(x)
-    rho += y; totalUsage = totalUsage + 1 // for computation of average activation
+    rho += y; totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
     y
   }
   var rho : NeuronVector = new NeuronVector(outputDimension)
   override def backpropagate(eta: NeuronVector) = {
     val cIndex = mirrorIndex 
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    (eta + NN.penality.grad(rho) * NN.beta) DOT gradientBuffer(cIndex)
+    (eta + NN.penality.grad(rho/totalUsage) * NN.beta) DOT gradientBuffer(cIndex)
   }
   
-  def setBeta(b: Double): Null = {NN.beta = b; null}
+  //def setBeta(b: Double): Null = {NN.beta = b; null}
 }
 
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/
