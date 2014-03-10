@@ -463,9 +463,9 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 
 /** SparseSingleLayer computes average activation and enforce sparsity penalty **/
 class SparseSingleLayerNN (override val dimension: Int, 
-						   override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
-						   val penality: NeuronFunction = new KL_divergenceFunction(0.2), /** Sparsity Penalty Function **/ 
-						   var beta: Double = 0.0)
+						   var beta: Double = 0.0,
+                           override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
+						   val penality: NeuronFunction = new KL_divergenceFunction(0.2) /** Sparsity Penalty Function **/)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType <: InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)

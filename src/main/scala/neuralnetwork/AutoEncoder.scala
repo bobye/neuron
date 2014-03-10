@@ -78,7 +78,7 @@ class SparseSingleLayerAE (val beta:Double = 0.0,
     					   val func: NeuronFunction = SigmoidFunction, 
 						   val penalty:NeuronFunction = new KL_divergenceFunction(.2))
 	(override val dimension:Int, val hiddenDimension:Int)
-	extends AutoEncoder(dimension, new SparseSingleLayerNN(hiddenDimension, func, penalty, beta))
+	extends AutoEncoder(dimension, new SparseSingleLayerNN(hiddenDimension, beta, func, penalty))
 
 class RecursiveSingleLayerAE (override val func:NeuronFunction = SigmoidFunction) (val wordLength: Int) 
 	extends SingleLayerAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
