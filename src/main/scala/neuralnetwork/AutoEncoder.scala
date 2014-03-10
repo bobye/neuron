@@ -76,7 +76,7 @@ class SingleLayerAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimens
 
 class SparseSingleLayerAE (val beta:Double = 0.0, // sparse penalty 
     					   lambda: Double = 0.0, // L2 regularization
-    					   val penalty:NeuronFunction = new KL_divergenceFunction(.2), // average activation
+    					   val penalty:NeuronFunction = new KL_divergenceFunction(0.01), // average activation
     					   val func: NeuronFunction = SigmoidFunction)
 	(dimension:Int, val hiddenDimension:Int)
 	extends AutoEncoder(dimension, lambda, new SparseSingleLayerNN(hiddenDimension, beta, func, penalty))

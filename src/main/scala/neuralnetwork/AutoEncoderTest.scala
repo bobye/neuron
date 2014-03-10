@@ -3,23 +3,20 @@ import breeze.stats.distributions._
 
 object AutoEncoderTest extends Optimizable with Workspace{
 	def main(args: Array[String]): Unit = {
+	  val inputDimension = 20
+	  val hiddenDimension = 10
 	  //nn = new SingleLayerAutoEncoder()(20,10).create()
-	  nn = new SparseSingleLayerAE(1.0,1.0)(20,10).create()
+	  nn = new SparseSingleLayerAE(1.0,1.0)(inputDimension,hiddenDimension).create()
 	  val numOfSamples = 100
 	  xData = new Array(numOfSamples);
 	  for (i<- 0 until numOfSamples) {
-	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
-	    /* 
-	     * It is interesting to see the difference between the above line
-	     * If xData are sampled from the same random generator, it is essentially not random
-	     * a Neural Network can capture the patterns very well
-	     */
-	    // xData(i) = new NeuronVector(nn.inputDimension) 
+	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1))  
 	  }
 	  yData = xData
 	  
 	  initMemory()
-	  val w = getRandomWeightVector()
+	  val amplitude = scala.math.sqrt(6.0/(inputDimension + hiddenDimension + 1.0))
+	  val w = getRandomWeightVector(amplitude)
 	  
 	  var time = System.currentTimeMillis();
 	  val (obj, grad) = getObjAndGrad(w)
