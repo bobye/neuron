@@ -506,12 +506,12 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/
 class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int) 
 	extends NeuralNetwork (inputDimension, outputDimension) {
-  type InstanceType = InstanceOfLinearNeuralNetwork
+  type InstanceType <: InstanceOfLinearNeuralNetwork
   def create(): InstanceOfLinearNeuralNetwork = new InstanceOfLinearNeuralNetwork(this)
 }
 class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 	extends InstanceOfNeuralNetwork(NN) with Memorable {
-  type StructureType = LinearNeuralNetwork
+  type StructureType <: LinearNeuralNetwork
   def setWeights(seed:String, wv:WeightVector) : Double = {
     if (status != seed) {
       status = seed
@@ -559,10 +559,10 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     } else {}
     this
   }  
-  private val W: Weight = new Weight(outputDimension, inputDimension) 
-  private val b: NeuronVector = new NeuronVector (outputDimension)
-  private val dW:Weight = new Weight(outputDimension, inputDimension)
-  private val db:NeuronVector = new NeuronVector (outputDimension)
+  protected val W: Weight = new Weight(outputDimension, inputDimension) 
+  protected val b: NeuronVector = new NeuronVector (outputDimension)
+  protected val dW:Weight = new Weight(outputDimension, inputDimension)
+  protected val db:NeuronVector = new NeuronVector (outputDimension)
   def apply (x: NeuronVector) = {
     assert (x.length == inputDimension)
     inputBuffer(mirrorIndex) = x
@@ -580,6 +580,33 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     db+= eta
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
     W TransMult eta
+  }
+}
+
+class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double)
+	extends LinearNeuralNetwork (inputDimension, outputDimension) {
+  type InstanceType = InstanceOfRegularizedLinearNN
+  override def create(): InstanceOfRegularizedLinearNN = new InstanceOfRegularizedLinearNN(this) 
+}
+
+class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN) 
+	extends InstanceOfLinearNeuralNetwork(NN) {
+  type StructureType = RegularizedLinearNN
+  override def setWeights(seed:String, wv:WeightVector) : Double = {
+    if (status != seed) {
+      status = seed
+      wv(W, b) // get optimized weights
+      dW.set(0.0) // reset derivative of weights
+    }
+    0.0 // + norm(W) * NN.lambda
+  }
+  override def getDerativeOfWeights(seed:String) : NeuronVector = {
+    if (status != seed) {
+      status = seed
+      (dW.vec concatenate db) // + (W / numOfMirrors, 0)
+    } else {
+      NullVector
+    }
   }
 }
 
