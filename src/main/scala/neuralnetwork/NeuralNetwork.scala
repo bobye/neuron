@@ -24,6 +24,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
   def *(x:Double) : NeuronVector = new NeuronVector(this.data * x)
   def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
+  def :=(that: NeuronVector): Null = {this.data := that.data; null}
   def +=(that: NeuronVector): Null = {this.data :+= that.data; null}
   def euclideanSqrNorm = {var z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
@@ -31,6 +32,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   
   def set(x:Double) : Null = {data:=x; null}
   def copy(): NeuronVector = new NeuronVector(data.copy)
+  def sum(): Double = data.sum
   //override def toString() = data.toString
 }
 class Weight (val data:DenseMatrix[Double]){
@@ -185,11 +187,11 @@ abstract trait Optimizable {
     val size = xData.length
     assert (size >= 1 && size == yData.length)
     var totalCost: Double = 0.0
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    val regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     for (i <- 0 until size) {
       totalCost = totalCost + (nn(xData(i))-yData(i)).euclideanSqrNorm/2.0
     }
-    totalCost/size
+    totalCost/size + regCost
   }
   
   def getObjAndGrad (w: WeightVector): (Double, NeuronVector) = {
@@ -201,9 +203,7 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    
-    // a forward pass on all the training samples
+    val regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     
     for {i <- 0 until size} {
       var z = nn(xData(i)) - yData(i)
@@ -214,8 +214,7 @@ abstract trait Optimizable {
     /*
      * End parallel loop
      */
-    
-    (totalCost/size, dW/size)
+    (totalCost/size + regCost, dW/size)
   }
   
   def getApproximateObjAndGrad (w: WeightVector) : (Double, NeuronVector) = {
@@ -245,7 +244,9 @@ abstract trait Optimizable {
   def train(w: WeightVector): (Double, WeightVector) = {
    val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
-	    val (obj, grad) = getObjAndGrad(new WeightVector(x))
+	    val w = new WeightVector(x)
+	    // getObj(w) // a forward pass on all the training samples, maybe slow
+	    val (obj, grad) = getObjAndGrad(w)
 	    (obj, grad.data)
 	  }    
     }
@@ -274,7 +275,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   // structure to vectorization functions
   var status:String = ""
 
-  def setWeights(seed:String, w:WeightVector) : InstanceOfNeuralNetwork
+  def setWeights(seed:String, w:WeightVector) : Double // return regularization term
   def getWeights(seed:String) : NeuronVector
   def getDerativeOfWeights(seed:String) : NeuronVector
   
@@ -305,14 +306,14 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
   val secondInstance = NN.second.create()
   
   
-  override def setWeights(seed:String, w: WeightVector) : InstanceOfMergedNeuralNetwork[Type1, Type2] = {
+  override def setWeights(seed:String, w: WeightVector) : Double = {
     if (status != seed) {
       status = seed
-      firstInstance.setWeights(seed, w)
+      firstInstance.setWeights(seed, w) + 
       secondInstance.setWeights(seed, w)
     } else {
+      0.0
     }
-    this
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
@@ -411,7 +412,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 	extends InstanceOfSelfTransform (NN) with Memorable { 
   type StructureType <: SingleLayerNeuralNetwork
   
-  def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {this}
+  def setWeights(seed:String, w:WeightVector) : Double = {0.0}
   def getWeights(seed:String) : NeuronVector = {NullVector}
   def getDerativeOfWeights(seed:String) : NeuronVector = {NullVector}
   
@@ -474,18 +475,24 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
 	extends InstanceOfSingleLayerNeuralNetwork (NN) {
   private var totalUsage: Int = 0 // reset if weights updated
   private var totalUsageOnUpdate: Int = 0
-  override def setWeights(seed:String, w:WeightVector) : InstanceOfSingleLayerNeuralNetwork = {
-    totalUsage = totalUsageOnUpdate
-    totalUsageOnUpdate = 0
-    rho.set(0.0)
-    this
+  override def setWeights(seed:String, w:WeightVector) : Double = {
+    if (status != seed) {
+      totalUsage = totalUsageOnUpdate
+      totalUsageOnUpdate = 0
+      rho := rhoOnUpdate
+      rhoOnUpdate.set(0.0)
+      if (totalUsage == 0) 0.0 /* use default value */ else NN.penality(rho / totalUsage).sum * NN.beta
+    } else {
+      0.0
+    }
  }
   override def apply(x: NeuronVector) = {
     val y = super.apply(x)
-    rho += y; totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
+    rhoOnUpdate += y; totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
     y
   }
-  var rho : NeuronVector = new NeuronVector(outputDimension)
+  private var rho : NeuronVector = new NeuronVector(outputDimension)
+  private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
   override def backpropagate(eta: NeuronVector) = {
     val cIndex = mirrorIndex 
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
@@ -504,13 +511,13 @@ class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int)
 class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 	extends InstanceOfNeuralNetwork(NN) with Memorable {
   type StructureType = LinearNeuralNetwork
-  def setWeights(seed:String, wv:WeightVector) : InstanceOfLinearNeuralNetwork = {
+  def setWeights(seed:String, wv:WeightVector) : Double = {
     if (status != seed) {
       status = seed
       wv(W, b) // get optimized weights
       dW.set(0.0) // reset derivative of weights
     }
-    this
+    0.0
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {

@@ -66,7 +66,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {threeLayers.allocate(seed); this}
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
   
-  def setWeights(seed:String, w:WeightVector): InstanceOfAutoEncoder = { threeLayers.setWeights(seed, w); this}
+  def setWeights(seed:String, w:WeightVector): Double = { threeLayers.setWeights(seed, w) }
   def getWeights(seed:String) : NeuronVector = threeLayers.getWeights(seed)
   def getDerativeOfWeights(seed:String) : NeuronVector = threeLayers.getDerativeOfWeights(seed)
 }
@@ -123,12 +123,13 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     encoder.backpropagate(eta_21)
   }
   
-  def setWeights(seed:String, w:WeightVector): InstanceOfContextAwareAutoEncoder = {
+  def setWeights(seed:String, w:WeightVector): Double = {
     if (status != seed) {
-    	encoder.setWeights(seed, w)
+    	encoder.setWeights(seed, w) + 
     	topLayer.setWeights(seed, w)
+    } else {
+      0.0
     }
-    this
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
