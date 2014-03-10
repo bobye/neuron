@@ -47,7 +47,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 
 /********************************************************************************************/
 // AutoEncoder
-class AutoEncoder (override val dimension: Int, val hidden: NeuralNetwork)
+class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0, val hidden: NeuralNetwork)
 	extends SelfTransform (dimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
   val encodeDimension = hidden.outputDimension
@@ -56,8 +56,8 @@ class AutoEncoder (override val dimension: Int, val hidden: NeuralNetwork)
 
 class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
   type Structure <: AutoEncoder
-  protected val inputLayer = new LinearNeuralNetwork(NN.dimension, NN.hidden.inputDimension).create() // can be referenced from ImageAutoEncoder
-  private val outputLayer = new LinearNeuralNetwork(NN.hidden.outputDimension, NN.dimension)
+  protected val inputLayer = new RegularizedLinearNN(NN.dimension, NN.hidden.inputDimension, NN.lambda).create() // can be referenced from ImageAutoEncoder
+  private val outputLayer = new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda)
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
@@ -71,14 +71,15 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   def getDerativeOfWeights(seed:String) : NeuronVector = threeLayers.getDerativeOfWeights(seed)
 }
 
-class SingleLayerAutoEncoder (val func:NeuronFunction = SigmoidFunction) (override val dimension:Int, val hiddenDimension:Int) 
-	extends AutoEncoder(dimension, new SingleLayerNeuralNetwork(hiddenDimension, func))
+class SingleLayerAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0) 
+	extends AutoEncoder(dimension, lambda, new SingleLayerNeuralNetwork(hiddenDimension, func))
 
-class SparseSingleLayerAE (val beta:Double = 0.0,
-    					   val func: NeuronFunction = SigmoidFunction, 
-						   val penalty:NeuronFunction = new KL_divergenceFunction(.2))
-	(override val dimension:Int, val hiddenDimension:Int)
-	extends AutoEncoder(dimension, new SparseSingleLayerNN(hiddenDimension, beta, func, penalty))
+class SparseSingleLayerAE (val beta:Double = 0.0, // sparse penalty 
+    					   lambda: Double = 0.0, // L2 regularization
+    					   val penalty:NeuronFunction = new KL_divergenceFunction(.2), // average activation
+    					   val func: NeuronFunction = SigmoidFunction)
+	(dimension:Int, val hiddenDimension:Int)
+	extends AutoEncoder(dimension, lambda, new SparseSingleLayerNN(hiddenDimension, beta, func, penalty))
 
 class RecursiveSingleLayerAE (override val func:NeuronFunction = SigmoidFunction) (val wordLength: Int) 
 	extends SingleLayerAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {

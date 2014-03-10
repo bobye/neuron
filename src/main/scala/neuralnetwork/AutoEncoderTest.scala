@@ -4,7 +4,7 @@ import breeze.stats.distributions._
 object AutoEncoderTest extends Optimizable with Workspace{
 	def main(args: Array[String]): Unit = {
 	  //nn = new SingleLayerAutoEncoder()(20,10).create()
-	  nn = new SparseSingleLayerAE(1.0)(20,10).create()
+	  nn = new SparseSingleLayerAE(1.0,1.0)(20,10).create()
 	  val numOfSamples = 100
 	  xData = new Array(numOfSamples);
 	  for (i<- 0 until numOfSamples) {

@@ -47,6 +47,7 @@ class Weight (val data:DenseMatrix[Double]){
   }
   def vec = new NeuronVector(data.toDenseVector) // make copy
   def set(x: Double) : Unit={data:=x; }
+  def euclideanSqrNorm: Double = {var z = norm(data.flatten()); z*z}
 }
 
 class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
@@ -466,7 +467,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 class SparseSingleLayerNN (override val dimension: Int, 
 						   var beta: Double = 0.0,
                            override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
-						   val penality: NeuronFunction = new KL_divergenceFunction(0.2) /** Sparsity Penalty Function **/)
+						   val penalty: NeuronFunction = new KL_divergenceFunction(0.2) /** Sparsity Penalty Function **/)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType = InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
@@ -482,7 +483,7 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
       totalUsageOnUpdate = 0
       rho := rhoOnUpdate
       rhoOnUpdate.set(0.0)
-      if (totalUsage == 0) 0.0 /* use default value */ else NN.penality(rho / totalUsage).sum * NN.beta
+      if (totalUsage == 0) 0.0 /* use default value */ else NN.penalty(rho / totalUsage).sum * NN.beta
     } else {
       0.0
     }
@@ -497,7 +498,7 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
   override def backpropagate(eta: NeuronVector) = {
     val cIndex = mirrorIndex 
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    (eta + NN.penality.grad(rho/totalUsage) * NN.beta) DOT gradientBuffer(cIndex)
+    (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) DOT gradientBuffer(cIndex)
   }
   
   //def setBeta(b: Double): Null = {NN.beta = b; null}
@@ -583,7 +584,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 }
 
-class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double)
+class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double = 0.0)
 	extends LinearNeuralNetwork (inputDimension, outputDimension) {
   type InstanceType = InstanceOfRegularizedLinearNN
   override def create(): InstanceOfRegularizedLinearNN = new InstanceOfRegularizedLinearNN(this) 
@@ -598,12 +599,12 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
       wv(W, b) // get optimized weights
       dW.set(0.0) // reset derivative of weights
     }
-    0.0 // + norm(W) * NN.lambda
+    W.euclideanSqrNorm * (NN.lambda /2)
   }
   override def getDerativeOfWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      (dW.vec concatenate db) // + (W / numOfMirrors, 0)
+      (dW.vec + W.vec * (NN.lambda)) concatenate db 
     } else {
       NullVector
     }

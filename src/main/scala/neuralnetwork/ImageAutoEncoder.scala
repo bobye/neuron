@@ -14,14 +14,14 @@ class ImageVector (override val data: DenseVector[Double]) extends NeuronVector(
 }
 
 class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseSingleLayerAE (1.0) (rows*cols, hiddenDimension){
+	extends SparseSingleLayerAE (1.0, 1.0) (rows*cols, hiddenDimension){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
 class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder) 
 	extends InstanceOfAutoEncoder(NN) {
   type Structure <: ImageAutoEncoder
-  def displayHiddenNetwork (str:String) : Null = { 
+  def displayHiddenNetwork (str:String) : Unit = { 
     val weightsVector = new WeightVector((NN.rows*NN.cols+1)*NN.hiddenDimension)
     weightsVector := inputLayer.getWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
@@ -30,7 +30,6 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
       weightsVector(img.asWeight(NN.rows, NN.cols), empty)
       img.saveas(str + '-' + i.toString)
     }
-    null
   }
 }
 
