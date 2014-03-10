@@ -56,7 +56,7 @@ class AutoEncoder (override val dimension: Int, val hidden: NeuralNetwork)
 
 class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
   type Structure <: AutoEncoder
-  private val inputLayer = new LinearNeuralNetwork(NN.dimension, NN.hidden.inputDimension)
+  protected val inputLayer = new LinearNeuralNetwork(NN.dimension, NN.hidden.inputDimension).create() // can be referenced from ImageAutoEncoder
   private val outputLayer = new LinearNeuralNetwork(NN.hidden.outputDimension, NN.dimension)
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
@@ -82,6 +82,7 @@ class SparseSingleLayerAE (val beta:Double = 0.0,
 
 class RecursiveSingleLayerAE (override val func:NeuronFunction = SigmoidFunction) (val wordLength: Int) 
 	extends SingleLayerAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
+  type Instance <: InstanceOfRecursiveSingleLayerAE
   override def create() : InstanceOfRecursiveSingleLayerAE = new InstanceOfRecursiveSingleLayerAE(this)
 }
 class InstanceOfRecursiveSingleLayerAE(override val NN:RecursiveSingleLayerAE) 
@@ -151,6 +152,7 @@ class SingleLayerCAE(val func: NeuronFunction = SigmoidFunction)
 class RecursiveSingleLayerCAE (override val func: NeuronFunction = SigmoidFunction) 
 	(val wordLength:Int, override val contextLength: Int)
 	extends SingleLayerCAE(func)(wordLength*2, contextLength, wordLength) with RecursiveEncoder {
+  type Instance <: InstanceOfRecursiveSingleLayerCAE
   override def create(): InstanceOfRecursiveSingleLayerCAE = new InstanceOfRecursiveSingleLayerCAE(this)
 }
 class InstanceOfRecursiveSingleLayerCAE (override val NN: RecursiveSingleLayerCAE)

@@ -24,15 +24,16 @@ class NeuronVector (val data: DenseVector[Double]) {
   def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
   def *(x:Double) : NeuronVector = new NeuronVector(this.data * x)
   def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
-  def :=(that: NeuronVector): Null = {this.data := that.data; null}
-  def +=(that: NeuronVector): Null = {this.data :+= that.data; null}
+  def :=(that: NeuronVector): Unit = {this.data := that.data; }
+  def +=(that: NeuronVector): Unit = {this.data :+= that.data; }
   def euclideanSqrNorm = {var z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
-  def set(x:Double) : Null = {data:=x; null}
+  def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = data.sum
+  def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
   //override def toString() = data.toString
 }
 class Weight (val data:DenseMatrix[Double]){
@@ -41,27 +42,26 @@ class Weight (val data:DenseMatrix[Double]){
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
-  def +=(that:Weight): Null = {
+  def +=(that:Weight): Unit = {
     this.data :+= that.data
-    null
   }
   def vec = new NeuronVector(data.toDenseVector) // make copy
-  def set(x: Double) : Null={data:=x; null}
+  def set(x: Double) : Unit={data:=x; }
 }
 
 class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
   def this(n:Int) = this(DenseVector.zeros[Double](n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
   var ptr : Int = 0
-  def reset(): Null = {ptr = 0; null}
+  def reset(): Unit = {ptr = 0; }
   def apply(W:Weight, b:NeuronVector): Int = {
     var rows = W.data.rows
     var cols = W.data.cols
     
     W.data := data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
     ptr = (ptr + rows * cols) % length
-    b.data := data(ptr until ptr + rows)
-    ptr = (ptr + rows) % length
+    b.data := data(ptr until ptr + b.length)
+    ptr = (ptr + b.length) % length
     ptr
   }
   def set(wv: NeuronVector): Int = {
@@ -242,7 +242,8 @@ abstract trait Optimizable {
    *  (2) sparsity parameter
    */ 
   def train(w: WeightVector): (Double, WeightVector) = {
-   val f = new DiffFunction[DenseVector[Double]] {
+    getObj(w) // one more time
+    val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
 	    val w = new WeightVector(x)
 	    // getObj(w) // a forward pass on all the training samples, maybe slow
@@ -467,7 +468,7 @@ class SparseSingleLayerNN (override val dimension: Int,
                            override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
 						   val penality: NeuronFunction = new KL_divergenceFunction(0.2) /** Sparsity Penalty Function **/)
 	extends SingleLayerNeuralNetwork (dimension, func) {
-  type InstanceType <: InstanceOfSparseSingleLayerNN
+  type InstanceType = InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
 } 
 
