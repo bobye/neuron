@@ -37,13 +37,13 @@ class NeuronVector (val data: DenseVector[Double]) {
 }
 class Weight (val data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
-  //def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
+  def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
-  def +=(that:Weight): Unit = {
-    this.data :+= that.data
-  }
+  def :=(that:Weight): Unit = {this.data := that.data}
+  def +=(that:Weight): Unit = {this.data :+= that.data}
+  def :*=(x:Double): Unit = {this.data :*= x}
   def vec = new NeuronVector(data.toDenseVector) // make copy
   def transpose = new Weight(data.t)
   def set(x: Double) : Unit={data:=x; }
@@ -157,9 +157,13 @@ abstract trait Optimizable {
   
   def getRandomWeightVector (amplitude:Double = 1.0, rand:Rand[Double] = new Uniform(-1,1)) : WeightVector = {
     assert(amplitude > 0)
-    val wlength = nn.getWeights(System.currentTimeMillis().hashCode.toString).length // get dimension of weights
-    val rv = new WeightVector(wlength, rand) 
-    rv :*= amplitude
+    
+    val wdefault = nn.getWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
+    val rv = new WeightVector(wdefault.length, rand) 
+    //rv :*= amplitude
+    rv := wdefault
+    //println(rv.data)
+    //println(wdefault.data)
     rv
   }
   
@@ -183,8 +187,12 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    val regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    
+    var regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    for (i <- 0 until size) { // feedforward pass
+      nn(xData(i))
+    }
+    regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+
     for {i <- 0 until size} {
       var z = nn(xData(i)) - yData(i)
       totalCost = totalCost + z.euclideanSqrNorm/2.0
@@ -223,7 +231,7 @@ abstract trait Optimizable {
    *  (2) sparsity parameter
    */ 
   def train(w: WeightVector): (Double, WeightVector) = {
-    getObj(w) // one more time
+
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
 	    val w = new WeightVector(x)
@@ -232,7 +240,7 @@ abstract trait Optimizable {
 	  }    
     }
     
-    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=500)
+    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=400)
 	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
     (f(w2.data), w2)
   }

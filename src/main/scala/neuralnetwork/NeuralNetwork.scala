@@ -3,6 +3,8 @@
 // Copyright under MIT License
 package neuralnetwork
 
+import breeze.stats.distributions._
+
 
 /********************************************************************************************/
 // Highest level classes for Neural Network
@@ -315,8 +317,15 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
   var mirrorIndex :Int = 0
   override def init(seed:String) = {
-    if (status != seed) {
+    if (status != seed) { 
       status = seed
+      
+      // initialize W
+      val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
+      W := new NeuronVector(outputDimension*inputDimension, new Uniform(-1,1))
+      	.asWeight(outputDimension, inputDimension)
+      W:*= amplitude// randomly set W 
+      
       numOfMirrors = 1
       mirrorIndex  = 0
     }
