@@ -197,7 +197,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   var mirrorIndex :Int = 0
   def apply (x: NeuronVector) = {
     assert (x.length == inputDimension)
-    inputBuffer(mirrorIndex) = x
+    //inputBuffer(mirrorIndex) = x
     gradientBuffer(mirrorIndex) = NN.func.grad(x)
     //outputBuffer(mirrorIndex) = NN.func(x)
         
@@ -217,13 +217,13 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     this
   }
   
-  var inputBuffer  = Array [NeuronVector]()
+  //var inputBuffer  = Array [NeuronVector]()
   //var outputBuffer = Array [NeuronVector]()
   var gradientBuffer= Array [NeuronVector] ()
   
   override def allocate(seed:String) ={
     if (status == seed) {
-      inputBuffer = new Array[NeuronVector] (numOfMirrors)
+      //inputBuffer = new Array[NeuronVector] (numOfMirrors)
       //outputBuffer= new Array[NeuronVector] (numOfMirrors)
       gradientBuffer= new Array[NeuronVector] (numOfMirrors)
       status = "" // reset status to make sure *Buffer are allocated only once
