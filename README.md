@@ -1,6 +1,4 @@
-This project is still under development, which aims at a generic template based framework to experiment neural network topologies
-
-There is no release at current time
+This project is still under development, which aims at a generic template based framework to experiment neural network topologies. There is no release at current time.
 
 ### How to build
 
@@ -10,6 +8,12 @@ sbt> compile
 sbt> eclipse
 ```
 Start _Scala IDE for Eclipse_ and import the project directory
+
+### TODO
+* Recursive Neural Network: binary tree based template, greedy tree from graph (chain, ... )
+* Operationable.copy(): create a copy of (InstanceOf)NeuralNetwork
+* UFLDL Tutorial
+  - Objective templates: L2 norm, softmax, ...
 
 ### Get Started
 TBA
