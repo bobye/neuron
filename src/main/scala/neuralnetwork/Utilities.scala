@@ -46,7 +46,7 @@ class Weight (var data:DenseMatrix[Double]){
   def :=(that:Weight): Unit = {this.data := that.data}
   def +=(that:Weight): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
-  def vec = new NeuronVector(data.flatten(false))  // important!
+  def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new Weight(data.t)
   def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}

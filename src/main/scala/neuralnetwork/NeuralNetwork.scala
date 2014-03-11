@@ -308,7 +308,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      W.vec concatenate b 
+      W.vec() concatenate b 
     }else {
       NullVector
     }
