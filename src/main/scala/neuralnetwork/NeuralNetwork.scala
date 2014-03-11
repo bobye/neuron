@@ -328,7 +328,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       
       // initialize W
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new Weight(outputDimension, inputDimension, new Uniform(-1,1))
+      W := new Weight(outputDimension, inputDimension, new Gaussian(0, 1))
       W:*= amplitude// randomly set W 
       
       numOfMirrors = 1

@@ -9,7 +9,7 @@ import neuralnetwork._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseSingleLayerAE (1.0, .0001) (rows*cols, hiddenDimension){
+	extends SparseSingleLayerAE (3.0, .0001) (rows*cols, hiddenDimension){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -62,7 +62,7 @@ object ImageAutoEncoderTest extends Optimizable with Workspace{
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w)
+	  val (obj, w2) = train(w,20)
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nnnet.secondInstance
