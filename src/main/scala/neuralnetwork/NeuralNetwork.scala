@@ -199,11 +199,11 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     assert (x.length == inputDimension)
     inputBuffer(mirrorIndex) = x
     gradientBuffer(mirrorIndex) = NN.func.grad(x)
-    outputBuffer(mirrorIndex) = NN.func(x)
+    //outputBuffer(mirrorIndex) = NN.func(x)
         
     var cIndex = mirrorIndex
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    outputBuffer(cIndex)
+    NN.func(x) // outputBuffer(cIndex)
   }
   override def init(seed:String) = {
     if (status != seed) {
@@ -218,13 +218,13 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   }
   
   var inputBuffer  = Array [NeuronVector]()
-  var outputBuffer = Array [NeuronVector]()
+  //var outputBuffer = Array [NeuronVector]()
   var gradientBuffer= Array [NeuronVector] ()
   
   override def allocate(seed:String) ={
     if (status == seed) {
       inputBuffer = new Array[NeuronVector] (numOfMirrors)
-      outputBuffer= new Array[NeuronVector] (numOfMirrors)
+      //outputBuffer= new Array[NeuronVector] (numOfMirrors)
       gradientBuffer= new Array[NeuronVector] (numOfMirrors)
       status = "" // reset status to make sure *Buffer are allocated only once
     } else {} 
@@ -336,11 +336,11 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     this
   }
   var inputBuffer  = Array [NeuronVector]()
-  var outputBuffer = Array [NeuronVector]()
+  //var outputBuffer = Array [NeuronVector]()
   override def allocate(seed:String) ={
     if (status == seed) {
       inputBuffer = new Array[NeuronVector] (numOfMirrors)
-      outputBuffer= new Array[NeuronVector] (numOfMirrors)
+      //outputBuffer= new Array[NeuronVector] (numOfMirrors)
       status = ""
     } else {}
     this
@@ -352,20 +352,20 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def apply (x: NeuronVector) = {
     assert (x.length == inputDimension)
     inputBuffer(mirrorIndex) = x
-    outputBuffer(mirrorIndex) = W* x + b
+    //outputBuffer(mirrorIndex) = W* x + b //dgemv
     var cIndex = mirrorIndex
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    outputBuffer(cIndex)
+    W* x + b //outputBuffer(cIndex)
   }
 
   def backpropagate(eta:NeuronVector) = {
     if (mirrorIndex == 0) { // start a new backpropagation
       dW.set(0.0); db.set(0.0)
     }
-    dW+= eta CROSS inputBuffer(mirrorIndex)
+    dW+= eta CROSS inputBuffer(mirrorIndex) // dgemm and daxpy
     db+= eta
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    W TransMult eta
+    W TransMult eta // dgemv
   }
 }
 

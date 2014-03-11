@@ -44,7 +44,7 @@ class Weight (val data:DenseMatrix[Double]){
   def :=(that:Weight): Unit = {this.data := that.data}
   def +=(that:Weight): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
-  def vec = new NeuronVector(data.toDenseVector) // make copy
+  def vec = new NeuronVector(data.flatten()) 
   def transpose = new Weight(data.t)
   def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
@@ -240,7 +240,7 @@ abstract trait Optimizable {
 	  }    
     }
     
-    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=400)
+    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=20)
 	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
     (f(w2.data), w2)
   }
