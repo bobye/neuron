@@ -49,7 +49,7 @@ object FeedForward extends Optimizable with Workspace{
 	println(System.currentTimeMillis() - time, obj3)
 	println(w.data)
 	println(w2.data)
-	
+
 
   }
 

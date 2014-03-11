@@ -40,9 +40,9 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   override def init(seed:String) = INN.init(seed)
   def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
   
-  def setWeights(seed:String, w:WeightVector) = INN.setWeights(seed, w)
+  def setWeights(seed:String, w:WeightVector, dw:WeightVector) = INN.setWeights(seed, w, dw)
   def getWeights(seed:String) : NeuronVector = INN.getWeights(seed)
-  def getDerativeOfWeights(seed:String) : NeuronVector = INN.getDerativeOfWeights(seed)
+  def getDerativeOfWeights(seed:String) : Double = INN.getDerativeOfWeights(seed)
 }
 
 /********************************************************************************************/
@@ -66,9 +66,9 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {threeLayers.allocate(seed); this}
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
   
-  def setWeights(seed:String, w:WeightVector): Double = { threeLayers.setWeights(seed, w) }
+  def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = { threeLayers.setWeights(seed, w, dw) }
   def getWeights(seed:String) : NeuronVector = threeLayers.getWeights(seed)
-  def getDerativeOfWeights(seed:String) : NeuronVector = threeLayers.getDerativeOfWeights(seed)
+  def getDerativeOfWeights(seed:String) : Double = threeLayers.getDerativeOfWeights(seed)
 }
 
 class SingleLayerAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0) 
@@ -125,23 +125,27 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     encoder.backpropagate(eta_21)
   }
   
-  def setWeights(seed:String, w:WeightVector): Double = {
+  def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = {
     if (status != seed) {
-    	encoder.setWeights(seed, w) + 
-    	topLayer.setWeights(seed, w)
+    	encoder.setWeights(seed, w, dw) 
+    	topLayer.setWeights(seed, w, dw)
     } else {
-      0.0
     }
   }
   def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
+      status = seed
       encoder.getWeights(seed) concatenate topLayer.getWeights(seed) 
     } else NullVector
   }
-  def getDerativeOfWeights(seed:String) : NeuronVector = {
+  def getDerativeOfWeights(seed:String) : Double = {
     if (status != seed) {
-      encoder.getDerativeOfWeights(seed) concatenate topLayer.getDerativeOfWeights(seed)  
-    } else NullVector
+      status = seed
+      encoder.getDerativeOfWeights(seed) +
+      topLayer.getDerativeOfWeights(seed)  
+    } else {
+      0.0
+    }
   }
   
 }

@@ -11,7 +11,7 @@ import breeze.stats.distributions._
 //import breeze.math._
 
 
-class NeuronVector (val data: DenseVector[Double]) {
+class NeuronVector (var data: DenseVector[Double]) {
   val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
@@ -25,6 +25,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def :=(that: NeuronVector): Unit = {this.data := that.data; }
   def +=(that: NeuronVector): Unit = {this.data :+= that.data; }
   def :*=(x:Double): Unit = {this.data :*= x}
+  def :/=(x:Double): Unit = {this.data :/= x}
   def euclideanSqrNorm = {val z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
@@ -35,12 +36,13 @@ class NeuronVector (val data: DenseVector[Double]) {
   def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
   //override def toString() = data.toString
 }
-class Weight (val data:DenseMatrix[Double]){
+class Weight (var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
+  def *(x:Double): Weight = new Weight(this.data * x)
   def :=(that:Weight): Unit = {this.data := that.data}
   def +=(that:Weight): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
@@ -50,7 +52,7 @@ class Weight (val data:DenseMatrix[Double]){
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
 }
 
-class WeightVector (override val data: DenseVector[Double]) extends NeuronVector(data) {
+class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   def this(n:Int) = this(DenseVector.zeros[Double](n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
   var ptr : Int = 0
@@ -59,9 +61,9 @@ class WeightVector (override val data: DenseVector[Double]) extends NeuronVector
     var rows = W.data.rows
     var cols = W.data.cols
     
-    W.data := data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
+    W.data = data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
     ptr = (ptr + rows * cols) % length
-    b.data := data(ptr until ptr + b.length)
+    b.data = data(ptr until ptr + b.length)
     ptr = (ptr + b.length) % length
     ptr
   }
@@ -171,10 +173,12 @@ abstract trait Optimizable {
     val size = xData.length
     assert (size >= 1 && size == yData.length)
     var totalCost: Double = 0.0
-    val regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    val dw = new WeightVector(w.length)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for (i <- 0 until size) {
       totalCost = totalCost + (nn(xData(i))-yData(i)).euclideanSqrNorm/2.0
     }
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
     totalCost/size + regCost
   }
   
@@ -182,28 +186,29 @@ abstract trait Optimizable {
     val size = xData.length
     assert(size >= 1 && size == yData.length)
     var totalCost:Double = 0.0
-    val dW = new NeuronVector (w.length)
     /*
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    var regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    val dw = new WeightVector(w.length)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for (i <- 0 until size) { // feedforward pass
       nn(xData(i))
     }
-    regCost = nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-
+    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for {i <- 0 until size} {
       var z = nn(xData(i)) - yData(i)
       totalCost = totalCost + z.euclideanSqrNorm/2.0
-      nn.backpropagate(z)
-      dW += nn.getDerativeOfWeights((((i+1)*System.currentTimeMillis())%1000000).toString)
+      nn.backpropagate(z) // update dw !      
     }
     /*
      * End parallel loop
      */
     // println(totalCost/size, regCost)
-    (totalCost/size + regCost, dW/size)
+    dw :/= size
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
+    (totalCost/size + regCost, dw)
   }
   
   def getApproximateObjAndGrad (w: WeightVector) : (Double, NeuronVector) = {
@@ -240,7 +245,7 @@ abstract trait Optimizable {
 	  }    
     }
     
-    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=20)
+    val lbfgs = new LBFGS[DenseVector[Double]](maxIter=400)
 	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
     (f(w2.data), w2)
   }

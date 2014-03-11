@@ -9,7 +9,7 @@ import neuralnetwork._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseSingleLayerAE (3.0, .0001) (rows*cols, hiddenDimension){
+	extends SparseSingleLayerAE (1.0, .0001) (rows*cols, hiddenDimension){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -21,12 +21,15 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
     val weightsVector = new WeightVector((NN.rows*NN.cols+1)*NN.hiddenDimension)
     val raw = inputLayer.getWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
     weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols+1).transpose.vec
+    
+    //println(weightsVector.data)
         
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
-      val img = new NeuronVector(NN.rows*NN.cols)
+      val img = new Weight(NN.rows, NN.cols)
       val b = new NeuronVector(1)//
-      weightsVector(img.asWeight(NN.rows, NN.cols), b)
-      println((img.data/norm(img.data)).data.mkString("\t")) // Just print
+      weightsVector(img, b)
+      //println(img.vec.data)
+      println((img.vec.data/norm(img.vec.data)).data.mkString("\t")) // Just print
     }
   }
 }
@@ -44,8 +47,8 @@ object ImageAutoEncoderTest extends Optimizable with Workspace{
 	    xData(i) = new NeuronVector(
 	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, rows*cols))
 	  }
-	 
 	  yData = xData
+	  
 	  val top = new SingleLayerNeuralNetwork(rows*cols) 
 	  val imcode = new ImageAutoEncoder(rows, cols, hidden)
 	  val nnnet = (top TIMES imcode).create()
@@ -56,8 +59,6 @@ object ImageAutoEncoderTest extends Optimizable with Workspace{
 	  val amplitude = scala.math.sqrt(6.0/(rows*cols + hidden + 1))
 	  val w = getRandomWeightVector(amplitude)
 	  //val w = getRandomWeightVector()
-	  
-	  
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
