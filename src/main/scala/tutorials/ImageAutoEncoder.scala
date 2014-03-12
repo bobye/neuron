@@ -9,7 +9,7 @@ import neuralnetwork._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseSingleLayerAE (3.0, .0001) (rows*cols, hiddenDimension){
+	extends SparseAutoEncoder (3.0, .0001) (rows*cols, hiddenDimension){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -49,10 +49,7 @@ object ImageAutoEncoderTest extends Optimizable with Workspace{
 	  }
 	  yData = xData
 	  
-	  val top = new SingleLayerNeuralNetwork(rows*cols) 
-	  val imcode = new ImageAutoEncoder(rows, cols, hidden)
-	  val nnnet = (top TIMES imcode).create()
-	  nn = nnnet // the same
+	  nn = new ImageAutoEncoder(rows, cols, hidden).create() // the same
 
 	  
 	  initMemory()
@@ -65,8 +62,7 @@ object ImageAutoEncoderTest extends Optimizable with Workspace{
 	  val (obj, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj)
 	  
-	  nnnet.secondInstance
-	  	.asInstanceOf[InstanceOfImageAutoEncoder]
+	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
 	  	.displayHiddenNetwork("hidden")
 
 	}

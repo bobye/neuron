@@ -51,9 +51,9 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   // structure to vectorization functions
   var status:String = ""
 
-  def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit // return regularization term
-  def getWeights(seed:String) : NeuronVector
-  def getDerativeOfWeights(seed:String) : Double
+  def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit = {}// return regularization term
+  def getWeights(seed:String) : NeuronVector = NullVector
+  def getDerativeOfWeights(seed:String) : Double = 0.0
   
   // dynamic operations
   def init(seed:String) : InstanceOfNeuralNetwork = {this} // default: do nothing
@@ -67,8 +67,15 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
 abstract class SelfTransform (val dimension: Int) extends NeuralNetwork(dimension, dimension) 
 abstract class InstanceOfSelfTransform (override val NN: SelfTransform) extends InstanceOfNeuralNetwork (NN)
 
-
-
+class IdentityTransform(dimension: Int) extends SelfTransform(dimension) {
+  type InstanceType = InstanceOfIdentityTransform
+  def create(): InstanceOfIdentityTransform = new InstanceOfIdentityTransform(this)
+  override def toString() = "" // print nothing
+}
+class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends InstanceOfSelfTransform(NN) {
+  def apply(x:NeuronVector) = x
+  def backpropagate(eta: NeuronVector) = eta
+}
 
 // basic operation to derive hierarchy structures
 abstract class MergedNeuralNetwork [Type1 <:Operationable, Type2 <:Operationable] 
@@ -90,7 +97,7 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
     } else {
     }
   }
-  def getWeights(seed:String) : NeuronVector = {
+  override def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
       firstInstance.getWeights(seed) concatenate secondInstance.getWeights(seed)
@@ -98,7 +105,7 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
       NullVector
     }
   }
-  def getDerativeOfWeights(seed:String) : Double = {
+  override def getDerativeOfWeights(seed:String) : Double = {
     if (status != seed) {
       status = seed
       firstInstance.getDerativeOfWeights(seed) +
@@ -188,9 +195,6 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 	extends InstanceOfSelfTransform (NN) with Memorable { 
   type StructureType <: SingleLayerNeuralNetwork
   
-  def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit = {}
-  def getWeights(seed:String) : NeuronVector = {NullVector}
-  def getDerativeOfWeights(seed:String) : Double = {0.0}
   
   private var gradient: NeuronVector = new NeuronVector(NN.dimension)
   
@@ -296,7 +300,7 @@ class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int)
 class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 	extends InstanceOfNeuralNetwork(NN) with Memorable {
   type StructureType <: LinearNeuralNetwork
-  def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit = {
+  override def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit = {
     if (status != seed) {
       status = seed
       w(W, b) // get optimized weights
@@ -305,7 +309,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       db.set(0.0)
     }
   }
-  def getWeights(seed:String) : NeuronVector = {
+  override def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
       W.vec() concatenate b 
@@ -313,7 +317,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       NullVector
     }
   }
-  def getDerativeOfWeights(seed:String) : Double = {
+  override def getDerativeOfWeights(seed:String) : Double = {
     if (status != seed) {
       status = seed
       //(dW.vec concatenate db) // / numOfMirrors
