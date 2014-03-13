@@ -132,13 +132,6 @@ class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   def apply(x:NeuronVector): NeuronVector = new NeuronVector(KLdiv(x.data))
 }
 
-/********************************************************************************************/
-// Graph data structure
-abstract trait DirectedGraph
-abstract trait AcyclicDirectedGraph extends DirectedGraph
-abstract trait BinaryTree extends AcyclicDirectedGraph
-// more to added
-
 
 /********************************************************************************************/
 // Implement batch mode training 

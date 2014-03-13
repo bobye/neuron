@@ -304,7 +304,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     if (status != seed) {
       status = seed
       w(W, b) // get optimized weights
-      dw(dW, db)
+      dw(dW, db) 
+      
       dW.set(0.0) // reset derivative of weights
       db.set(0.0)
     }

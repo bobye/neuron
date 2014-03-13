@@ -3,29 +3,42 @@ package neuralnetwork
 
 /********************************************************************************************/
 // Encoder and Recursive Neural Network
-abstract trait EncodeClass {
+abstract trait EncoderWorkspace {
+  implicit class extractClass [T<:EncodeClass]( x:T) {
+    def extract() = x match {
+      case _:Encoder => new EncoderNeuralNetwork[T](x)
+      case _:InstanceOfEncoder => new InstanceOfEncoderNeuralNetwork[T](x)
+    }
+  }  
+}
+
+abstract trait EncodeClass extends Operationable {
   val encodeDimension: Int
 }
 abstract trait Encoder extends Operationable with EncodeClass{
   type InstanceType <: InstanceOfEncoder
   override def create(): InstanceOfEncoder
 } 
-abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass{
+abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
   def encode(x:NeuronVector): NeuronVector = encoder(x)
 }
 
 // It implicitly requires the dimensional constraints
-abstract trait RecursiveEncoder extends Encoder {
+abstract trait RecursiveClass extends EncodeClass {
+  val wordLength: Int
+}
+abstract trait RecursiveEncoder extends Encoder with RecursiveClass {
   override def create(): InstanceOfRecursiveEncoder
 }
-abstract trait InstanceOfRecursiveEncoder extends InstanceOfEncoder
+abstract trait InstanceOfRecursiveEncoder extends InstanceOfEncoder with RecursiveClass 
 
 // Convert Encoder and InstanceOfEncoder to new NeuralNetwork by replacing apply() with encode()
 // However, the weights of both are not changed, which means in back propagation 
 // only part of weights are got updated
-class EncoderNeuralNetwork [T<: Encoder] (val NN: T) extends NeuralNetwork(NN.inputDimension, NN.encodeDimension) {
+class EncoderNeuralNetwork [T<: Encoder] (val NN: T) 
+	extends NeuralNetwork(NN.inputDimension, NN.encodeDimension) {
   type InstanceType <: InstanceOfEncoderNeuralNetwork [NN.InstanceType]
   def create() = new InstanceOfEncoderNeuralNetwork(NN.create())
 }
@@ -36,7 +49,9 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   type StructureType <: EncoderNeuralNetwork[INN.StructureType]  
   
   override val outputDimension = INN.encodeDimension
-  def apply (x:NeuronVector) = INN.encode(x)
+  def apply (x:NeuronVector) = {
+    INN.encode(x)
+  }
   override def init(seed:String) = INN.init(seed)
   def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
   
@@ -59,7 +74,7 @@ class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0,
 class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
   type Structure <: AutoEncoder
   protected val inputLayer = new RegularizedLinearNN(NN.dimension, NN.hidden.inputDimension, NN.lambda).create() // can be referenced from ImageAutoEncoder
-  private val outputLayer = NN.post TIMES (new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda))
+  val outputLayer = NN.post TIMES (new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda))
   val encodeDimension = NN.encodeDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
@@ -105,22 +120,33 @@ class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) (val wordLength:
   override def create() : InstanceOfRecursiveLinearAE = new InstanceOfRecursiveLinearAE(this)
 }
 class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE) 
-	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder
+	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
+  val wordLength = NN.wordLength
+}
 
      			 
 /********************************************************************************************/
 //Context Aware Auto Encoder
+abstract trait ContextAwareClass extends Operationable {
+  val contextLength: Int
+}
+abstract trait ContextAwareEncoder extends Encoder with ContextAwareClass {
+  override def create(): InstanceOfContextAwareEncoder
+}
+abstract trait InstanceOfContextAwareEncoder extends InstanceOfEncoder with ContextAwareClass
+
 class ContextAwareAutoEncoder(val codeLength: Int, val contextLength: Int, 
     val hidden: NeuralNetwork, val post: SelfTransform) 
-	extends SelfTransform(codeLength + contextLength) with Encoder {
+	extends SelfTransform(codeLength + contextLength) with ContextAwareEncoder {
   type Instance <: InstanceOfContextAwareAutoEncoder
   assert (post.dimension == codeLength)
   val encodeDimension = hidden.outputDimension
   def create (): InstanceOfContextAwareAutoEncoder = new InstanceOfContextAwareAutoEncoder(this)
 }
 class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder) 
-	extends InstanceOfSelfTransform(NN) with InstanceOfEncoder {
+	extends InstanceOfSelfTransform(NN) with InstanceOfContextAwareEncoder {
   type Structure <: ContextAwareAutoEncoder
+  val contextLength = NN.contextLength
   private val inputLayer = new LinearNeuralNetwork(NN.codeLength +NN.contextLength, NN.hidden.inputDimension)
   private val finalLayer = NN.post TIMES new LinearNeuralNetwork(NN.hidden.outputDimension + NN.contextLength, NN.codeLength)
   val encodeDimension = NN.hidden.outputDimension
@@ -175,14 +201,27 @@ class SingleLayerCAE(val func: NeuronFunction = SigmoidFunction)
 	(override val codeLength: Int, override val contextLength:Int, val hiddenDimension: Int)
 	extends ContextAwareAutoEncoder(codeLength, contextLength, 
 	    new SingleLayerNeuralNetwork(hiddenDimension, func),
-	    new SingleLayerNeuralNetwork(codeLength, SigmoidFunction))
+	    new SingleLayerNeuralNetwork(codeLength, SigmoidFunction)) with ContextAwareEncoder
+
+abstract trait CREncodeClass extends EncodeClass with RecursiveClass with ContextAwareClass
+abstract trait CREncoder extends Encoder with RecursiveEncoder with ContextAwareEncoder {
+  type InstanceType <: InstanceOfCREncoder
+  override def create(): InstanceOfCREncoder
+}
+abstract trait InstanceOfCREncoder extends InstanceOfEncoder with InstanceOfRecursiveEncoder with InstanceOfContextAwareEncoder {
+  type StructureType <: CREncoder
+}
 
 class RecursiveSingleLayerCAE (override val func: NeuronFunction = SigmoidFunction) 
 	(val wordLength:Int, override val contextLength: Int)
-	extends SingleLayerCAE(func)(wordLength*2, contextLength, wordLength) with RecursiveEncoder {
+	extends SingleLayerCAE(func)(wordLength*2, contextLength, wordLength) 
+	with CREncoder {
   type Instance <: InstanceOfRecursiveSingleLayerCAE
   override def create(): InstanceOfRecursiveSingleLayerCAE = new InstanceOfRecursiveSingleLayerCAE(this)
 }
 class InstanceOfRecursiveSingleLayerCAE (override val NN: RecursiveSingleLayerCAE)
-	extends InstanceOfContextAwareAutoEncoder(NN) with InstanceOfRecursiveEncoder
+	extends InstanceOfContextAwareAutoEncoder(NN) 
+	with InstanceOfCREncoder{
+  val wordLength = NN.wordLength
+}
 
