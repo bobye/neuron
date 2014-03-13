@@ -132,6 +132,15 @@ class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   def apply(x:NeuronVector): NeuronVector = new NeuronVector(KLdiv(x.data))
 }
 
+abstract class DistanceFunction {
+  def grad(x:NeuronVector, y:NeuronVector): NeuronVector
+  def apply(x:NeuronVector, y:NeuronVector): Double
+}
+
+object L2Distance extends DistanceFunction {
+  def grad(x:NeuronVector, y:NeuronVector) = (x - y)
+  def apply(x:NeuronVector, y:NeuronVector) = (x - y).euclideanSqrNorm /2.0
+}
 
 /********************************************************************************************/
 // Implement batch mode training 
@@ -162,20 +171,20 @@ abstract trait Optimizable {
     rv
   }
   
-  def getObj(w: WeightVector) : Double = { // doesnot compute gradient or backpropagation
+  def getObj(w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
     val size = xData.length
     assert (size >= 1 && size == yData.length)
     var totalCost: Double = 0.0
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for (i <- 0 until size) {
-      totalCost = totalCost + (nn(xData(i))-yData(i)).euclideanSqrNorm/2.0
+      totalCost = totalCost + distance(nn(xData(i)), yData(i))
     }
     val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
     totalCost/size + regCost
   }
   
-  def getObjAndGrad (w: WeightVector): (Double, NeuronVector) = {
+  def getObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance): (Double, NeuronVector) = {
     val size = xData.length
     assert(size >= 1 && size == yData.length)
     var totalCost:Double = 0.0
@@ -191,8 +200,9 @@ abstract trait Optimizable {
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for {i <- 0 until size} {
-      var z = nn(xData(i)) - yData(i)
-      totalCost = totalCost + z.euclideanSqrNorm/2.0
+      val x = nn(xData(i)); val y = yData(i)
+      var z = distance.grad(x, yData(i))
+      totalCost = totalCost + distance(x,y)
       nn.backpropagate(z) // update dw !      
     }
     /*
@@ -204,16 +214,16 @@ abstract trait Optimizable {
     (totalCost/size + regCost, dw)
   }
   
-  def getApproximateObjAndGrad (w: WeightVector) : (Double, NeuronVector) = {
+  def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
     // Compute gradient using numerical approximation
     var dW = w.copy()
     for (i<- 0 until w.length) {
 	  val epsilon = 0.00001
 	  val w2 = w.copy
 	  w2.data(i) = w.data(i) + epsilon
-	  val cost1 = getObj(w2)
+	  val cost1 = getObj(w2, distance)
 	  w2.data(i) = w.data(i) - epsilon
-	  val cost2 = getObj(w2)
+	  val cost2 = getObj(w2, distance)
 	  
 	  dW.data(i) = (cost1 - cost2) / (2*epsilon)
 	}
@@ -228,12 +238,12 @@ abstract trait Optimizable {
    *  (1) L1 or L2 on weights
    *  (2) sparsity parameter
    */ 
-  def train(w: WeightVector, maxIter:Int = 400): (Double, WeightVector) = {
+  def train(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance): (Double, WeightVector) = {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
 	    val w = new WeightVector(x)
-	    val (obj, grad) = getObjAndGrad(w)
+	    val (obj, grad) = getObjAndGrad(w, distance)
 	    (obj, grad.data)
 	  }    
     }

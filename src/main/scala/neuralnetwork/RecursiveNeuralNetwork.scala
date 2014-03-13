@@ -41,6 +41,7 @@ class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
 	  case Branch(left, right) => (enc.extract() TIMES (leftRNN PLUS rightRNN)).create()
 	}
 	
+	
 }
 
 /*

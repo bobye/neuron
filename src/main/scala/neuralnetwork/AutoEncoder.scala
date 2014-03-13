@@ -23,6 +23,7 @@ abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClas
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
   def encode(x:NeuronVector): NeuronVector = encoder(x)
+  var inputBuffer  = Array [NeuronVector]() // buffering inputData
 }
 
 // It implicitly requires the dimensional constraints
@@ -81,7 +82,11 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   private val threeLayers = (outputLayer TIMES encoder).create()
   def apply (x:NeuronVector) = threeLayers(x)
   override def init(seed:String) = {threeLayers.init(seed); this}
-  override def allocate(seed:String) : InstanceOfNeuralNetwork = {threeLayers.allocate(seed); this}
+  override def allocate(seed:String) : InstanceOfNeuralNetwork = {
+    threeLayers.allocate(seed);
+    inputBuffer = inputLayer.inputBuffer
+    this
+  }
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = { threeLayers.setWeights(seed, w, dw) }
@@ -162,7 +167,7 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
 	extends InstanceOfSelfTransform(NN) with InstanceOfContextAwareEncoder {
   type Structure <: ContextAwareAutoEncoder
   val contextLength = NN.contextLength
-  private val inputLayer = new LinearNeuralNetwork(NN.codeLength +NN.contextLength, NN.hidden.inputDimension)
+  private val inputLayer = new LinearNeuralNetwork(NN.codeLength +NN.contextLength, NN.hidden.inputDimension).create()
   private val finalLayer = NN.post TIMES new LinearNeuralNetwork(NN.hidden.outputDimension + NN.contextLength, NN.codeLength)
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
@@ -178,6 +183,7 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   }
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {
     encoder.allocate(seed)
+    inputBuffer = inputLayer.inputBuffer
     topLayer.allocate(seed)
     this
   }
