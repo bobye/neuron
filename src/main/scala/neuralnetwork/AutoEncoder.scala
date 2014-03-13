@@ -27,7 +27,6 @@ abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClas
   
   var encodeCurrent: NeuronVector = NullVector
   var inputBuffer  = Array [NeuronVector]() // buffering Data
-  var outputBuffer = Array [NeuronVector]()
 }
 
 // It implicitly requires the dimensional constraints
@@ -85,6 +84,9 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encodeDimension = NN.encodeDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
+  
+  var outputBuffer = Array [NeuronVector]()
+  
   def apply (x:NeuronVector) = {
     encodeCurrent = encoder(x) // buffered
     outputBuffer(mirrorIndex) = outputLayer(encodeCurrent)
@@ -98,6 +100,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     threeLayers.init(seed); 
     this
   }
+  
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {
     threeLayers.allocate(seed);
     inputBuffer = inputLayer.inputBuffer
@@ -191,6 +194,9 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val outputLayer = (NN.post TIMES outputLayerLinear).create()
+  
+  var outputBuffer = Array [NeuronVector]()
+  
   def apply (x:NeuronVector) = {
     var (_, context) = x.splice(NN.codeLength)
     encodeCurrent = encoder(x)
