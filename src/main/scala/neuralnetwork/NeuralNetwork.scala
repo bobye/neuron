@@ -148,7 +148,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   }
 
   def backpropagate(eta: NeuronVector) = {
-    var (firstEta, secondEta) = eta.splice(NN.first.inputDimension)
+    var (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
     firstInstance.backpropagate(firstEta) concatenate secondInstance.backpropagate(secondEta)
   }
   
@@ -343,6 +343,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       numOfMirrors = numOfMirrors + 1
       //println(numOfMirrors)
     }
+    
     this
   }
   var inputBuffer  = Array [NeuronVector]()

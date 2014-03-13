@@ -2,7 +2,7 @@ package tutorials
 import breeze.stats.distributions._
 import neuralnetwork._
 
-object AutoEncoderTest extends Optimizable with Workspace{
+object AutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {
 	  val inputDimension = 20
 	  val hiddenDimension = 10
@@ -16,10 +16,10 @@ object AutoEncoderTest extends Optimizable with Workspace{
 	  yData = xData
 	  
 	  initMemory()
-	  val amplitude = scala.math.sqrt(6.0/(inputDimension + hiddenDimension + 1.0))
-	  val w = getRandomWeightVector(amplitude)
+	  //val amplitude = scala.math.sqrt(6.0/(inputDimension + hiddenDimension + 1.0))
+	  val w = getRandomWeightVector()
 	  
-	  getObj(w)
+	  //getObj(w)
 	  
 	  var time = System.currentTimeMillis();
 	  val (obj, grad) = getObjAndGrad(w)

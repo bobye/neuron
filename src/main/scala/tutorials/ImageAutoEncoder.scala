@@ -34,7 +34,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
   }
 }
 
-object ImageAutoEncoderTest extends Optimizable with Workspace{
+object ImageAutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {
 	  val rows = 8
 	  val cols = 8

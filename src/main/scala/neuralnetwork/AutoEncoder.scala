@@ -53,6 +53,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
     INN.encode(x)
   }
   override def init(seed:String) = INN.init(seed)
+  override def allocate(seed:String) = INN.allocate(seed)
   def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector) = INN.setWeights(seed, w, dw)
@@ -94,6 +95,11 @@ class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:I
 			new SingleLayerNeuralNetwork(hiddenDimension, func),
 			new IdentityTransform(dimension))
 
+class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0)
+	extends AutoEncoder(dimension, lambda,
+			new SingleLayerNeuralNetwork(hiddenDimension, func),
+			new SingleLayerNeuralNetwork(dimension))
+
 	  
 class SparseLinearAE (val beta:Double = 0.0, // sparse penalty 
     					   lambda: Double = 0.0, // L2 regularization
@@ -124,6 +130,15 @@ class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE)
   val wordLength = NN.wordLength
 }
 
+class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction) (val wordLength: Int)
+	extends SimpleAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
+  type Instance <: InstanceOfRecursiveSimpleAE
+  override def create() : InstanceOfRecursiveSimpleAE = new InstanceOfRecursiveSimpleAE(this)
+}
+class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
+	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
+  val wordLength = NN.wordLength
+}
      			 
 /********************************************************************************************/
 //Context Aware Auto Encoder
@@ -162,7 +177,7 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     this
   }
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {
-    encoder.allocate(seed);
+    encoder.allocate(seed)
     topLayer.allocate(seed)
     this
   }

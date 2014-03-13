@@ -7,22 +7,22 @@ abstract trait Graph {
 }
 
 abstract trait Node {
-  val neighbors: Set[Node]
+  //val neighbors: Set[Node]
 }
 
-abstract trait BinaryTreeNode {
-  val left, right: BinaryTreeNode
-  def isLeaf(): Boolean = false
+abstract class Tree {
   val numOfLeaves: Int
 }
-abstract trait Leaf extends BinaryTreeNode with Node {
-  val left: Null = null
-  val right:Null = null
-  override def isLeaf(): Boolean = true
-  val numOfLeaves = 1
+
+case class Branch (val left:Tree, val right:Tree) extends Tree {
+  val numOfLeaves = left.numOfLeaves + right.numOfLeaves
+}
+case class Leaf extends Tree with Node {
+  val numOfLeaves: Int = 1
 }
 
-class RecursiveNeuralNetwork (val tree: BinaryTreeNode, // The root node of tree
+
+class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
 						  	  val enc: RecursiveClass, 
 						  	  val input: Operationable) 
 	extends Operationable with EncoderWorkspace {
@@ -30,14 +30,15 @@ class RecursiveNeuralNetwork (val tree: BinaryTreeNode, // The root node of tree
 	val inputDimension = tree.numOfLeaves * input.inputDimension
 	val outputDimension = enc.wordLength
 
-	val leftRNN = if (tree.isLeaf()) null else new RecursiveNeuralNetwork(tree.left, enc, input) 
-	val rightRNN= if (tree.isLeaf()) null else new RecursiveNeuralNetwork(tree.right,enc, input)
-	def create() = {
-	  if (tree.isLeaf()) {
-	    input.create()
-	  } else {
-	    (enc.extract() TIMES (leftRNN PLUS rightRNN)).create()
-	  }
+	val (leftRNN, rightRNN) = tree match {
+      case Leaf() => (null, null)
+      case Branch(left, right) =>  (new RecursiveNeuralNetwork(left, enc, input),
+          new RecursiveNeuralNetwork(right, enc, input))
+    }
+    
+	def create() = tree match{
+	  case Leaf() => input.create()
+	  case Branch(left, right) => (enc.extract() TIMES (leftRNN PLUS rightRNN)).create()
 	}
 	
 }
