@@ -27,6 +27,7 @@ abstract trait Operationable extends Workspace {
 /** Memorable NN is instance that keep internal buffers **/
 abstract trait Memorable extends InstanceOfNeuralNetwork {
   var numOfMirrors:Int = 0
+  var mirrorIndex: Int = 0
   //type arrayOfData[T<:NeuronVector] = Array[T]
 }
 
@@ -198,7 +199,6 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   
   private var gradient: NeuronVector = new NeuronVector(NN.dimension)
   
-  var mirrorIndex :Int = 0
   def apply (x: NeuronVector) = {
     assert (x.length == inputDimension)
     //inputBuffer(mirrorIndex) = x
@@ -326,7 +326,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     }
     0.0
   }
-  var mirrorIndex :Int = 0
+
   override def init(seed:String) = {
     if (status != seed) { 
       status = seed

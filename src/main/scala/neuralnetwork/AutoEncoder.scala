@@ -19,11 +19,15 @@ abstract trait Encoder extends Operationable with EncodeClass{
   type InstanceType <: InstanceOfEncoder
   override def create(): InstanceOfEncoder
 } 
-abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
+abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass with Memorable {
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
-  def encode(x:NeuronVector): NeuronVector = encoder(x)
-  var inputBuffer  = Array [NeuronVector]() // buffering inputData
+  def encode(x:NeuronVector): NeuronVector = {apply(x); encodeCurrent}
+  
+  
+  var encodeCurrent: NeuronVector = NullVector
+  var inputBuffer  = Array [NeuronVector]() // buffering Data
+  var outputBuffer = Array [NeuronVector]()
 }
 
 // It implicitly requires the dimensional constraints
@@ -76,17 +80,32 @@ class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0,
 class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
   type Structure <: AutoEncoder
   protected val inputLayer = new RegularizedLinearNN(NN.dimension, NN.hidden.inputDimension, NN.lambda).create() // can be referenced from ImageAutoEncoder
-  val outputLayer = NN.post TIMES (new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda))
+  protected val outputLayerLinear = (new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda)).create()
+  val outputLayer = (NN.post TIMES outputLayerLinear).create()
   val encodeDimension = NN.encodeDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
-  def apply (x:NeuronVector) = threeLayers(x)
-  override def init(seed:String) = {threeLayers.init(seed); this}
+  def apply (x:NeuronVector) = {
+    encodeCurrent = encoder(x) // buffered
+    outputBuffer(mirrorIndex) = outputLayer(encodeCurrent)
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors 
+    outputBuffer(mirrorIndex)
+  }
+  
+  
+  override def init(seed:String) = {
+    mirrorIndex = 0
+    threeLayers.init(seed); 
+    this
+  }
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {
     threeLayers.allocate(seed);
     inputBuffer = inputLayer.inputBuffer
+    numOfMirrors = outputLayerLinear.numOfMirrors
+    outputBuffer = new Array[NeuronVector] (numOfMirrors)
     this
   }
+  
   def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = { threeLayers.setWeights(seed, w, dw) }
@@ -146,7 +165,7 @@ class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
 }
      			 
 /********************************************************************************************/
-//Context Aware Auto Encoder
+//Context Aware Auto Encoder (NOT YET TESTED!)
 abstract trait ContextAwareClass extends Operationable {
   val contextLength: Int
 }
@@ -168,49 +187,56 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   type Structure <: ContextAwareAutoEncoder
   val contextLength = NN.contextLength
   private val inputLayer = new LinearNeuralNetwork(NN.codeLength +NN.contextLength, NN.hidden.inputDimension).create()
-  private val finalLayer = NN.post TIMES new LinearNeuralNetwork(NN.hidden.outputDimension + NN.contextLength, NN.codeLength)
+  private val outputLayerLinear = new LinearNeuralNetwork(NN.hidden.outputDimension + NN.contextLength, NN.codeLength).create()
   val encodeDimension = NN.hidden.outputDimension
   val encoder = (NN.hidden TIMES inputLayer).create()
-  private val topLayer = finalLayer.create()
+  private val outputLayer = (NN.post TIMES outputLayerLinear).create()
   def apply (x:NeuronVector) = {
     var (_, context) = x.splice(NN.codeLength)
-    topLayer(encoder(x) concatenate context) concatenate context
+    encodeCurrent = encoder(x)
+    outputBuffer(mirrorIndex) = outputLayer(encodeCurrent concatenate context) concatenate context
+    mirrorIndex = (mirrorIndex + 1) % numOfMirrors 
+    outputBuffer(mirrorIndex)
   } 
+  
   override def init(seed:String) = {
     encoder.init(seed)
-    topLayer.init(seed)
+    outputLayer.init(seed)
+    mirrorIndex = 0
     this
   }
   override def allocate(seed:String) : InstanceOfNeuralNetwork = {
     encoder.allocate(seed)
     inputBuffer = inputLayer.inputBuffer
-    topLayer.allocate(seed)
+    numOfMirrors = outputLayerLinear.numOfMirrors
+    outputBuffer = new Array[NeuronVector] (numOfMirrors)
+    outputLayer.allocate(seed)
     this
   }
   def backpropagate(eta:NeuronVector) = {
     var (eta_31, _) = eta.splice(NN.codeLength)
-    var (eta_21, _) = topLayer.backpropagate(eta_31).splice(NN.hidden.outputDimension)
+    var (eta_21, _) = outputLayer.backpropagate(eta_31).splice(NN.hidden.outputDimension)
     encoder.backpropagate(eta_21)
   }
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = {
     if (status != seed) {
     	encoder.setWeights(seed, w, dw) 
-    	topLayer.setWeights(seed, w, dw)
+    	outputLayer.setWeights(seed, w, dw)
     } else {
     }
   }
   override def getWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      encoder.getWeights(seed) concatenate topLayer.getWeights(seed) 
+      encoder.getWeights(seed) concatenate outputLayer.getWeights(seed) 
     } else NullVector
   }
   override def getDerativeOfWeights(seed:String) : Double = {
     if (status != seed) {
       status = seed
       encoder.getDerativeOfWeights(seed) +
-      topLayer.getDerativeOfWeights(seed)  
+      outputLayer.getDerativeOfWeights(seed)  
     } else {
       0.0
     }
