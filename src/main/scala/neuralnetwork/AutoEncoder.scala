@@ -12,6 +12,10 @@ abstract trait EncoderWorkspace {
   }  
 }
 
+class EncoderMemorable extends Memorable {
+  var encodeCurrent: NeuronVector = NullVector
+}
+
 abstract trait EncodeClass extends Operationable {
   val encodeDimension: Int
 }
@@ -22,10 +26,8 @@ abstract trait Encoder extends Operationable with EncodeClass{
 abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
-  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {apply(x, mem); encodeCurrent}
-  
-  
-  var encodeCurrent: NeuronVector = NullVector
+  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = 
+  	{apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent}
 }
 
 // It implicitly requires the dimensional constraints
@@ -86,26 +88,33 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   
   
   def apply (x:NeuronVector, mem:SetOfMemorables) = {
-    encodeCurrent = encoder(x, mem) // buffered
+    mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoder(x, mem) // buffered
     val cIndex = mem(key).mirrorIndex
-    mem(key).outputBuffer(mem(key).mirrorIndex) = outputLayer(encodeCurrent, mem)
+    mem(key).outputBuffer(mem(key).mirrorIndex) = 
+      outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent, mem)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
     mem(key).outputBuffer(cIndex)
   }
   
   
   override def init(seed:String, mem:SetOfMemorables) = {
-    mem += (key -> new Memorable)
-    mem(key).mirrorIndex = 0
-    threeLayers.init(seed, mem); 
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
+      mem += (key -> new EncoderMemorable)
+      mem(key).status = seed
+      mem(key).mirrorIndex = 0
+      threeLayers.init(seed, mem); 
+    }
     this
   }
   
   override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
-    threeLayers.allocate(seed, mem);
-    mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
-    mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
-    mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+    if (mem(key).status == seed) {
+      threeLayers.allocate(seed, mem);
+      mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
+      mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
+      mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).status = ""
+    }
     this
   }
   
@@ -198,25 +207,34 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   
   def apply (x:NeuronVector, mem:SetOfMemorables) = {
     var (_, context) = x.splice(NN.codeLength)
-    encodeCurrent = encoder(x, mem)
+    mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoder(x, mem)
     val cIndex = mem(key).mirrorIndex
-    mem(key).outputBuffer(mem(key).mirrorIndex) = outputLayer(encodeCurrent concatenate context, mem) concatenate context
+    mem(key).outputBuffer(mem(key).mirrorIndex) = 
+      outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent 
+          concatenate context, mem) concatenate context
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
     mem(key).outputBuffer(cIndex)
   } 
   
   override def init(seed:String, mem:SetOfMemorables) = {
-    encoder.init(seed, mem)
-    outputLayer.init(seed, mem)
-    mem(key).mirrorIndex = 0
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
+      mem += (key -> new EncoderMemorable)
+      mem(key).status = seed
+      encoder.init(seed, mem)
+      outputLayer.init(seed, mem)
+      mem(key).mirrorIndex = 0
+    }
     this
   }
   override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
-    encoder.allocate(seed, mem)
-    mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
-    mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
-    mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
-    outputLayer.allocate(seed, mem)
+    if (mem(key).status == seed) {
+      encoder.allocate(seed, mem)
+      mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
+      mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
+      mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+      outputLayer.allocate(seed, mem)
+      mem(key).status = ""
+    }  
     this
   }
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {

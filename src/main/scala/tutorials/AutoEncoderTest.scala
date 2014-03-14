@@ -6,8 +6,8 @@ object AutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {
 	  val inputDimension = 20
 	  val hiddenDimension = 10
-	  //nn = new SingleLayerAutoEncoder()(20,10).create()
-	  nn = new SparseLinearAE(1.0,1.0)(inputDimension,hiddenDimension).create()
+	  nn = new LinearAutoEncoder()(inputDimension,hiddenDimension).create()
+	  //nn = new SparseLinearAE(1.0,1.0)(inputDimension,hiddenDimension).create()
 	  val numOfSamples = 100
 	  xData = new Array(numOfSamples);
 	  for (i<- 0 until numOfSamples) {

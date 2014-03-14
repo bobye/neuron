@@ -33,7 +33,6 @@ object RNNTest extends Optimizable with Workspace {
 	    yData(i) = new NeuronVector(1, new Uniform(-1,1))
 	  }
 	  
-	  initMemory()
 	  val w = getRandomWeightVector()
 	  var time: Long = 0
 	  

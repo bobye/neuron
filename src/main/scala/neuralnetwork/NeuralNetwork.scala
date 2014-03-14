@@ -14,9 +14,6 @@ abstract trait Workspace{//
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
   } 
-  
-  
-  
 }
 /** Operationable is a generic trait that supports operations **/
 abstract trait Operationable extends Workspace {
@@ -33,7 +30,7 @@ abstract trait Operationable extends Workspace {
 /** Memorable NN is instance that keep internal buffers **/
 class SetOfMemorables extends HashMap[String, Memorable]
 class Memorable {
-  //var status = ""
+  var status = ""
   var numOfMirrors:Int = 0
   var mirrorIndex: Int = 0
   //type arrayOfData[T<:NeuronVector] = Array[T]
@@ -220,9 +217,9 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     NN.func(x) // outputBuffer(cIndex)
   }
   override def init(seed:String, mem:SetOfMemorables) = {
-    if (status != seed) {
-      status = seed
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
       mem. += (key -> new Memorable)
+      mem(key).status = seed
       mem(key).numOfMirrors = 1 // find a new instance
       mem(key).mirrorIndex = 0
     }
@@ -233,9 +230,9 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   }
   
   override def allocate(seed:String, mem:SetOfMemorables) ={
-    if (status == seed) {
+    if (mem(key).status == seed) {
       mem(key).gradientBuffer= new Array[NeuronVector] (mem(key).numOfMirrors)
-      status = "" // reset status to make sure *Buffer are allocated only once
+      mem(key).status = "" // reset status to make sure *Buffer are allocated only once
     } else {} 
     this
   }
@@ -282,11 +279,13 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
   }
   override def apply(x: NeuronVector, mem:SetOfMemorables) = {
     val y = super.apply(x, mem)
-    rhoOnUpdate += y; totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
+    // This part has parallel side effects
+    rhoOnUpdate += y; 
+    totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
     y
   }
-  @volatile private var rho : NeuronVector = new NeuronVector(outputDimension)
-  @volatile private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
+  private var rho : NeuronVector = new NeuronVector(outputDimension)
+  private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -338,10 +337,10 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 
   override def init(seed:String, mem:SetOfMemorables) = {
-    if (status != seed) { 
-      status = seed
-      
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
       mem += (key -> new Memorable)
+      mem(key).status = seed
+      
       mem(key).numOfMirrors = 1
       mem(key).mirrorIndex  = 0
     }
@@ -352,9 +351,9 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     this
   }
   override def allocate(seed:String, mem:SetOfMemorables) ={
-    if (status == seed) {
+    if (mem(key).status == seed) {
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
-      status = ""
+      mem(key).status = ""
     } else {}
     this
   }  
@@ -377,6 +376,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     }
     * 
     */
+    // This part may have parallel side effects
     dW+= eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex) // dgemm and daxpy
     db+= eta
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors

@@ -11,7 +11,7 @@ import breeze.stats.distributions._
 //import breeze.math._
 
 
-class NeuronVector (@volatile var data: DenseVector[Double]) {
+class NeuronVector (var data: DenseVector[Double]) {
   val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
@@ -36,7 +36,7 @@ class NeuronVector (@volatile var data: DenseVector[Double]) {
   def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
   //override def toString() = data.toString
 }
-class Weight (@volatile var data:DenseMatrix[Double]){
+class Weight (var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
@@ -154,11 +154,11 @@ abstract trait Optimizable {
   
   final var randomGenerator = new scala.util.Random
   
-  def initMemory() : (InstanceOfNeuralNetwork, SetOfMemorables) = {
-    val seed = System.currentTimeMillis().hashCode.toString
-    var mem = new SetOfMemorables
+  def initMemory() : SetOfMemorables = {
+    val seed = ((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString
+    val mem = new SetOfMemorables
     nn.init(seed, mem).allocate(seed, mem)
-    (nn, mem)
+    mem
   }
   
   def getRandomWeightVector () : WeightVector = {
@@ -175,12 +175,19 @@ abstract trait Optimizable {
     var totalCost: Double = 0.0
     val dw = new WeightVector(w.length)
     
-    var (_, mem) = initMemory()
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)    
     
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)    
+    /*
     for (i <- 0 until size) {
+      val (_, mem) = initMemory()
       totalCost = totalCost + distance(nn(xData(i), mem), yData(i))
     }
+    * 
+    */
+    totalCost = (0 until size).par.map(i => {
+      distance(nn(xData(i), initMemory()), yData(i))
+    }).reduce(_+_)
+    
     val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
     totalCost/size + regCost
   }
@@ -193,21 +200,28 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
-    var (_, mem) = initMemory()
+    
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     
+    /*
     for (i <- 0 until size) { // feedforward pass
+      val (_, mem) = initMemory()
       nn(xData(i), mem)
     }
+    */
+    (0 until size).foreach(i => {
+      nn(xData(i),initMemory())
+    })
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
-    for {i <- 0 until size} {
+    totalCost = (0 until size).map(i => {
+      val mem = initMemory()
       val x = nn(xData(i), mem); val y = yData(i)
       var z = distance.grad(x, yData(i))
-      totalCost = totalCost + distance(x,y)
-      nn.backpropagate(z, mem) // update dw !      
-    }
+      nn.backpropagate(z, mem) // update dw !
+      distance(x,y)
+    }).reduce(_+_)
     /*
      * End parallel loop
      */
