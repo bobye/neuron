@@ -29,6 +29,9 @@ abstract trait Memorable extends InstanceOfNeuralNetwork {
   var numOfMirrors:Int = 0
   var mirrorIndex: Int = 0
   //type arrayOfData[T<:NeuronVector] = Array[T]
+  var inputBuffer  = Array [NeuronVector]()
+  var outputBuffer = Array [NeuronVector]()
+  var gradientBuffer= Array [NeuronVector] ()
 }
 
 
@@ -223,7 +226,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   
   //var inputBuffer  = Array [NeuronVector]()
   //var outputBuffer = Array [NeuronVector]()
-  var gradientBuffer= Array [NeuronVector] ()
+  //var gradientBuffer= Array [NeuronVector] ()
   
   override def allocate(seed:String) ={
     if (status == seed) {
@@ -333,7 +336,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       
       // initialize W
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new Weight(outputDimension, inputDimension, new Gaussian(0, 1))
+      W := new Weight(outputDimension, inputDimension, new Uniform(-1, 1))
       W:*= amplitude// randomly set W 
       
       numOfMirrors = 1
@@ -346,12 +349,11 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     
     this
   }
-  var inputBuffer  = Array [NeuronVector]()
+  //var inputBuffer  = Array [NeuronVector]()
   //var outputBuffer = Array [NeuronVector]()
   override def allocate(seed:String) ={
     if (status == seed) {
       inputBuffer = new Array[NeuronVector] (numOfMirrors)
-      //outputBuffer= new Array[NeuronVector] (numOfMirrors)
       status = ""
     } else {}
     this
@@ -363,10 +365,9 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def apply (x: NeuronVector) = {
     assert (x.length == inputDimension)
     inputBuffer(mirrorIndex) = x
-    //outputBuffer(mirrorIndex) = W* x + b //dgemv
     var cIndex = mirrorIndex
     mirrorIndex = (mirrorIndex + 1) % numOfMirrors
-    W* x + b //outputBuffer(cIndex)
+    W* x + b 
   }
 
   def backpropagate(eta:NeuronVector) = {
