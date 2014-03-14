@@ -15,11 +15,7 @@ object AutoEncoderTest extends Optimizable {
 	  }
 	  yData = xData
 	  
-	  initMemory()
-	  //val amplitude = scala.math.sqrt(6.0/(inputDimension + hiddenDimension + 1.0))
 	  val w = getRandomWeightVector()
-	  
-	  //getObj(w)
 	  
 	  var time = System.currentTimeMillis();
 	  val (obj, grad) = getObjAndGrad(w)

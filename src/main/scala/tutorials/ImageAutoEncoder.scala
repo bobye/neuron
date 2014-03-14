@@ -19,7 +19,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
   type Structure <: ImageAutoEncoder
   def displayHiddenNetwork (str:String) : Unit = { 
     val weightsVector = new WeightVector((NN.rows*NN.cols+1)*NN.hiddenDimension)
-    val raw = inputLayer.getWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
+    val raw = inputLayer.getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
     weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols+1).transpose.vec(false)
     
     //println(weightsVector.data)
@@ -52,10 +52,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  nn = new ImageAutoEncoder(rows, cols, hidden).create() // the same
 
 	  
-	  initMemory()
-	  val amplitude = scala.math.sqrt(6.0/(rows*cols + hidden + 1))
-	  val w = getRandomWeightVector(amplitude)
-	  //val w = getRandomWeightVector()
+	  val w = getRandomWeightVector()
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();

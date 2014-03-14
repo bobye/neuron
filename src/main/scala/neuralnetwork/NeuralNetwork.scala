@@ -33,7 +33,7 @@ abstract trait Operationable extends Workspace {
 /** Memorable NN is instance that keep internal buffers **/
 class SetOfMemorables extends HashMap[String, Memorable]
 class Memorable {
-  var status = ""
+  //var status = ""
   var numOfMirrors:Int = 0
   var mirrorIndex: Int = 0
   //type arrayOfData[T<:NeuronVector] = Array[T]
@@ -66,7 +66,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   var status:String = ""
 
   def setWeights(seed:String, w:WeightVector, dw:WeightVector) : Unit = {}// return regularization term
-  def getWeights(seed:String) : NeuronVector = NullVector
+  def getRandomWeights(seed:String) : NeuronVector = NullVector
   def getDerativeOfWeights(seed:String) : Double = 0.0
   
   // dynamic operations
@@ -111,11 +111,11 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
     } else {
     }
   }
-  override def getWeights(seed:String) : NeuronVector = {
+  override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
-      status = seed
-      firstInstance.getWeights(seed) concatenate secondInstance.getWeights(seed)
-    }else {
+        status = seed
+        firstInstance.getRandomWeights(seed) concatenate secondInstance.getRandomWeights(seed)
+      }else {
       NullVector
     }
   }
@@ -318,9 +318,14 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       db.set(0.0)
     }
   }
-  override def getWeights(seed:String) : NeuronVector = {
+  override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
+      // initialize W
+      val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
+      W := new Weight(outputDimension, inputDimension, new Uniform(-1, 1))
+      W:*= amplitude// randomly set W 
+      
       W.vec() concatenate b 
     }else {
       NullVector
@@ -339,11 +344,6 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     if (status != seed) { 
       status = seed
       
-      // initialize W
-      val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new Weight(outputDimension, inputDimension, new Uniform(-1, 1))
-      W:*= amplitude// randomly set W 
-      
       mem += (key -> new Memorable)
       mem(key).numOfMirrors = 1
       mem(key).mirrorIndex  = 0
@@ -352,11 +352,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       mem(key).numOfMirrors = mem(key).numOfMirrors + 1
       //println(numOfMirrors)
     }
-    
     this
   }
-  //var inputBuffer  = Array [NeuronVector]()
-  //var outputBuffer = Array [NeuronVector]()
   override def allocate(seed:String, mem:SetOfMemorables) ={
     if (status == seed) {
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)

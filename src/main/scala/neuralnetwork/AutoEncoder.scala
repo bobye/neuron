@@ -60,7 +60,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = INN.encoder.backpropagate(eta, mem)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector) = INN.setWeights(seed, w, dw)
-  override def getWeights(seed:String) : NeuronVector = INN.getWeights(seed)
+  override def getRandomWeights(seed:String) : NeuronVector = INN.getRandomWeights(seed)
   override def getDerativeOfWeights(seed:String) : Double = INN.getDerativeOfWeights(seed)
 }
 
@@ -95,6 +95,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   
   
   override def init(seed:String, mem:SetOfMemorables) = {
+    mem += (key -> new Memorable)
     mem(key).mirrorIndex = 0
     threeLayers.init(seed, mem); 
     this
@@ -111,7 +112,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = threeLayers.backpropagate(eta, mem)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = { threeLayers.setWeights(seed, w, dw) }
-  override def getWeights(seed:String) : NeuronVector = threeLayers.getWeights(seed)
+  override def getRandomWeights(seed:String) : NeuronVector = threeLayers.getRandomWeights(seed)
   override def getDerativeOfWeights(seed:String) : Double = threeLayers.getDerativeOfWeights(seed)
 }
 
@@ -231,10 +232,10 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     } else {
     }
   }
-  override def getWeights(seed:String) : NeuronVector = {
+  override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      encoder.getWeights(seed) concatenate outputLayer.getWeights(seed) 
+      encoder.getRandomWeights(seed) concatenate outputLayer.getRandomWeights(seed) 
     } else NullVector
   }
   override def getDerativeOfWeights(seed:String) : Double = {

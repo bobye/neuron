@@ -26,18 +26,14 @@ object FeedForward extends Optimizable with Workspace{
 	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
 	}
 	
-
-	
-
-	initMemory()
-    val w = getRandomWeightVector()	
-	
+    val w = getRandomWeightVector()		
     
     // compute objective and gradient
     var time = System.currentTimeMillis();
 	val (obj, grad) = getObjAndGrad(w)
 	println(System.currentTimeMillis() - time, obj, grad.data)
 	
+
 	// gradient checking
 	time = System.currentTimeMillis()
     val (obj2, grad2) = getApproximateObjAndGrad(w)

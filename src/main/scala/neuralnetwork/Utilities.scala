@@ -161,15 +161,11 @@ abstract trait Optimizable {
     (nn, mem)
   }
   
-  def getRandomWeightVector (amplitude:Double = 1.0, rand:Rand[Double] = new Uniform(-1,1)) : WeightVector = {
-    assert(amplitude > 0)
+  def getRandomWeightVector () : WeightVector = {
     
-    val wdefault = nn.getWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
-    val rv = new WeightVector(wdefault.length, rand) 
-    //rv :*= amplitude
+    val wdefault = nn.getRandomWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
+    val rv = new WeightVector(wdefault.length) 
     rv := wdefault
-    //println(rv.data)
-    //println(wdefault.data)
     rv
   }
   
@@ -178,8 +174,10 @@ abstract trait Optimizable {
     assert (size >= 1 && size == yData.length)
     var totalCost: Double = 0.0
     val dw = new WeightVector(w.length)
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
+    
     var (_, mem) = initMemory()
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)    
+    
     for (i <- 0 until size) {
       totalCost = totalCost + distance(nn(xData(i), mem), yData(i))
     }
@@ -195,9 +193,10 @@ abstract trait Optimizable {
      * Compute objective and gradients in batch mode
      * which can be run in parallel 
      */
+    var (_, mem) = initMemory()
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
-    var (_, mem) = initMemory()
+    
     for (i <- 0 until size) { // feedforward pass
       nn(xData(i), mem)
     }
