@@ -157,12 +157,12 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   type StructureType = JointNeuralNetwork[Type1, Type2]
   
   def apply (x: NeuronVector, mem:SetOfMemorables)  = {
-    var (first, second) = x.splice(NN.first.inputDimension)
+    val (first, second) = x.splice(NN.first.inputDimension)
     firstInstance(first, mem) concatenate secondInstance(second, mem)
   }
 
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
-    var (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
+    val (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
     firstInstance.backpropagate(firstEta, mem) concatenate secondInstance.backpropagate(secondEta, mem)
   }
   
@@ -209,16 +209,13 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 	extends InstanceOfSelfTransform (NN) { 
   type StructureType <: SingleLayerNeuralNetwork
   
-  
-  private var gradient: NeuronVector = new NeuronVector(NN.dimension)
-  
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
     //inputBuffer(mirrorIndex) = x
     mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x)
     //outputBuffer(mirrorIndex) = NN.func(x)
         
-    var cIndex = mem(key).mirrorIndex
+    val cIndex = mem(key).mirrorIndex
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     NN.func(x) // outputBuffer(cIndex)
   }
@@ -288,8 +285,8 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     rhoOnUpdate += y; totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
     y
   }
-  private var rho : NeuronVector = new NeuronVector(outputDimension)
-  private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
+  @volatile private var rho : NeuronVector = new NeuronVector(outputDimension)
+  @volatile private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -368,7 +365,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
-    var cIndex = mem(key).mirrorIndex
+    val cIndex = mem(key).mirrorIndex
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W* x + b 
   }

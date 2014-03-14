@@ -11,7 +11,7 @@ import breeze.stats.distributions._
 //import breeze.math._
 
 
-class NeuronVector (var data: DenseVector[Double]) {
+class NeuronVector (@volatile var data: DenseVector[Double]) {
   val length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
@@ -36,7 +36,7 @@ class NeuronVector (var data: DenseVector[Double]) {
   def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
   //override def toString() = data.toString
 }
-class Weight (var data:DenseMatrix[Double]){
+class Weight (@volatile var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)

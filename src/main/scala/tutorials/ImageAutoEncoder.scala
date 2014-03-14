@@ -56,7 +56,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w, 20) // Change to train(w) for real training
+	  val (obj, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
