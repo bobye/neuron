@@ -19,10 +19,10 @@ abstract trait Encoder extends Operationable with EncodeClass{
   type InstanceType <: InstanceOfEncoder
   override def create(): InstanceOfEncoder
 } 
-abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass with Memorable {
+abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
-  def encode(x:NeuronVector): NeuronVector = {apply(x); encodeCurrent}
+  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {apply(x, mem); encodeCurrent}
   
   
   var encodeCurrent: NeuronVector = NullVector
@@ -52,12 +52,12 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   type StructureType <: EncoderNeuralNetwork[INN.StructureType]  
   
   override val outputDimension = INN.encodeDimension
-  def apply (x:NeuronVector) = {
-    INN.encode(x)
+  def apply (x:NeuronVector, mem:SetOfMemorables) = {
+    INN.encode(x, mem)
   }
-  override def init(seed:String) = INN.init(seed)
-  override def allocate(seed:String) = INN.allocate(seed)
-  def backpropagate(eta:NeuronVector) = INN.encoder.backpropagate(eta)
+  override def init(seed:String, mem:SetOfMemorables) = INN.init(seed, mem)
+  override def allocate(seed:String, mem:SetOfMemorables) = INN.allocate(seed, mem)
+  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = INN.encoder.backpropagate(eta, mem)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector) = INN.setWeights(seed, w, dw)
   override def getWeights(seed:String) : NeuronVector = INN.getWeights(seed)
@@ -85,29 +85,30 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   private val threeLayers = (outputLayer TIMES encoder).create()
   
   
-  def apply (x:NeuronVector) = {
-    encodeCurrent = encoder(x) // buffered
-    outputBuffer(mirrorIndex) = outputLayer(encodeCurrent)
-    mirrorIndex = (mirrorIndex + 1) % numOfMirrors 
-    outputBuffer(mirrorIndex)
+  def apply (x:NeuronVector, mem:SetOfMemorables) = {
+    encodeCurrent = encoder(x, mem) // buffered
+    val cIndex = mem(key).mirrorIndex
+    mem(key).outputBuffer(mem(key).mirrorIndex) = outputLayer(encodeCurrent, mem)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
+    mem(key).outputBuffer(cIndex)
   }
   
   
-  override def init(seed:String) = {
-    mirrorIndex = 0
-    threeLayers.init(seed); 
+  override def init(seed:String, mem:SetOfMemorables) = {
+    mem(key).mirrorIndex = 0
+    threeLayers.init(seed, mem); 
     this
   }
   
-  override def allocate(seed:String) : InstanceOfNeuralNetwork = {
-    threeLayers.allocate(seed);
-    inputBuffer = inputLayer.inputBuffer
-    numOfMirrors = outputLayerLinear.numOfMirrors
-    outputBuffer = new Array[NeuronVector] (numOfMirrors)
+  override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
+    threeLayers.allocate(seed, mem);
+    mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
+    mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
+    mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
     this
   }
   
-  def backpropagate(eta:NeuronVector) = threeLayers.backpropagate(eta)
+  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = threeLayers.backpropagate(eta, mem)
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = { threeLayers.setWeights(seed, w, dw) }
   override def getWeights(seed:String) : NeuronVector = threeLayers.getWeights(seed)
@@ -194,32 +195,33 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
   private val outputLayer = (NN.post TIMES outputLayerLinear).create()
   
   
-  def apply (x:NeuronVector) = {
+  def apply (x:NeuronVector, mem:SetOfMemorables) = {
     var (_, context) = x.splice(NN.codeLength)
-    encodeCurrent = encoder(x)
-    outputBuffer(mirrorIndex) = outputLayer(encodeCurrent concatenate context) concatenate context
-    mirrorIndex = (mirrorIndex + 1) % numOfMirrors 
-    outputBuffer(mirrorIndex)
+    encodeCurrent = encoder(x, mem)
+    val cIndex = mem(key).mirrorIndex
+    mem(key).outputBuffer(mem(key).mirrorIndex) = outputLayer(encodeCurrent concatenate context, mem) concatenate context
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
+    mem(key).outputBuffer(cIndex)
   } 
   
-  override def init(seed:String) = {
-    encoder.init(seed)
-    outputLayer.init(seed)
-    mirrorIndex = 0
+  override def init(seed:String, mem:SetOfMemorables) = {
+    encoder.init(seed, mem)
+    outputLayer.init(seed, mem)
+    mem(key).mirrorIndex = 0
     this
   }
-  override def allocate(seed:String) : InstanceOfNeuralNetwork = {
-    encoder.allocate(seed)
-    inputBuffer = inputLayer.inputBuffer
-    numOfMirrors = outputLayerLinear.numOfMirrors
-    outputBuffer = new Array[NeuronVector] (numOfMirrors)
-    outputLayer.allocate(seed)
+  override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
+    encoder.allocate(seed, mem)
+    mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
+    mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
+    mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+    outputLayer.allocate(seed, mem)
     this
   }
-  def backpropagate(eta:NeuronVector) = {
+  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
     var (eta_31, _) = eta.splice(NN.codeLength)
-    var (eta_21, _) = outputLayer.backpropagate(eta_31).splice(NN.hidden.outputDimension)
-    encoder.backpropagate(eta_21)
+    var (eta_21, _) = outputLayer.backpropagate(eta_31, mem).splice(NN.hidden.outputDimension)
+    encoder.backpropagate(eta_21, mem)
   }
   
   override def setWeights(seed:String, w:WeightVector, dw:WeightVector): Unit = {

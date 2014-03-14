@@ -154,9 +154,11 @@ abstract trait Optimizable {
   
   final var randomGenerator = new scala.util.Random
   
-  def initMemory() : InstanceOfNeuralNetwork = {
+  def initMemory() : (InstanceOfNeuralNetwork, SetOfMemorables) = {
     val seed = System.currentTimeMillis().hashCode.toString
-    nn.init(seed).allocate(seed)
+    var mem = new SetOfMemorables
+    nn.init(seed, mem).allocate(seed, mem)
+    (nn, mem)
   }
   
   def getRandomWeightVector (amplitude:Double = 1.0, rand:Rand[Double] = new Uniform(-1,1)) : WeightVector = {
@@ -177,8 +179,9 @@ abstract trait Optimizable {
     var totalCost: Double = 0.0
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
+    var (_, mem) = initMemory()
     for (i <- 0 until size) {
-      totalCost = totalCost + distance(nn(xData(i)), yData(i))
+      totalCost = totalCost + distance(nn(xData(i), mem), yData(i))
     }
     val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
     totalCost/size + regCost
@@ -194,16 +197,17 @@ abstract trait Optimizable {
      */
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
+    var (_, mem) = initMemory()
     for (i <- 0 until size) { // feedforward pass
-      nn(xData(i))
+      nn(xData(i), mem)
     }
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
     for {i <- 0 until size} {
-      val x = nn(xData(i)); val y = yData(i)
+      val x = nn(xData(i), mem); val y = yData(i)
       var z = distance.grad(x, yData(i))
       totalCost = totalCost + distance(x,y)
-      nn.backpropagate(z) // update dw !      
+      nn.backpropagate(z, mem) // update dw !      
     }
     /*
      * End parallel loop
