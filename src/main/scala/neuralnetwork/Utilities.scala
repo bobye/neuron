@@ -210,7 +210,7 @@ abstract trait Optimizable {
       nn(xData(i), mem)
     }
     */
-    (0 until size).foreach(i => {
+    (0 until size).par.foreach(i => {
       nn(xData(i),initMemory())
     })
     

@@ -5,7 +5,7 @@ package neuralnetwork
 
 import breeze.stats.distributions._
 import scala.collection.mutable._
-
+import scala.concurrent.stm._
 /********************************************************************************************/
 // Highest level classes for Neural Network
 abstract trait Workspace{// 
@@ -256,15 +256,17 @@ class SparseSingleLayerNN (override val dimension: Int,
 class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN) 
 	extends InstanceOfSingleLayerNeuralNetwork (NN) {
   private var totalUsage: Int = 0 // reset if weights updated
-  private var totalUsageOnUpdate: Int = 0
+  private val totalUsageOnUpdate = Ref(0)
   override def setWeights(seed: String, w: WeightVector, dw: WeightVector) : Unit = {
+    atomic { implicit txn =>
     if (status != seed) {
       status = seed
-      totalUsage = totalUsageOnUpdate
-      totalUsageOnUpdate = 0
-      rho := rhoOnUpdate
-      rhoOnUpdate.set(0.0)
+      totalUsage = totalUsageOnUpdate()
+      totalUsageOnUpdate() = 0
+      rho := rhoOnUpdate()
+      rhoOnUpdate().set(0.0)
     } else {
+    }
     }
  }
   override def getDerativeOfWeights(seed:String) : Double = {
@@ -279,13 +281,15 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
   }
   override def apply(x: NeuronVector, mem:SetOfMemorables) = {
     val y = super.apply(x, mem)
+    atomic { implicit txn =>
     // This part has parallel side effects
-    rhoOnUpdate += y; 
-    totalUsageOnUpdate = totalUsageOnUpdate + 1 // for computation of average activation
+    rhoOnUpdate() = rhoOnUpdate() + y; // it still has problems
+    totalUsageOnUpdate() = totalUsageOnUpdate() + 1 // for computation of average activation
+    }
     y
   }
-  private var rho : NeuronVector = new NeuronVector(outputDimension)
-  private var rhoOnUpdate : NeuronVector = new NeuronVector(outputDimension)
+  private val rho : NeuronVector = new NeuronVector(outputDimension)
+  private val rhoOnUpdate = Ref(new NeuronVector(outputDimension))
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -364,7 +368,6 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
-    val cIndex = mem(key).mirrorIndex
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W* x + b 
   }

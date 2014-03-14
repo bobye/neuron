@@ -8,7 +8,8 @@ libraryDependencies  ++= Seq(
             // native libraries are not included by default. add this if you want them (as of 0.7-SNAPSHOT)
             // native libraries greatly improve performance, but increase jar sizes.
             "org.scalanlp" % "breeze-natives_2.10" % "0.7-SNAPSHOT",
-            "org.slf4j" % "slf4j-simple" % "1.7.6"
+            "org.slf4j" % "slf4j-simple" % "1.7.6",
+            "org.scala-stm" %% "scala-stm" % "0.7"
 )
 
 resolvers ++= Seq(
