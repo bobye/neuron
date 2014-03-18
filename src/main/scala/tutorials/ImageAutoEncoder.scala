@@ -18,15 +18,15 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 { 
   type Structure <: ImageAutoEncoder
   def displayHiddenNetwork (str:String) : Unit = { 
-    val weightsVector = new WeightVector((NN.rows*NN.cols+1)*NN.hiddenDimension)
-    val raw = inputLayer.getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
-    weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols+1).transpose.vec(false)
+    val weightsVector = new WeightVector((NN.rows*NN.cols)*NN.hiddenDimension)
+    val raw = inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
+    weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols).transpose.vec(false)
     
     //println(weightsVector.data)
         
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
       val img = new Weight(NN.rows, NN.cols)
-      val b = new NeuronVector(1)//
+      val b = new NeuronVector(0)//
       weightsVector(img, b)
       //println(img.vec.data)
       println((img.vec().data/norm(img.vec().data)).data.mkString("\t")) // Just print

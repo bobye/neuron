@@ -72,7 +72,7 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
     val rows = W.data.rows
     val cols = W.data.cols
     
-    data(ptr until ptr + rows*cols) := W.vec().data
+    data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols) := W.data
     ptr = (ptr + rows * cols) % length
     data(ptr until ptr + b.length) := b.data
     ptr = (ptr + b.length) % length
@@ -229,7 +229,7 @@ abstract trait Optimizable {
     totalCost = (0 until size).par.map(i => {
       val mem = initMemory()
       val x = nn(xData(i), mem); val y = yData(i)
-      var z = distance.grad(x, yData(i))
+      val z = distance.grad(x, yData(i))
       nn.backpropagate(z, mem) // update dw !
       distance(x,y)
     }).reduce(_+_)

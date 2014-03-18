@@ -364,8 +364,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     } else {}
     this
   }  
-  protected val W: Weight = new Weight(outputDimension, inputDimension) 
-  protected val b: NeuronVector = new NeuronVector (outputDimension)
+  val W: Weight = new Weight(outputDimension, inputDimension) 
+  val b: NeuronVector = new NeuronVector (outputDimension)
   protected val dW = Ref(new Weight(outputDimension, inputDimension))
   protected val db = Ref(new NeuronVector (outputDimension))
   def apply (x: NeuronVector, mem:SetOfMemorables) = {

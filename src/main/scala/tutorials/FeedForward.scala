@@ -11,7 +11,7 @@ object FeedForward extends Optimizable with Workspace{
     // create topology of neural network
 	val a = new SingleLayerNeuralNetwork(10)
 	val a2= new SingleLayerNeuralNetwork(20)
-	val b = new RegularizedLinearNN(10,10)
+	val b = new RegularizedLinearNN(10,10, 0.001)
  
 	val c = (a TIMES b).create()
 	val d = (b PLUS c) TIMES a2
