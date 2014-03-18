@@ -39,6 +39,7 @@ class NeuronVector (var data: DenseVector[Double]) {
 class Weight (var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
+  def +(that: Weight): Weight = new Weight(this.data + that.data)
   def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
@@ -58,12 +59,22 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   var ptr : Int = 0
   def reset(): Unit = {ptr = 0; }
   def apply(W:Weight, b:NeuronVector): Int = {
-    var rows = W.data.rows
-    var cols = W.data.cols
+    val rows = W.data.rows
+    val cols = W.data.cols
     
     W.data = data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
     ptr = (ptr + rows * cols) % length
     b.data = data(ptr until ptr + b.length)
+    ptr = (ptr + b.length) % length
+    ptr
+  }
+  def get(W:Weight, b:NeuronVector): Int = {
+    val rows = W.data.rows
+    val cols = W.data.cols
+    
+    data(ptr until ptr + rows*cols) := W.vec().data
+    ptr = (ptr + rows * cols) % length
+    data(ptr until ptr + b.length) := b.data
     ptr = (ptr + b.length) % length
     ptr
   }
@@ -176,7 +187,7 @@ abstract trait Optimizable {
     val dw = new WeightVector(w.length)
     
     
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)    
     /*
     for (i <- 0 until size) {
       val (_, mem) = initMemory()
@@ -188,7 +199,7 @@ abstract trait Optimizable {
       distance(nn(xData(i), initMemory()), yData(i))
     }).reduce(_+_)
     
-    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
     totalCost/size + regCost
   }
   
@@ -202,7 +213,7 @@ abstract trait Optimizable {
      */
     
     val dw = new WeightVector(w.length)
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     
     /*
     for (i <- 0 until size) { // feedforward pass
@@ -214,8 +225,8 @@ abstract trait Optimizable {
       nn(xData(i),initMemory())
     })
     
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w, dw)
-    totalCost = (0 until size).map(i => {
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    totalCost = (0 until size).par.map(i => {
       val mem = initMemory()
       val x = nn(xData(i), mem); val y = yData(i)
       var z = distance.grad(x, yData(i))
@@ -226,9 +237,9 @@ abstract trait Optimizable {
      * End parallel loop
      */
     // println(totalCost/size, regCost)
-    dw :/= size
-    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString)
-    (totalCost/size + regCost, dw)
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    (totalCost/size + regCost, dw/size)
   }
   
   def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
