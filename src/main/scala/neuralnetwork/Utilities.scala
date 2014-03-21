@@ -116,6 +116,7 @@ object dsgm extends UFunc with MappingUFunc{
     }
 }
 
+
 class KLdiv (rho:Double) extends UFunc with MappingUFunc {
   implicit object implDouble extends Impl [Double, Double] {
     def apply(a: Double) = {
@@ -136,6 +137,7 @@ object SigmoidFunction extends NeuronFunction {
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(sigmoid(x.data))
 }
 
+
 class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   object dKLdfunc extends dKLd(rho)
   object KLdiv extends KLdiv(rho)
@@ -149,8 +151,20 @@ abstract class DistanceFunction {
 }
 
 object L2Distance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector) = (x - y)
+  def grad(x:NeuronVector, y:NeuronVector): NeuronVector = (x - y)
   def apply(x:NeuronVector, y:NeuronVector) = (x - y).euclideanSqrNorm /2.0
+}
+object SoftMaxDistance extends DistanceFunction {
+  def grad(x:NeuronVector, y:NeuronVector): NeuronVector ={
+    assert(abs(y.sum - 1) < 1E-6) // y must be a probability distribution
+    val x1 = new NeuronVector(exp(x.data))
+    (x1/x1.sum - y)
+  }
+  def apply(x:NeuronVector, y:NeuronVector): Double = {
+    val x1 = new NeuronVector(exp(x.data))
+    val x2 = new NeuronVector(-log(x1.data / x1.data.sum))
+    (y DOT x2).sum
+  }
 }
 
 /********************************************************************************************/
@@ -255,7 +269,7 @@ abstract trait Optimizable {
 	  
 	  dW.data(i) = (cost1 - cost2) / (2*epsilon)
 	}
-    (getObj(w), dW)
+    (getObj(w, distance), dW)
   }
   
 
