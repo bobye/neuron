@@ -229,12 +229,7 @@ abstract trait Optimizable {
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     
-    /*
-    for (i <- 0 until size) { // feedforward pass
-      val (_, mem) = initMemory()
-      nn(xData(i), mem)
-    }
-    */
+
     (0 until size).par.foreach(i => {
       nn(xData(i),initMemory())
     })
@@ -276,9 +271,7 @@ abstract trait Optimizable {
   /*
    * Train neural network using first order minimizer (L-BFGS)
    * Please NOTE there is no regularization penalty in training 
-   * But it is possible to add them in the future: 
-   *  (1) L1 or L2 on weights
-   *  (2) sparsity parameter
+   * Regularization usually is done in distributed modules
    */ 
   def train(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance): (Double, WeightVector) = {
 

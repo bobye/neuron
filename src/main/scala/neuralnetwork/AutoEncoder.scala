@@ -1,5 +1,6 @@
 package neuralnetwork
 
+import scala.concurrent.stm._
 
 /********************************************************************************************/
 // Encoder and Recursive Neural Network
@@ -69,7 +70,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 
 /********************************************************************************************/
 // AutoEncoder
-class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0, 
+class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0, val regCoeff:Double = 0.0,
     			   val hidden: NeuralNetwork, val post: SelfTransform)
 	extends SelfTransform (dimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
@@ -87,13 +88,28 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encoder = (NN.hidden TIMES inputLayer).create()
   private val threeLayers = (outputLayer TIMES encoder).create()
   
-  
+  private val aeError = Ref(0.0);
   def apply (x:NeuronVector, mem:SetOfMemorables) = {
     mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoder(x, mem) // buffered
     val cIndex = mem(key).mirrorIndex
     mem(key).outputBuffer(mem(key).mirrorIndex) = 
       outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent, mem)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
+    
+    if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {// traverse all exists buffers, and compute gradients accordingly
+      val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
+      for (i <- 0 until mem(key).numOfMirrors) {
+        backpropagate(L2Distance.grad(mem(key).outputBuffer(i), 
+        			  				  mem(key).inputBuffer(i)) * regCoeffNorm, mem)
+      }
+      atomic { implicit txn =>
+        for (i <- 0 until mem(key).numOfMirrors) {
+          aeError() = aeError() + 
+        		  L2Distance(mem(key).outputBuffer(i), mem(key).inputBuffer(i)) * regCoeffNorm
+        }
+      }
+    }
+    
     mem(key).outputBuffer(cIndex)
   }
   
@@ -103,7 +119,9 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       mem += (key -> new EncoderMemorable)
       mem(key).status = seed
       mem(key).mirrorIndex = 0
-      threeLayers.init(seed, mem); 
+      threeLayers.init(seed, mem) 
+    } else {
+      threeLayers.init(seed, mem)
     }
     this
   }
@@ -112,7 +130,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     if (mem(key).status == seed) {
       threeLayers.allocate(seed, mem);
       mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
-      mem(key).numOfMirrors = mem(outputLayerLinear.key).numOfMirrors
+      mem(key).numOfMirrors = mem(inputLayer.key).numOfMirrors
       mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).status = ""
     }
@@ -121,45 +139,66 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = threeLayers.backpropagate(eta, mem)
   
-  override def setWeights(seed:String, w:WeightVector): Unit = { threeLayers.setWeights(seed, w) }
+  override def setWeights(seed:String, w:WeightVector): Unit = { 
+    atomic { implicit txn =>
+    	aeError() = 0.0
+    }
+    threeLayers.setWeights(seed, w) 
+  }
   override def getRandomWeights(seed:String) : NeuronVector = threeLayers.getRandomWeights(seed)
-  override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = 
-    threeLayers.getDerativeOfWeights(seed, dw, numOfSamples)
+  
+  // For Auto-Encoder, the encoding error can be used a regularization term in addition
+  override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
+    if (status != seed) {
+      status = seed
+      atomic { implicit txn =>
+       threeLayers.getDerativeOfWeights(seed, dw, numOfSamples) + aeError() / numOfSamples
+      }
+    } else {
+      0.0
+    }
+  }
+   
 }
 
 
-class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0) 
-	extends AutoEncoder(dimension, lambda, 
+class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
+	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0) 
+	extends AutoEncoder(dimension, lambda, regCoeff, 
 			new SingleLayerNeuralNetwork(hiddenDimension, func),
 			new IdentityTransform(dimension))
 
-class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) (dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0)
-	extends AutoEncoder(dimension, lambda,
+class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
+	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0)
+	extends AutoEncoder(dimension, lambda, regCoeff, 
 			new SingleLayerNeuralNetwork(hiddenDimension, func),
 			new SingleLayerNeuralNetwork(dimension))
 
 	  
 class SparseLinearAE (val beta:Double = 0.0, // sparse penalty 
     					   lambda: Double = 0.0, // L2 regularization
+    					   regCoeff: Double = 0.0, // autoencoding
     					   val penalty:NeuronFunction = new KL_divergenceFunction(0.01), // average activation
     					   val func: NeuronFunction = SigmoidFunction)
 	(dimension:Int, val hiddenDimension:Int)
-	extends AutoEncoder(dimension, lambda, 
+	extends AutoEncoder(dimension, lambda, regCoeff,
 	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty),
 	    new IdentityTransform(dimension))
 
 class SparseAutoEncoder (val beta:Double = 0.0,
 					  lambda:Double = 0.0,
+					  regCoeff: Double = 0.0,
 					  val penalty: NeuronFunction = new KL_divergenceFunction(0.01),
 					  val func: NeuronFunction = SigmoidFunction,
 					  val outputFunc: NeuronFunction = SigmoidFunction)
 	(dimension: Int, val hiddenDimension:Int)
-	extends AutoEncoder(dimension, lambda,
+	extends AutoEncoder(dimension, lambda, regCoeff, 
 	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty),
 	    new SingleLayerNeuralNetwork(dimension))
 	
-class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) (val wordLength: Int) 
-	extends LinearAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
+class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
+	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0) 
+	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) with RecursiveEncoder {
   type Instance <: InstanceOfRecursiveLinearAE
   override def create() : InstanceOfRecursiveLinearAE = new InstanceOfRecursiveLinearAE(this)
 }
@@ -168,8 +207,9 @@ class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE)
   val wordLength = NN.wordLength
 }
 
-class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction) (val wordLength: Int)
-	extends SimpleAutoEncoder(func)(wordLength*2, wordLength) with RecursiveEncoder {
+class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction) 
+	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0)
+	extends SimpleAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) with RecursiveEncoder {
   type Instance <: InstanceOfRecursiveSimpleAE
   override def create() : InstanceOfRecursiveSimpleAE = new InstanceOfRecursiveSimpleAE(this)
 }
@@ -179,7 +219,8 @@ class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
 }
      			 
 /********************************************************************************************/
-//Context Aware Auto Encoder (NOT YET TESTED!)
+// Context Aware Auto Encoder (NOT YET TESTED!)
+// The following section is far from complete! Don't use it.
 abstract trait ContextAwareClass extends Operationable {
   val contextLength: Int
 }

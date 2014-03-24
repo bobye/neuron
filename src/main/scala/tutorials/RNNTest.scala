@@ -2,7 +2,8 @@ package tutorials
 
 import neuralnetwork._
 import breeze.stats.distributions._
-
+import breeze.linalg._
+import breeze.optimize._
 
 
 
@@ -19,7 +20,7 @@ object RNNTest extends Optimizable with Workspace {
 	def main(args: Array[String]): Unit = {
 	  val wordLength = 3
 	  val tree = fullBinaryTree(10)
-	  val enc  = (new RecursiveSimpleAE()(wordLength)).create()
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 0.1)).create()
 	  val input = (new IdentityTransform(wordLength)).create()
 	  val output = new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)
 	  
@@ -46,5 +47,11 @@ object RNNTest extends Optimizable with Workspace {
 	  time = System.currentTimeMillis();
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj2, grad2.data)
+	  
+	  
+	  time = System.currentTimeMillis();
+	  val (obj3, w2) = train(w)
+	  println(System.currentTimeMillis() - time, obj3)
+	  
 	}
 }
