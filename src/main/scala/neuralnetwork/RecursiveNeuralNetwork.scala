@@ -48,13 +48,17 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
     (v, new Node(new Branch(x.t,y.t), nd))
   }
   
-  def loadChain(x: Array[NeuronVector]): Unit = {
-    assert(x.size > 0)
+  def loadChain(x: NeuronVector, wordLength: Int): Unit = {
+    assert(x.length > 0 && x.length % wordLength == 0)
     
-    var h1 = new Node(new Leaf, x(0))
+    
+    var (head, xtmp) = x.splice(wordLength)
+    
+    var h1 = new Node(new Leaf, head)
     nodes = nodes + h1
-    for (i <- 1 until x.size ) {
-      val h2 = new Node(new Leaf, x(i))
+    for (i <- 1 until x.length/wordLength ) {
+      val (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
+      val h2 = new Node(new Leaf, head)
       nodes = nodes + h2
       h1.neighbors = h1.neighbors + h2
       h2.neighbors = h2.neighbors + h1
