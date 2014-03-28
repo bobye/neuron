@@ -388,7 +388,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     */
     
     atomic { implicit txn =>
-    //println(key, mem(key).mirrorIndex, db().data)
+    //println(key, mem(key).mirrorIndex, eta.data)
     dW() = dW() + (eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)) // dgemm and daxpy
     db() = db() + eta
     }

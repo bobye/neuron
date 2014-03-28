@@ -7,8 +7,8 @@ object AutoEncoderTest extends Optimizable {
 	  val inputDimension = 20
 	  val hiddenDimension = 10
 	  //nn = new SimpleAutoEncoder()(inputDimension,hiddenDimension,0.1, 0.1).create()
-	  nn = new SparseLinearAE(0.0,1.0,1.0)(inputDimension,hiddenDimension).create()
-	  //nn = new SparseLinearAE(1.0,1.0,0.1)(inputDimension,hiddenDimension).create() // Gradient check fails
+	  //nn = new SparseLinearAE(0.0,1.0,1.0)(inputDimension,hiddenDimension).create()
+	  nn = new SparseLinearAE(1.0,1.0,1.0)(inputDimension,hiddenDimension).create() // Gradient check succeed
 	  
 	  val numOfSamples = 100
 	  xData = new Array(numOfSamples);

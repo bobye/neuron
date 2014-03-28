@@ -34,6 +34,8 @@ class NeuronVector (var data: DenseVector[Double]) {
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = data.sum
   def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
+  def last(): Double = data(data.length)
+  def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   //override def toString() = data.toString
 }
 class Weight (var data:DenseMatrix[Double]){
@@ -246,9 +248,10 @@ abstract trait Optimizable {
     /*
      * End parallel loop
      */
-    // println(totalCost/size, regCost)
+    
     
     val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    //println(totalCost/size, regCost)
     (totalCost/size + regCost, dw/size)
   }
   

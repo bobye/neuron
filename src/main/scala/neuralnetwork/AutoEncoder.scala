@@ -27,8 +27,11 @@ abstract trait Encoder extends Operationable with EncodeClass{
 abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
   val encoder: InstanceOfNeuralNetwork
-  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = 
-  	{apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent}
+  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {
+    apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
+  }
+  //def applyEncodingErr(x:NeuronVector, mem:SetOfMemorables): NeuronVector
+  def encodingErrBP(eta:NeuronVector, mem: SetOfMemorables): NeuronVector 
 }
 
 // It implicitly requires the dimensional constraints
@@ -60,7 +63,9 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   }
   override def init(seed:String, mem:SetOfMemorables) = INN.init(seed, mem)
   override def allocate(seed:String, mem:SetOfMemorables) = INN.allocate(seed, mem)
-  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = INN.encoder.backpropagate(eta, mem)
+  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
+    INN.encodingErrBP(eta, mem)
+  }
   
   override def setWeights(seed:String, w:WeightVector) = INN.setWeights(seed, w)
   override def getRandomWeights(seed:String) : NeuronVector = INN.getRandomWeights(seed)
@@ -89,22 +94,24 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   private val threeLayers = (outputLayer TIMES encoder).create()
   
   private val aeError = Ref(0.0);
-  def apply (x:NeuronVector, mem:SetOfMemorables) = {
+  def apply (x:NeuronVector, mem:SetOfMemorables) = {  
     mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoder(x, mem) // buffered
     mem(key).mirrorIndex = mem(inputLayer.key).mirrorIndex //(mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).outputBuffer(mem(key).mirrorIndex) = 
       outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent, mem)
     
-    
+    //mem(key).asInstanceOf[EncoderMemorable].encodingError = 
+    //  L2Distance(mem(key).outputBuffer(mem(key).mirrorIndex), x) * NN.regCoeff / mem(key).numOfMirrors    
     if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {
       // traverse all exists buffers, and compute gradients accordingly
-      // Penalize the auto-encoding errors typically fails the gradient checking
-      // Because the regularization are changed in each step
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
+      /*
       for (i <- 0 until mem(key).numOfMirrors) {
         backpropagate(L2Distance.grad(mem(key).outputBuffer(i), 
         			  				  mem(key).inputBuffer(i)) * regCoeffNorm, mem)
       }
+      * 
+      */
       atomic { implicit txn =>
         for (i <- 0 until mem(key).numOfMirrors) {
           aeError() = aeError() + 
@@ -112,8 +119,9 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
         }
       }
     }
+
     
-    mem(key).outputBuffer(mem(key).mirrorIndex)
+    mem(key).outputBuffer(mem(key).mirrorIndex)    
   }
   
   
@@ -140,7 +148,21 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     this
   }
   
-  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = threeLayers.backpropagate(eta, mem)
+  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
+    val z= L2Distance.grad(mem(key).outputBuffer(mem(key).mirrorIndex), mem(key).inputBuffer(mem(key).mirrorIndex)) * 
+    		(NN.regCoeff/ mem(key).numOfMirrors)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    threeLayers.backpropagate(eta + z, mem) - z 
+  }
+  
+  def encodingErrBP(eta:NeuronVector, mem:SetOfMemorables): NeuronVector = {
+    val z= L2Distance.grad(mem(key).outputBuffer(mem(key).mirrorIndex), mem(key).inputBuffer(mem(key).mirrorIndex)) * 
+    		(NN.regCoeff/ mem(key).numOfMirrors)
+    val z2= outputLayer.backpropagate(z, mem)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    encoder.backpropagate(z2 + eta, mem) - z
+  }
+
   
   override def setWeights(seed:String, w:WeightVector): Unit = { 
     atomic { implicit txn =>
@@ -289,6 +311,8 @@ class InstanceOfContextAwareAutoEncoder(override val NN:ContextAwareAutoEncoder)
     var (eta_21, _) = outputLayer.backpropagate(eta_31, mem).splice(NN.hidden.outputDimension)
     encoder.backpropagate(eta_21, mem)
   }
+  
+  def encodingErrBP(eta:NeuronVector, mem:SetOfMemorables): NeuronVector = {NullVector} // to be implemented
   
   override def setWeights(seed:String, w:WeightVector): Unit = {
     if (status != seed) {

@@ -20,7 +20,7 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	def main(args: Array[String]): Unit = {
 	  val wordLength = 10
 	  val tree = fullBinaryTree(10)
-	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 0.1)).create()
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0001, 1.0)).create()
 	  val input = (new IdentityTransform(wordLength)).create()
 	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  
@@ -30,7 +30,7 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	  
 	  val w = getRandomWeightVector()
 	  
-	  val numOfSamples = 100
+	  val numOfSamples = 1
 	  nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
 	  
 	  xData = new Array(numOfSamples)
@@ -48,12 +48,10 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	  println(System.currentTimeMillis() - time, obj, grad.data)
 	  
 	  // Gradient checking
-	  // Note: the gradient check fails, because we are to optimize stochastically
-	  /*
 	  time = System.currentTimeMillis();
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj2, grad2.data)
-	  */
+	  
 	  
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
