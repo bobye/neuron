@@ -14,9 +14,9 @@ object GMGTest extends Optimizable with Workspace {
     (L2Distance(enc(z, mem), z), enc.encode(z, mem))
   }
   
-  val wordLength = 1
+  val wordLength = 10
   val chainLength= 10
-  val enc  = new RecursiveSimpleAE()(wordLength, 0.0, 0.0).create()
+  val enc  = new RecursiveSimpleAE()(wordLength, 0.0, 0.01).create()
   val input = new IdentityTransform(wordLength).create()
   val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength, 1)).create()
   
@@ -90,7 +90,7 @@ object GMGTest extends Optimizable with Workspace {
 	xData = new Array(numOfSamples)
     yData = new Array(numOfSamples)
     for (i<- 0 until numOfSamples) yield {
-      xData(i) = new NeuronVector(wordLength*chainLength, new Uniform(-1,1))
+      xData(i) = new NeuronVector(wordLength*chainLength, new Uniform(0,1))
       yData(i) = new NeuronVector(1, new Uniform(-1,1))
     }   
     
@@ -106,16 +106,19 @@ object GMGTest extends Optimizable with Workspace {
 	  println(System.currentTimeMillis() - time, obj, grad.data)
 	  
 	  // gradient checking
+	  // Note: the gradient check fails, because we are to optimize stochastically
+	  /*
 	  time = System.currentTimeMillis();
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj2, grad2.data)
 	  //println((grad2 - grad).euclideanSqrNorm)
+	  */
 	  
-	  /*
+	  
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3)
-	*/
+	
   }
 
 }

@@ -96,7 +96,10 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent, mem)
     
     
-    if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {// traverse all exists buffers, and compute gradients accordingly
+    if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {
+      // traverse all exists buffers, and compute gradients accordingly
+      // Penalize the auto-encoding errors typically fails the gradient checking
+      // Because the regularization are changed in each step
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
       for (i <- 0 until mem(key).numOfMirrors) {
         backpropagate(L2Distance.grad(mem(key).outputBuffer(i), 

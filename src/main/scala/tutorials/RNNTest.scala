@@ -18,45 +18,46 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
     }
 	
 	def main(args: Array[String]): Unit = {
-	  val wordLength = 1
-	  val tree = fullBinaryTree(3)
-	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 10.0)).create()
+	  val wordLength = 10
+	  val tree = fullBinaryTree(10)
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 0.1)).create()
 	  val input = (new IdentityTransform(wordLength)).create()
 	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  
-	  //nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create()
-	  nn = (enc TIMES enc).create()
+	  
+	  nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create() 
+	  //nn = (enc TIMES enc).create()
 	  
 	  val w = getRandomWeightVector()
 	  
-	  val numOfSamples = 1
+	  val numOfSamples = 100
 	  nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
 	  
 	  xData = new Array(numOfSamples)
 	  yData = new Array(numOfSamples)
 	  for (i<- 0 until numOfSamples) {
 	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(0,1))  
-	    yData(i) = nn(xData(i), initMemory())//new NeuronVector(1, new Uniform(-1,1))
+	    yData(i) = new NeuronVector(1, new Uniform(-1,1))
 	  }
 	  
 	  
 	  var time: Long = 0
-	  println()
-	  //val obj = getObj(w); println(obj)
 	  
 	  time = System.currentTimeMillis();
 	  val (obj, grad) = getObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj, grad.data)
 	  
-	  // gradient checking
+	  // Gradient checking
+	  // Note: the gradient check fails, because we are to optimize stochastically
+	  /*
 	  time = System.currentTimeMillis();
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj2, grad2.data)
+	  */
 	  
-	  /*
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3)
-	  */
+	  
 	}
 }
