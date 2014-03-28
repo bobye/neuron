@@ -155,7 +155,11 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   
   def apply (x: NeuronVector, mem:SetOfMemorables)  = {
     val (first, second) = x.splice(NN.first.inputDimension)
-    firstInstance(first, mem) concatenate secondInstance(second, mem)
+    // first compute secondInstance, then compute firstInstance
+    // which is the inverse order of backpropagation
+    val secondVec=  secondInstance(second, mem)
+    val firstVec =  firstInstance(first, mem)
+    firstVec concatenate secondVec
   }
 
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
@@ -183,6 +187,8 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
   type StructureType = ChainNeuralNetwork[Type1, Type2]
 
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
+    // first compute secondInstance, then compute firstInstance
+    // which is the inverse order of backpropagation
     firstInstance(secondInstance(x, mem), mem) 
   }
   
@@ -209,11 +215,10 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
     //inputBuffer(mirrorIndex) = x
+    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x)
     //outputBuffer(mirrorIndex) = NN.func(x)
-        
-    val cIndex = mem(key).mirrorIndex
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    
     NN.func(x) // outputBuffer(cIndex)
   }
   override def init(seed:String, mem:SetOfMemorables) = {
@@ -296,7 +301,6 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) DOT mem(key).gradientBuffer(cIndex)
   }
   
-  //def setBeta(b: Double): Null = {NN.beta = b; null}
 }
 
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/
@@ -370,8 +374,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   protected val db = Ref(new NeuronVector (outputDimension))
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W* x + b 
   }
 
@@ -382,13 +386,15 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     }
     * 
     */
-    // This part may have parallel side effects
+    
     atomic { implicit txn =>
+    //println(key, mem(key).mirrorIndex, db().data)
     dW() = dW() + (eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)) // dgemm and daxpy
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W TransMult eta // dgemv
+    
   }
 }
 

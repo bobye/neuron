@@ -91,10 +91,10 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   private val aeError = Ref(0.0);
   def apply (x:NeuronVector, mem:SetOfMemorables) = {
     mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoder(x, mem) // buffered
-    val cIndex = mem(key).mirrorIndex
+    mem(key).mirrorIndex = mem(inputLayer.key).mirrorIndex //(mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).outputBuffer(mem(key).mirrorIndex) = 
       outputLayer(mem(key).asInstanceOf[EncoderMemorable].encodeCurrent, mem)
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors 
+    
     
     if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {// traverse all exists buffers, and compute gradients accordingly
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
@@ -110,7 +110,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       }
     }
     
-    mem(key).outputBuffer(cIndex)
+    mem(key).outputBuffer(mem(key).mirrorIndex)
   }
   
   
@@ -129,8 +129,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
     if (mem(key).status == seed) {
       threeLayers.allocate(seed, mem);
-      mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
       mem(key).numOfMirrors = mem(inputLayer.key).numOfMirrors
+      mem(key).inputBuffer = mem(inputLayer.key).inputBuffer
       mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).status = ""
     }
@@ -152,6 +152,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
+       // There is a minor bug here: if hidden layer has sparsity penalty, because we use backpropagation in apply()
        threeLayers.getDerativeOfWeights(seed, dw, numOfSamples) + aeError() / numOfSamples
       }
     } else {

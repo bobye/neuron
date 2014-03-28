@@ -7,7 +7,7 @@ import breeze.optimize._
 
 
 
-object RNNTest extends Optimizable with Workspace {
+object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
     
     def fullBinaryTree(depth:Int) : Tree = {
       assert (depth <= 15 && depth >= 1)
@@ -18,25 +18,30 @@ object RNNTest extends Optimizable with Workspace {
     }
 	
 	def main(args: Array[String]): Unit = {
-	  val wordLength = 3
-	  val tree = fullBinaryTree(10)
-	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 0.1)).create()
+	  val wordLength = 1
+	  val tree = fullBinaryTree(3)
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.0, 10.0)).create()
 	  val input = (new IdentityTransform(wordLength)).create()
-	  val output = new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)
+	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  
-	  nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create()
+	  //nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create()
+	  nn = (enc TIMES enc).create()
 	  
-	  val numOfSamples = 100
+	  val w = getRandomWeightVector()
+	  
+	  val numOfSamples = 1
+	  nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+	  
 	  xData = new Array(numOfSamples)
 	  yData = new Array(numOfSamples)
 	  for (i<- 0 until numOfSamples) {
-	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1))  
-	    yData(i) = new NeuronVector(1, new Uniform(-1,1))
+	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(0,1))  
+	    yData(i) = nn(xData(i), initMemory())//new NeuronVector(1, new Uniform(-1,1))
 	  }
 	  
-	  val w = getRandomWeightVector()
-	  var time: Long = 0
 	  
+	  var time: Long = 0
+	  println()
 	  //val obj = getObj(w); println(obj)
 	  
 	  time = System.currentTimeMillis();
@@ -48,10 +53,10 @@ object RNNTest extends Optimizable with Workspace {
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  println(System.currentTimeMillis() - time, obj2, grad2.data)
 	  
-	  
+	  /*
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3)
-	  
+	  */
 	}
 }

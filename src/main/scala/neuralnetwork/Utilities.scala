@@ -179,10 +179,10 @@ abstract trait Optimizable {
   
   final var randomGenerator = new scala.util.Random
   
-  def initMemory() : SetOfMemorables = {
+  def initMemory(inn: InstanceOfNeuralNetwork = nn) : SetOfMemorables = {
     val seed = ((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString
     val mem = new SetOfMemorables
-    nn.init(seed, mem).allocate(seed, mem)
+    inn.init(seed, mem).allocate(seed, mem)
     mem
   }
   
@@ -202,13 +202,12 @@ abstract trait Optimizable {
     
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)    
-    /*
-    for (i <- 0 until size) {
-      val (_, mem) = initMemory()
-      totalCost = totalCost + distance(nn(xData(i), mem), yData(i))
-    }
-    * 
-    */
+    (0 until size).par.foreach(i => {
+      nn(xData(i),initMemory())
+    })
+    
+    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     totalCost = (0 until size).par.map(i => {
       distance(nn(xData(i), initMemory()), yData(i))
     }).reduce(_+_)
@@ -229,10 +228,12 @@ abstract trait Optimizable {
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     
-
+    
     (0 until size).par.foreach(i => {
       nn(xData(i),initMemory())
     })
+    
+    
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     totalCost = (0 until size).par.map(i => {
