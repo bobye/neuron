@@ -18,11 +18,10 @@ abstract class GreedyMergeGraph {
   
   // initializing to empty
   var nodes = Set[Node]()
-  var edges = SortedSet[Edge]()(Ordering[Double].on[Edge](_.v))
+  var edges = Set[Edge]()//SortedSet[Edge]()(Ordering[Double].on[Edge](_.v)) // Warning: every edge should have different v!
   
   def greedyMerge() : Unit = {
     while (!edges.isEmpty) {
-    
     val e = edges.min(Ordering.by((p:Edge)=>p.v)) // find the minimum proximity pair of connected nodes
     val n1 = e.v1
     val n2 = e.v2
@@ -51,12 +50,11 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
   def loadChain(x: NeuronVector, wordLength: Int): Unit = {
     assert(x.length > 0 && x.length % wordLength == 0)
     
-    
     var (head, xtmp) = x.splice(wordLength)
     
     var h1 = new Node(new Leaf, head)
     nodes = nodes + h1
-    for (i <- 1 until x.length/wordLength ) {
+    for (i <- 1 until x.length/wordLength ) {      
       val (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
       val h2 = new Node(new Leaf, head)
       nodes = nodes + h2
