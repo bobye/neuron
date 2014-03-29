@@ -177,6 +177,8 @@ abstract trait Optimizable {
   var nn: InstanceOfNeuralNetwork = null
   var xData : Array[NeuronVector] = null
   var yData : Array[NeuronVector] = null
+  var xDataTest : Array[NeuronVector] = null
+  var yDataTest : Array[NeuronVector] = null
   /*************************************/
   
   final var randomGenerator = new scala.util.Random
@@ -290,5 +292,14 @@ abstract trait Optimizable {
     val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
 	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
     (f(w2.data), w2)
+  }
+  
+  def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
+    val size = xDataTest.length
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    val totalCost = (0 until size).par.map(i => {
+      		distance(nn(xDataTest(i), initMemory()), yDataTest(i))
+      	}).reduce(_+_)
+    totalCost / size
   }
 }

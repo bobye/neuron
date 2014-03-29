@@ -19,7 +19,7 @@ object GMGTest extends Optimizable with Workspace {
   val dim:Int = 3
   val wordLength = 10
   val chainLength= 5
-  val lambda = 0.0
+  val lambda = 0.001
   val regCost= 0.1
 
   class Facility {
@@ -105,6 +105,16 @@ object GMGTest extends Optimizable with Workspace {
     (totalCost/size + regCost, dw/size)    
   }
   
+   override def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
+    val size = xDataTest.length
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    val totalCost = (0 until size).par.map(i => {
+      val inn = getDynamicNeuralNetwork(xDataTest(i))
+      distance(inn(xDataTest(i), initMemory(inn)), yDataTest(i))
+    }).reduce(_+_)
+    totalCost / size
+  }
   
   
   def main(args: Array[String]): Unit = {
@@ -112,14 +122,27 @@ object GMGTest extends Optimizable with Workspace {
     val dataSource = scala.io.Source.fromFile("data/colorpalette/kulerData.txt").getLines.toArray
     val labelSource= scala.io.Source.fromFile("data/colorpalette/kulerData-s.txt").getLines.toArray
     val numOfSamples = dataSource.length
-	xData = new Array(numOfSamples)
-    yData = new Array(numOfSamples)
+    val trainSize : Int = (0.6 * numOfSamples).toInt
+    
+    val shuffledList = scala.util.Random.shuffle((0 until numOfSamples).toList)
+
+	
+    val xDataM = new Array[NeuronVector](numOfSamples)
+    val yDataM = new Array[NeuronVector](numOfSamples)
+
     for (i<- 0 until numOfSamples) yield {
-      xData(i) = new NeuronVector(
-	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, dim*chainLength))
-      yData(i) = new NeuronVector(
-	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, 1)) * 0.2 // normalized to [0,1]
+      xDataM(i) = new NeuronVector(
+	        new DenseVector(dataSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, dim*chainLength))
+      yDataM(i) = new NeuronVector(
+	        new DenseVector(labelSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, 1)) * 0.2 // normalized to [0,1]
     }   
+    
+    xData = xDataM slice(0, trainSize)
+    yData = yDataM slice(0, trainSize)
+    
+    xDataTest = xDataM slice(trainSize, numOfSamples)
+    yDataTest = yDataM slice(trainSize, numOfSamples)
+    
     
     nn = getDynamicNeuralNetwork(xData(0), fac, fsimple) // default neural network
     nnFork=getDynamicNeuralNetwork(xData(0), facFork, fsimple)
@@ -145,6 +168,10 @@ object GMGTest extends Optimizable with Workspace {
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3)
+	  
+	  time = System.currentTimeMillis();
+	  val obj4 = test(w)
+	  println(System.currentTimeMillis() - time, obj4)
 	  
   }
 
