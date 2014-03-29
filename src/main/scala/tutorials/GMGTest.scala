@@ -25,7 +25,7 @@ object GMGTest extends Optimizable with Workspace {
   class Facility {
    val enc  = new RecursiveSimpleAE()(wordLength, lambda, regCost).create() //used for training  
    val input = (new SingleLayerNeuralNetwork(wordLength) TIMES new LinearNeuralNetwork(dim, wordLength)).create()
-   val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength, 1)).create()
+   val output = (new LinearNeuralNetwork(wordLength, 1)).create()
   }
   val fac = new Facility
   val facFork=new Facility
@@ -134,7 +134,7 @@ object GMGTest extends Optimizable with Workspace {
       xDataM(i) = new NeuronVector(
 	        new DenseVector(dataSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, dim*chainLength))
       yDataM(i) = new NeuronVector(
-	        new DenseVector(labelSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, 1)) * 0.2 // normalized to [0,1]
+	        new DenseVector(labelSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, 1))
     }   
     
     xData = xDataM slice(0, trainSize)
@@ -170,7 +170,7 @@ object GMGTest extends Optimizable with Workspace {
 	  println(System.currentTimeMillis() - time, obj3)
 	  
 	  time = System.currentTimeMillis();
-	  val obj4 = test(w)
+	  val obj4 = test(w2) // >.< change w to w2
 	  println(System.currentTimeMillis() - time, obj4)
 	  
   }
