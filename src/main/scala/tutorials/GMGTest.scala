@@ -19,18 +19,34 @@ object GMGTest extends Optimizable with Workspace {
   val dim:Int = 3
   val wordLength = 10
   val chainLength= 5
-  val lambda = 0.001
+  val lambda = 0.0
   val regCost= 0.1
 
+  class NNModel (wL: Int) extends AutoEncoder(2*wL, lambda, regCost,
+		  							new SingleLayerNeuralNetwork(wL) TIMES 
+		  								new LinearNeuralNetwork((wL*1.414).toInt, wL) TIMES
+		  									new SingleLayerNeuralNetwork((wL*1.414).toInt),
+		  							new SingleLayerNeuralNetwork(2*wL)) with  RecursiveEncoder {
+    val wordLength = wL
+    type Instance <: InstanceOfNNModel
+    override def create() : InstanceOfNNModel = new InstanceOfNNModel(this)    
+  }
+  class InstanceOfNNModel (override val NN: NNModel) extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
+    val wordLength = NN.wordLength
+    type StructureType <: NNModel
+  }
+  
   class Facility {
-   val enc  = new RecursiveSimpleAE()(wordLength, lambda, regCost).create() //used for training  
+   val enc  = new RecursiveSimpleAE()(wordLength, lambda, regCost).create() //used for training 
+   //val enc = new NNModel(wordLength).create()
    val input = (new SingleLayerNeuralNetwork(wordLength) TIMES new LinearNeuralNetwork(dim, wordLength)).create()
-   val output = (new LinearNeuralNetwork(wordLength, 1)).create()
   }
   val fac = new Facility
   val facFork=new Facility
 
+  
   var nnFork : InstanceOfNeuralNetwork = null
+  val output = (new LinearNeuralNetwork(wordLength, 15)).create()
   
   def getDynamicNeuralNetwork(x:NeuronVector, 
 		  					  ff: Facility = fac, 
@@ -40,7 +56,8 @@ object GMGTest extends Optimizable with Workspace {
     tgmc.loadChain(inputs(x,initMemory(inputs)), wordLength)
     tgmc.greedyMerge()// tgmc.nodes is set of trees
     val node = tgmc.nodes.iterator.next
-    (ff.output TIMES new RecursiveNeuralNetwork(node.t, ff.enc, ff.input)).create()
+    
+    (output TIMES new RecursiveNeuralNetwork(node.t, ff.enc, ff.input)).create()
   }
   
    override def getObj(w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
@@ -138,10 +155,10 @@ object GMGTest extends Optimizable with Workspace {
     }   
     
     xData = xDataM slice(0, trainSize)
-    yData = yDataM slice(0, trainSize)
+    yData = xData //yDataM slice(0, trainSize)
     
     xDataTest = xDataM slice(trainSize, numOfSamples)
-    yDataTest = yDataM slice(trainSize, numOfSamples)
+    yDataTest = xDataTest //yDataM slice(trainSize, numOfSamples)
     
     
     nn = getDynamicNeuralNetwork(xData(0), fac, fsimple) // default neural network
@@ -167,7 +184,7 @@ object GMGTest extends Optimizable with Workspace {
 	  	  
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
-	  println(System.currentTimeMillis() - time, obj3)
+	  println(System.currentTimeMillis() - time, obj3, w2.data)
 	  
 	  time = System.currentTimeMillis();
 	  val obj4 = test(w2) // >.< change w to w2

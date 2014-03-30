@@ -9,6 +9,7 @@ abstract trait EncoderWorkspace {
     def extract() = x match {
       case _:Encoder => new EncoderNeuralNetwork[T](x)
       case _:InstanceOfEncoder => new InstanceOfEncoderNeuralNetwork[T](x)
+      case _ => x // others
     }
   }  
 }
@@ -38,10 +39,10 @@ abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClas
 abstract trait RecursiveClass extends EncodeClass {
   val wordLength: Int
 }
-abstract trait RecursiveEncoder extends Encoder with RecursiveClass {
+abstract trait RecursiveEncoder extends Operationable with RecursiveClass {
   override def create(): InstanceOfRecursiveEncoder
 }
-abstract trait InstanceOfRecursiveEncoder extends InstanceOfEncoder with RecursiveClass 
+abstract trait InstanceOfRecursiveEncoder extends InstanceOfNeuralNetwork with RecursiveClass 
 
 // Convert Encoder and InstanceOfEncoder to new NeuralNetwork by replacing apply() with encode()
 // However, the weights of both are not changed, which means in back propagation 
@@ -76,7 +77,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 /********************************************************************************************/
 // AutoEncoder
 class AutoEncoder (override val dimension: Int, val lambda:Double = 0.0, val regCoeff:Double = 0.0,
-    			   val hidden: NeuralNetwork, val post: SelfTransform)
+    			   val hidden: Operationable, val post: SelfTransform)
 	extends SelfTransform (dimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
   assert (post.dimension == dimension)
