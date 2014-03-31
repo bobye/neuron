@@ -141,7 +141,7 @@ object GMGTest extends Optimizable with Workspace {
     val numOfSamples = dataSource.length
     val trainSize : Int = (0.6 * numOfSamples).toInt
     
-    val shuffledList = scala.util.Random.shuffle((0 until numOfSamples).toList)
+    val shuffledArray = scala.util.Random.shuffle((0 until numOfSamples).toList).toArray
 
 	
     val xDataM = new Array[NeuronVector](numOfSamples)
@@ -149,15 +149,15 @@ object GMGTest extends Optimizable with Workspace {
 
     for (i<- 0 until numOfSamples) yield {
       xDataM(i) = new NeuronVector(
-	        new DenseVector(dataSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, dim*chainLength))
+	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, dim*chainLength))
       yDataM(i) = new NeuronVector(
-	        new DenseVector(labelSource(shuffledList(i)).split("\\s+").map(_.toDouble), 0, 1, 1))
+	        new DenseVector(labelSource(i).split("\\s+").map(_.toDouble), 0, 1, 1))
     }   
     
-    xData = xDataM slice(0, trainSize)
+    xData = (shuffledArray slice(0, trainSize)).map(xDataM(_))
     yData = xData //yDataM slice(0, trainSize)
     
-    xDataTest = xDataM slice(trainSize, numOfSamples)
+    xDataTest = (shuffledArray slice(trainSize, numOfSamples)).map(xDataM(_))
     yDataTest = xDataTest //yDataM slice(trainSize, numOfSamples)
     
     
