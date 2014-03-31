@@ -19,7 +19,7 @@ object GMGTest extends Optimizable with Workspace {
   val dim:Int = 3
   val wordLength = 10
   val chainLength= 5
-  val lambda = 0.0
+  val lambda = 0.001
   val regCost= 0.1
 
   class NNModel (wL: Int) extends AutoEncoder(2*wL, lambda, regCost,
@@ -184,12 +184,22 @@ object GMGTest extends Optimizable with Workspace {
 	  	  
 	  time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
-	  println(System.currentTimeMillis() - time, obj3, w2.data)
+	  println(System.currentTimeMillis() - time, obj3)
 	  
 	  time = System.currentTimeMillis();
 	  val obj4 = test(w2) // >.< change w to w2
 	  println(System.currentTimeMillis() - time, obj4)
 	  
+	  val xDataDecode = (0 until numOfSamples).map(i => {
+		  val inn = getDynamicNeuralNetwork(xDataM(i))
+		  inn(xDataM(i), initMemory(inn))
+      })
+      
+      import java.io._
+      val writer = new PrintWriter(new File("data/colorpalette/kulerData-Decode.txt"))
+	  xDataDecode.foreach(x => writer.write(x.data.data.toString()))
+	  writer.close()
+	 
   }
 
 }

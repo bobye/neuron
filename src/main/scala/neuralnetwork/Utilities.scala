@@ -283,8 +283,7 @@ abstract trait Optimizable {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
-	    val w = new WeightVector(x)
-	    val (obj, grad) = getObjAndGrad(w, distance)
+	    val (obj, grad) = getObjAndGrad(new WeightVector(x), distance)
 	    (obj, grad.data)
 	  }    
     }
