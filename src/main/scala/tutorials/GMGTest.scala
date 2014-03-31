@@ -136,8 +136,8 @@ object GMGTest extends Optimizable with Workspace {
   
   def main(args: Array[String]): Unit = {
     
-    val dataSource = scala.io.Source.fromFile("data/colorpalette/kulerData.txt").getLines.toArray
-    val labelSource= scala.io.Source.fromFile("data/colorpalette/kulerData-s.txt").getLines.toArray
+    val dataSource = scala.io.Source.fromFile("data/colorpalette/mturkData.txt").getLines.toArray
+    val labelSource= scala.io.Source.fromFile("data/colorpalette/mturkData-s.txt").getLines.toArray
     val numOfSamples = dataSource.length
     val trainSize : Int = (0.6 * numOfSamples).toInt
     
@@ -155,10 +155,10 @@ object GMGTest extends Optimizable with Workspace {
     }   
     
     xData = (shuffledArray slice(0, trainSize)).map(xDataM(_))
-    yData = xData //yDataM slice(0, trainSize)
+    yData = xData // (shuffledArray slice(0, trainSize)).map(yDataM(_))
     
     xDataTest = (shuffledArray slice(trainSize, numOfSamples)).map(xDataM(_))
-    yDataTest = xDataTest //yDataM slice(trainSize, numOfSamples)
+    yDataTest = xDataTest // (shuffledArray slice(trainSize, numOfSamples)).map(yDataM(_))
     
     
     nn = getDynamicNeuralNetwork(xData(0), fac, fsimple) // default neural network
@@ -196,7 +196,7 @@ object GMGTest extends Optimizable with Workspace {
       })
       
       import java.io._
-      val writer = new PrintWriter(new File("data/colorpalette/kulerData-Decode.txt"))
+      val writer = new PrintWriter(new File("data/colorpalette/mturkData-Decode.txt"))
 	  xDataDecode.foreach(x => {writer.write(x.data.data.mkString("\t")); writer.write("\n")})
 	  writer.close()
 	 
