@@ -197,7 +197,7 @@ object GMGTest extends Optimizable with Workspace {
       
       import java.io._
       val writer = new PrintWriter(new File("data/colorpalette/kulerData-Decode.txt"))
-	  xDataDecode.foreach(x => writer.write(x.data.data.toString()))
+	  xDataDecode.foreach(x => {writer.write(x.data.data.mkString("\t")); writer.write("\n")})
 	  writer.close()
 	 
   }
