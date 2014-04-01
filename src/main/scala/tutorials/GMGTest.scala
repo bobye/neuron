@@ -19,7 +19,7 @@ object GMGTest extends Optimizable with Workspace {
   val dim:Int = 3
   val wordLength = 10
   val chainLength= 5
-  val lambda = 0.005
+  val lambda = 0.001
   val regCost= 0.1
 
   class NNModel (wL: Int) extends AutoEncoder(2*wL, lambda, regCost,
@@ -95,7 +95,7 @@ object GMGTest extends Optimizable with Workspace {
      */
     
     val dw = new WeightVector(w.length)
-    /*
+    
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     val indCost = (0 until size).par.map(i => {
@@ -104,8 +104,8 @@ object GMGTest extends Optimizable with Workspace {
     })
     val thres = indCost.sum / size
     val inliers = (0 until size) .filter(indCost(_)<3*thres)
-    */
-    val inliers = (0 until size)
+    
+    //val inliers = (0 until size)
         
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
@@ -143,7 +143,7 @@ object GMGTest extends Optimizable with Workspace {
     val dataSource = scala.io.Source.fromFile("data/colorpalette/mturkData.txt").getLines.toArray
     val labelSource= scala.io.Source.fromFile("data/colorpalette/mturkData-s.txt").getLines.toArray
     val numOfSamples = dataSource.length
-    val trainSize : Int = (0.6 * numOfSamples).toInt
+    val trainSize : Int = (numOfSamples).toInt
     
     val shuffledArray = scala.util.Random.shuffle((0 until numOfSamples).toList).toArray
 
@@ -161,7 +161,7 @@ object GMGTest extends Optimizable with Workspace {
     xData = (shuffledArray slice(0, trainSize)).map(xDataM(_))
     yData = xData // (shuffledArray slice(0, trainSize)).map(yDataM(_))
     
-    xDataTest = (shuffledArray slice(trainSize, numOfSamples)).map(xDataM(_))
+    xDataTest = xData //(shuffledArray slice(trainSize, numOfSamples)).map(xDataM(_))
     yDataTest = xDataTest // (shuffledArray slice(trainSize, numOfSamples)).map(yDataM(_))
     
     
@@ -204,7 +204,7 @@ object GMGTest extends Optimizable with Workspace {
 	  xDataDecode.foreach(x => {writer.write(x.data.data.mkString("\t")); writer.write("\n")})
 	  writer.close()
 	  
-	  val writeW = new PrintWriter(new File("data/colorpalette/mturkData-W.txt"))
+	  val writeW = new PrintWriter(new File("data/colorpalette/mturkData-W" + wordLength.toString + "-" + obj3.toString +".txt"))
 	  writeW.write(w2.data.data.mkString("\t")); 
 	  writeW.close()
 	 
