@@ -19,7 +19,7 @@ object GMGTest extends Optimizable with Workspace {
   val dim:Int = 3
   val wordLength = 10
   val chainLength= 5
-  val lambda = 0.001
+  val lambda = 0.005
   val regCost= 0.1
 
   class NNModel (wL: Int) extends AutoEncoder(2*wL, lambda, regCost,
@@ -98,14 +98,18 @@ object GMGTest extends Optimizable with Workspace {
     /*
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    (0 until size).par.foreach(i => {
+    val indCost = (0 until size).par.map(i => {
       val inn = getDynamicNeuralNetwork(xData(i))
-      inn(xData(i),initMemory(inn))
+      distance(inn(xData(i),initMemory(inn)), yData(i))
     })
-    */    
+    val thres = indCost.sum / size
+    val inliers = (0 until size) .filter(indCost(_)<3*thres)
+    */
+    val inliers = (0 until size)
+        
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    totalCost = (0 until size).par.map(i => {
+    totalCost = inliers.par.map(i => {
       val inn = getDynamicNeuralNetwork(xData(i))
       val mem = initMemory(inn)
       
@@ -118,8 +122,8 @@ object GMGTest extends Optimizable with Workspace {
      * End parallel loop
      */
     
-    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
-    (totalCost/size + regCost, dw/size)    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, inliers.size)
+    (totalCost/inliers.size + regCost, dw/inliers.size)    
   }
   
    override def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
@@ -199,6 +203,10 @@ object GMGTest extends Optimizable with Workspace {
       val writer = new PrintWriter(new File("data/colorpalette/mturkData-Decode.txt"))
 	  xDataDecode.foreach(x => {writer.write(x.data.data.mkString("\t")); writer.write("\n")})
 	  writer.close()
+	  
+	  val writeW = new PrintWriter(new File("data/colorpalette/mturkData-W.txt"))
+	  writeW.write(w2.data.data.mkString("\t")); 
+	  writeW.close()
 	 
   }
 
