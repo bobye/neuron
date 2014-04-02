@@ -101,14 +101,51 @@ class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
 	
 }
 
-/*
-class ContextAwareRNN (val tree:BinaryTreeNode,
-					   val enc:CREncodeClass,
-					   val input:Operationable,
-					   val inputContext:Operationable)
-    extends Operationable {
-  assert(input.outputDimension == enc.wordLength)
+object RecursiveAECases extends Workspace {
+
+abstract trait RAE extends EncodeClass{
+  val encoderReal: Operationable
+  val decoderReal: Operationable
 }
-* 
-*/
+
+class RAELeaf(val enc:InstanceOfAutoEncoder) 
+	extends IdentityTransform(enc.encodeDimension) with RAE {
+  val encodeDimension = enc.encodeDimension
+  val encoderReal = this 
+  val decoderReal = this
+}
+
+class RAEBranch(val enc:InstanceOfAutoEncoder, 
+    val leftRAE: RAE, val rightRAE: RAE, regCoeff:Double = 0.0)
+	extends AutoEncoder( 
+	    regCoeff,
+	    enc.encoderInstance TIMES (leftRAE.encoderReal PLUS rightRAE.encoderReal),
+  	    (leftRAE.decoderReal PLUS rightRAE.decoderReal) TIMES enc.decoderInstance) with RAE {
+  val encoderReal = encoder
+  val decoderReal = decoder
+}
+
+
+class RecursiveAutoEncoder (val tree: Tree,
+							val enc: InstanceOfAutoEncoder ,
+							val input: Operationable,
+							val regCoeff:Double = 0.0)
+		extends Operationable with EncoderWorkspace  {
+  assert(input.outputDimension == enc.encodeDimension)
+  assert(enc.inputDimension == 2*enc.encodeDimension)
+  val encodeDimension = enc.encodeDimension
+  val wordLength = encodeDimension
+  
+  def ae(tree:Tree): RAE = tree match {
+      case Leaf() => new RAELeaf(enc)
+      case Branch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
+  }
+  
+  val inputDimension = tree.numOfLeaves * input.inputDimension
+  val outputDimension = enc.encodeDimension
+  val AE = ae(tree)
+  def create() = (AE.extract() TIMES (input REPEAT tree.numOfLeaves)).create()
+  
+}
+}
 

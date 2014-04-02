@@ -13,6 +13,7 @@ abstract trait Workspace{//
     // Two basic operations to support combination 
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
+    def REPEAT (n:Int) = new RepeatNeuralNetwork(x, n)
   } 
 }
 /** Operationable is a generic trait that supports operations **/
@@ -145,6 +146,17 @@ class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   def outputDimension= first.outputDimension+ second.outputDimension 
   def create(): InstanceOfJointNeuralNetwork[Type1, Type2] = new InstanceOfJointNeuralNetwork(this)
   override def toString() = "(" + first.toString + " + " + second.toString + ")"
+}
+
+class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends Operationable {
+  assert (n>=1)
+  val inputDimension = x.inputDimension * n
+  val outputDimension = x.outputDimension * n
+  def create() = n match {
+    case 1 => x.create()
+    case _ => (x PLUS new RepeatNeuralNetwork(x, n-1)).create()
+  }
+  override def toString() = "(" + x.toString() + "," + " n)"
 }
 
 class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable]

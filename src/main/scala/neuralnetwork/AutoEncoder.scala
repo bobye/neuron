@@ -27,7 +27,6 @@ abstract trait Encoder extends Operationable with EncodeClass{
 } 
 abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
-  //val encoder: InstanceOfNeuralNetwork
   def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {
     apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
   }
@@ -38,6 +37,9 @@ abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClas
 // It implicitly requires the dimensional constraints
 abstract trait RecursiveClass extends EncodeClass {
   val wordLength: Int
+  // some bugs here, but works fine for running
+  //assert(wordLength == encodeDimension)
+  //assert(wordLength*2 == inputDimension)
 }
 abstract trait RecursiveEncoder extends Operationable with RecursiveClass {
   override def create(): InstanceOfRecursiveEncoder
@@ -76,11 +78,10 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 
 /********************************************************************************************/
 // AutoEncoder
-class AutoEncoder (override val dimension: Int, val regCoeff:Double = 0.0,
+class AutoEncoder (val regCoeff:Double = 0.0,
     			   val encoder: Operationable, val decoder: Operationable)
-	extends SelfTransform (dimension) with Encoder {
+	extends SelfTransform (encoder.inputDimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
-  assert (encoder.inputDimension == dimension)
   assert (encoder.outputDimension == decoder.inputDimension)
   assert (decoder.outputDimension == dimension)
   val encodeDimension = encoder.outputDimension
@@ -191,15 +192,16 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
 }
 
 object AutoEncoderCases extends Workspace {
+  
 class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0) 
-	extends AutoEncoder(dimension, regCoeff, 
+	extends AutoEncoder(regCoeff, 
 			new SingleLayerNeuralNetwork(hiddenDimension, func) TIMES new RegularizedLinearNN(dimension, hiddenDimension, lambda),
 			new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
 class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0)
-	extends AutoEncoder(dimension, regCoeff, 
+	extends AutoEncoder(regCoeff, 
 			new SingleLayerNeuralNetwork(hiddenDimension, func) TIMES new RegularizedLinearNN(dimension, hiddenDimension, lambda),
 			new SingleLayerNeuralNetwork(dimension, func) TIMES new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 			
@@ -213,7 +215,7 @@ class SparseLinearAE (val beta:Double = 0.0, // sparse penalty
 	(dimension:Int, val hiddenDimension:Int)
 	(val inputLayer: InstanceOfRegularizedLinearNN = 
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern	
-	extends AutoEncoder(dimension, regCoeff,
+	extends AutoEncoder(regCoeff,
 	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty) TIMES inputLayer,
 	    new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
@@ -226,7 +228,7 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 	(dimension: Int, val hiddenDimension:Int)
 	(val inputLayer: InstanceOfRegularizedLinearNN = 
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern
-	extends AutoEncoder(dimension, regCoeff, 
+	extends AutoEncoder(regCoeff, 
 	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty) TIMES inputLayer,
 	    new SingleLayerNeuralNetwork(dimension, func) TIMES new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 	
@@ -253,7 +255,10 @@ class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
 }
 
 }
-     			 
+   
+
+
+
 /********************************************************************************************/
 // Context Aware Auto Encoder (NOT YET TESTED!)
 // The following section is far from complete! Don't use it.
