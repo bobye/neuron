@@ -1,5 +1,6 @@
 package tutorials
 import neuralnetwork._
+import neuralnetwork.AutoEncoderCases._
 import breeze.stats.distributions._
 import breeze.linalg._
 
@@ -21,7 +22,7 @@ object GMGTest extends Optimizable with Workspace {
   val chainLength= 5
   val lambda = 0.001
   val regCost= 0.1
-
+/*
   class NNModel (wL: Int) extends AutoEncoder(2*wL, lambda, regCost,
 		  							new SingleLayerNeuralNetwork(wL) TIMES 
 		  								new LinearNeuralNetwork((wL*1.414).toInt, wL) TIMES
@@ -36,6 +37,7 @@ object GMGTest extends Optimizable with Workspace {
     type StructureType <: NNModel
   }
   
+  */
   class Facility {
    val enc  = new RecursiveSimpleAE()(wordLength, lambda, regCost).create() //used for training 
    //val enc = new NNModel(wordLength).create()
@@ -95,7 +97,10 @@ object GMGTest extends Optimizable with Workspace {
      */
     
     val dw = new WeightVector(w.length)
-    
+    /*
+     * RANSAC
+     */
+    /*
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     val indCost = (0 until size).par.map(i => {
@@ -104,8 +109,8 @@ object GMGTest extends Optimizable with Workspace {
     })
     val thres = indCost.sum / size
     val inliers = (0 until size) .filter(indCost(_)<3*thres)
-    
-    //val inliers = (0 until size)
+    */
+    val inliers = (0 until size)
         
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     nnFork.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
@@ -204,7 +209,7 @@ object GMGTest extends Optimizable with Workspace {
 	  xDataDecode.foreach(x => {writer.write(x.data.data.mkString("\t")); writer.write("\n")})
 	  writer.close()
 	  
-	  val writeW = new PrintWriter(new File("data/colorpalette/mturkData-W" + wordLength.toString + "-" + obj3.toString +".txt"))
+	  val writeW = new PrintWriter(new File("data/colorpalette/mturkData-W" + wordLength.toString + "-" + obj4.toString +".txt"))
 	  writeW.write(w2.data.data.mkString("\t")); 
 	  writeW.close()
 	 

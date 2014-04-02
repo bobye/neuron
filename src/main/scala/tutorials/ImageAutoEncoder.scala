@@ -4,12 +4,12 @@ package tutorials
 import breeze.linalg._
 import breeze.stats.distributions._
 import neuralnetwork._
-
+import neuralnetwork.AutoEncoderCases._
 
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseAutoEncoder (3.0, .0001) (rows*cols, hiddenDimension){
+	extends SparseAutoEncoder (3.0, .0001) (rows*cols, hiddenDimension)(){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -19,7 +19,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
   type Structure <: ImageAutoEncoder
   def displayHiddenNetwork (str:String) : Unit = { 
     val weightsVector = new WeightVector((NN.rows*NN.cols)*NN.hiddenDimension)
-    val raw = inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
+    val raw = NN.inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
     weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols).transpose.vec(false)
     
     //println(weightsVector.data)
