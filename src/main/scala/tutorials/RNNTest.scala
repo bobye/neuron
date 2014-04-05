@@ -26,7 +26,7 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	  
 	  
 	  //nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create() 
-	  nn = (output TIMES new RecursiveAutoEncoder(tree, enc, input, 1.0)).create() 
+	  nn = (output TIMES new RecursiveAutoEncoder(tree, enc, input, 1.0).encoCreate()).create()
 	  //nn = (enc TIMES enc).create()
 	  
 	  val w = getRandomWeightVector()

@@ -118,7 +118,7 @@ class RAEBranch(val enc:InstanceOfAutoEncoder,
     val leftRAE: RAE, val rightRAE: RAE, regCoeff:Double = 0.0)
 	extends AutoEncoder ( 
 	    regCoeff,
-	    new ChainNeuralNetwork(enc.encoderInstance, new JointNeuralNetwork(leftRAE.enco, rightRAE.enco)),
+	    new ChainNeuralNetwork(new InstanceOfEncoderNeuralNetwork(enc), new JointNeuralNetwork(leftRAE.enco, rightRAE.enco)),
   	    new ChainNeuralNetwork(new JointNeuralNetwork(leftRAE.deco, rightRAE.deco), enc.decoderInstance)) with RAE {
   val enco = this.extract()
   val deco = decoder
@@ -130,7 +130,7 @@ class RecursiveAutoEncoder (val tree: Tree,
 							val input: InstanceOfAutoEncoder,
 							val regCoeff:Double = 0.0)
 		extends Operationable with EncoderWorkspace  {
-  assert(input.outputDimension == enc.encodeDimension)
+  assert(input.encodeDimension == enc.encodeDimension)
   assert(enc.inputDimension == 2*enc.encodeDimension)
   val encodeDimension = enc.encodeDimension
   val wordLength = encodeDimension
@@ -142,8 +142,8 @@ class RecursiveAutoEncoder (val tree: Tree,
   
   val inputDimension = tree.numOfLeaves * input.inputDimension
   val outputDimension = enc.encodeDimension
-  val AE = ae(tree)
-  def create() = AE.extract().create()
-  
+  private val AE = ae(tree)
+  def encoCreate() = AE.enco.create()
+  def create() = AE.create()
 }
 
