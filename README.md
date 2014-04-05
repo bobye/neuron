@@ -1,4 +1,4 @@
-This project is still under development, which aims at a generic template based framework to experiment neural network topologies. There is no release at current time.
+_This project is still under development, which aims at a generic framework to experiment heterogeneous neural network topologies. There is no release at current time._
 
 ### How to build
 
@@ -9,6 +9,15 @@ sbt> eclipse
 ```
 Start _Scala IDE for Eclipse_ and import the project directory
 
+### Features
+ - template vs. module
+ - algebra (PLUS, TIMES, TENSOR) for network structures
+ - multilayer perceptron
+ - autoencoders
+ - recursive neural network
+ - metrics (L1/L2, Softmax)
+ - parallel framework: atomic parameters + distributed states
+ 
 ### Get Started
 TBA
 
