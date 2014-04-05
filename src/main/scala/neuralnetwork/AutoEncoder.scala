@@ -127,25 +127,25 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   
   
   override def init(seed:String, mem:SetOfMemorables) = {
+    main.init(seed, mem)
     if (!mem.isDefinedAt(key) || mem(key).status != seed) {
       mem += (key -> new EncoderMemorable)
       mem(key).status = seed
       mem(key).numOfMirrors = 1
       mem(key).mirrorIndex = 0
-      main.init(seed, mem) 
     } else {
-      main.init(seed, mem)
       mem(key).numOfMirrors = mem(key).numOfMirrors + 1
     }
     this
   }
   
   override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
+    main.allocate(seed, mem)
     if (mem(key).status == seed) {
-      main.allocate(seed, mem);
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).status = ""
+    } else {
     }
     this
   }

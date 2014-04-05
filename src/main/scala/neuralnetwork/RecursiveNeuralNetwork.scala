@@ -129,7 +129,7 @@ class RecursiveAutoEncoder (val tree: Tree,
 							val enc: InstanceOfAutoEncoder ,
 							val input: InstanceOfAutoEncoder,
 							val regCoeff:Double = 0.0)
-		extends Operationable with EncoderWorkspace  {
+		extends SelfTransform(tree.numOfLeaves*input.inputDimension) with EncoderWorkspace  {
   assert(input.encodeDimension == enc.encodeDimension)
   assert(enc.inputDimension == 2*enc.encodeDimension)
   val encodeDimension = enc.encodeDimension
@@ -140,8 +140,6 @@ class RecursiveAutoEncoder (val tree: Tree,
       case Branch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
   }
   
-  val inputDimension = tree.numOfLeaves * input.inputDimension
-  val outputDimension = enc.encodeDimension
   private val AE = ae(tree)
   def encoCreate() = AE.enco.create()
   def create() = AE.create()
