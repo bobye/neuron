@@ -108,11 +108,10 @@ abstract trait RAE extends EncodeClass{
   val decoderReal: Operationable
 }
 
-class RAELeaf(val enc:InstanceOfAutoEncoder) 
-	extends IdentityTransform(enc.encodeDimension) with RAE {
-  val encodeDimension = enc.encodeDimension
-  val encoderReal = this 
-  val decoderReal = this
+class RAELeaf(val leaf:InstanceOfAutoEncoder) 
+	extends AutoEncoder(leaf.NN.regCoeff, leaf.encoderInstance, leaf.decoderInstance) with RAE {
+  val encoderReal = leaf.encoderInstance
+  val decoderReal = leaf.decoderInstance
 }
 
 class RAEBranch(val enc:InstanceOfAutoEncoder, 
@@ -128,7 +127,7 @@ class RAEBranch(val enc:InstanceOfAutoEncoder,
 
 class RecursiveAutoEncoder (val tree: Tree,
 							val enc: InstanceOfAutoEncoder ,
-							val input: Operationable,
+							val input: InstanceOfAutoEncoder,
 							val regCoeff:Double = 0.0)
 		extends Operationable with EncoderWorkspace  {
   assert(input.outputDimension == enc.encodeDimension)
@@ -137,7 +136,7 @@ class RecursiveAutoEncoder (val tree: Tree,
   val wordLength = encodeDimension
   
   def ae(tree:Tree): RAE = tree match {
-      case Leaf() => new RAELeaf(enc)
+      case Leaf() => new RAELeaf(input)
       case Branch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
   }
   

@@ -88,6 +88,9 @@ class AutoEncoder (val regCoeff:Double = 0.0,
   def create (): InstanceOfAutoEncoder = new InstanceOfAutoEncoder(this)
 }
 
+class IdentityAutoEncoder (dimension:Int) 
+	extends AutoEncoder(0.0, new IdentityTransform(dimension), new IdentityTransform(dimension)) 
+
 class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
   type Structure <: AutoEncoder
   //protected val inputLayer = new RegularizedLinearNN(NN.dimension, NN.hidden.inputDimension, NN.lambda).create() // can be referenced from ImageAutoEncoder

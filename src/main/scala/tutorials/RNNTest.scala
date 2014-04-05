@@ -21,9 +21,9 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	
 	def main(args: Array[String]): Unit = {
 	  val wordLength = 1
-	  val tree = fullBinaryTree(10)
+	  val tree = fullBinaryTree(3)
 	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.001, 0.1)).create()
-	  val input = (new IdentityTransform(wordLength)).create()
+	  val input = (new IdentityAutoEncoder(wordLength)).create()
 	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  
 	  
