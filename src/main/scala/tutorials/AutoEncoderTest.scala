@@ -1,7 +1,6 @@
 package tutorials
 import breeze.stats.distributions._
 import neuralnetwork._
-import neuralnetwork.AutoEncoderCases._
 
 object AutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {

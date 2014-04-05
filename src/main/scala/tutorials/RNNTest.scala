@@ -1,8 +1,6 @@
 package tutorials
 
 import neuralnetwork._
-import neuralnetwork.AutoEncoderCases._
-import neuralnetwork.RecursiveAECases._
 import breeze.stats.distributions._
 import breeze.linalg._
 import breeze.optimize._
@@ -20,9 +18,9 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
     }
 	
 	def main(args: Array[String]): Unit = {
-	  val wordLength = 1
-	  val tree = fullBinaryTree(3)
-	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.001, 0.1)).create()
+	  val wordLength = 10
+	  val tree = fullBinaryTree(5)
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.001, 0.0)).create()
 	  val input = (new IdentityAutoEncoder(wordLength)).create()
 	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  

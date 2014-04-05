@@ -4,7 +4,6 @@ package tutorials
 import breeze.linalg._
 import breeze.stats.distributions._
 import neuralnetwork._
-import neuralnetwork.AutoEncoderCases._
 
 
 // create custom Image AutoEncoder from SparseSingleLayerAE

@@ -194,19 +194,21 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
    
 }
 
-object AutoEncoderCases extends Workspace {
   
 class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0) 
 	extends AutoEncoder(regCoeff, 
-			new SingleLayerNeuralNetwork(hiddenDimension, func) TIMES new RegularizedLinearNN(dimension, hiddenDimension, lambda),
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
+								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
 			new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
 class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0)
 	extends AutoEncoder(regCoeff, 
-			new SingleLayerNeuralNetwork(hiddenDimension, func) TIMES new RegularizedLinearNN(dimension, hiddenDimension, lambda),
-			new SingleLayerNeuralNetwork(dimension, func) TIMES new RegularizedLinearNN(hiddenDimension, dimension, lambda))
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
+								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func),
+								   new RegularizedLinearNN(hiddenDimension, dimension, lambda)))
 			
 
 	  
@@ -219,7 +221,7 @@ class SparseLinearAE (val beta:Double = 0.0, // sparse penalty
 	(val inputLayer: InstanceOfRegularizedLinearNN = 
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern	
 	extends AutoEncoder(regCoeff,
-	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty) TIMES inputLayer,
+	    new ChainNeuralNetwork(new SparseSingleLayerNN(hiddenDimension, beta, func, penalty), inputLayer),
 	    new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
 class SparseAutoEncoder (val beta:Double = 0.0,
@@ -232,8 +234,9 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 	(val inputLayer: InstanceOfRegularizedLinearNN = 
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern
 	extends AutoEncoder(regCoeff, 
-	    new SparseSingleLayerNN(hiddenDimension, beta, func, penalty) TIMES inputLayer,
-	    new SingleLayerNeuralNetwork(dimension, func) TIMES new RegularizedLinearNN(hiddenDimension, dimension, lambda))
+	    new ChainNeuralNetwork(new SparseSingleLayerNN(hiddenDimension, beta, func, penalty), inputLayer),
+	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func),
+	    					   new RegularizedLinearNN(hiddenDimension, dimension, lambda)))
 	
 class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
 	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0) 
@@ -255,8 +258,6 @@ class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction)
 class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
 	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
   val wordLength = NN.wordLength
-}
-
 }
    
 

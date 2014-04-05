@@ -1,6 +1,5 @@
 package tutorials
 import neuralnetwork._
-import neuralnetwork.AutoEncoderCases._
 import breeze.stats.distributions._
 import breeze.linalg._
 
