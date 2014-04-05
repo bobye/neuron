@@ -14,6 +14,8 @@ abstract trait Workspace{//
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
     def REPEAT (n:Int) = new RepeatNeuralNetwork(x, n)
+    def TENSOR [T2<:Operationable](y:T2) = 
+      new TensorNeuralNetwork(x.outputDimension, y.outputDimension) TIMES (x PLUS y)
   } 
 }
 /** Operationable is a generic trait that supports operations **/
@@ -87,6 +89,52 @@ class IdentityTransform(dimension: Int) extends SelfTransform(dimension) {
 class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends InstanceOfSelfTransform(NN) {
   def apply(x:NeuronVector, mem:SetOfMemorables) = x
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = eta
+}
+
+class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 
+	extends NeuralNetwork(firstDimension + secondDimension, (firstDimension+1)*(secondDimension+1) -1) {
+  type InstanceType = InstanceOfTensorNeuralNetwork
+  def create() = new InstanceOfTensorNeuralNetwork(this)
+} 
+
+class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork) 
+	extends InstanceOfNeuralNetwork(NN) {
+  override def init(seed:String, mem:SetOfMemorables) = {
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
+      mem. += (key -> new Memorable)
+      mem(key).status = seed
+      mem(key).numOfMirrors = 1 // find a new instance
+      mem(key).mirrorIndex = 0
+    }
+    else {      
+      mem(key).numOfMirrors = mem(key).numOfMirrors + 1
+    }
+    this
+  }
+  
+  override def allocate(seed:String, mem:SetOfMemorables) ={
+    if (mem(key).status == seed) {
+      mem(key).inputBuffer= new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).status = "" // reset status to make sure *Buffer are allocated only once
+    } else {} 
+    this
+  }
+  def apply(x:NeuronVector, mem:SetOfMemorables) = {
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    mem(key).inputBuffer(mem(key).mirrorIndex) = x;
+    val (firstVec, secondVec) = x.splice(NN.firstDimension)
+    (firstVec CROSS secondVec).vec() concatenate firstVec concatenate secondVec
+  }
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
+    val (ord2Grad, ord1Grad) = eta.splice(NN.firstDimension * NN.secondDimension)
+    val ord2GradW = ord2Grad.asWeight(NN.firstDimension, NN.secondDimension)
+    val (firstOrd1Grad, secondOrd1Grad) = ord1Grad.splice(NN.firstDimension)
+    val (firstVec, secondVec) = mem(key).inputBuffer(mem(key).mirrorIndex).splice(NN.firstDimension)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    val firstOrd2Grad = ord2GradW * secondVec 
+    val secondOrd2Grad = ord2GradW TransMult firstVec
+    (firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
+  }
 }
 
 // basic operation to derive hierarchy structures

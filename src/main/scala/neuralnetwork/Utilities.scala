@@ -53,6 +53,8 @@ class Weight (var data:DenseMatrix[Double]){
   def transpose = new Weight(data.t)
   def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
+  def sumCol() = new NeuronVector(sum(data, Axis._0).toDenseVector)
+  def sumRow() = new NeuronVector(sum(data, Axis._1).toDenseVector)
 }
 
 class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
