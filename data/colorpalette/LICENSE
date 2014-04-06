@@ -1,1 +1,10 @@
+@article{odonovan2011,
+  author={Peter O'Donovan and Aseem Agarwala and Aaron Hertzmann },
+  title={Color {C}ompatibility {F}rom {L}arge {D}atasets},
+  journal={ACM Transactions on Graphics},
+  volume={30}
+  number={4},
+  year={2011},
+} 
+
 Data are released under the Creative Commons BY-NC-SA license. If you use this data or code for a publication, we ask that you cite the above paper.
