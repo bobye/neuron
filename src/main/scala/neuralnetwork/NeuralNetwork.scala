@@ -13,9 +13,12 @@ abstract trait Workspace{//
     // Two basic operations to support combination 
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
+    def SHARE [T2<:Operationable](y:T2) = new ShareNeuralNetwork(x,y)
     def REPEAT (n:Int) = new RepeatNeuralNetwork(x, n)
-    def TENSOR [T2<:Operationable](y:T2) = 
+    def TENSOR [T2<:Operationable](y:T2) = // second order tensor only
       new TensorNeuralNetwork(x.outputDimension, y.outputDimension) TIMES (x PLUS y)
+    def mTENSOR [T2<:Operationable](y:T2) = // mix first order and second order tensor
+      (x TENSOR y) SHARE (x PLUS y)
   } 
 }
 /** Operationable is a generic trait that supports operations **/
@@ -97,6 +100,10 @@ class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int)
   type InstanceType = InstanceOfTensorNeuralNetwork
   def create() = new InstanceOfTensorNeuralNetwork(this)
 } 
+
+class MTensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 
+	extends ShareNeuralNetwork(new TensorNeuralNetwork(firstDimension, secondDimension), 
+							   new IdentityTransform(firstDimension + secondDimension))
 
 class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork) 
 	extends InstanceOfNeuralNetwork(NN) {
@@ -191,7 +198,7 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
 class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		( override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1,Type2](first,second) {
-  type Instance = InstanceOfJointNeuralNetwork[Type1,Type2]
+  type InstanceType <: InstanceOfJointNeuralNetwork[Type1,Type2]
   def inputDimension = first.inputDimension + second.inputDimension
   def outputDimension= first.outputDimension+ second.outputDimension 
   def create(): InstanceOfJointNeuralNetwork[Type1, Type2] = new InstanceOfJointNeuralNetwork(this)
@@ -213,7 +220,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
 		(override val NN: JointNeuralNetwork [Type1, Type2]) 
 	extends InstanceOfMergedNeuralNetwork [Type1, Type2](NN) {
   
-  type StructureType = JointNeuralNetwork[Type1, Type2]
+  type StructureType <: JointNeuralNetwork[Type1, Type2]
   
   def apply (x: NeuronVector, mem:SetOfMemorables)  = {
     val (first, second) = x.splice(NN.first.inputDimension)
@@ -235,7 +242,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
 class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
 		(override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1, Type2] (first, second) {
-  type Instance = InstanceOfChainNeuralNetwork[Type1,Type2]
+  type InstanceType <: InstanceOfChainNeuralNetwork[Type1,Type2]
   assert(first.inputDimension == second.outputDimension) 
   def inputDimension = second.inputDimension
   def outputDimension= first.outputDimension 
@@ -246,7 +253,7 @@ class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
 		(override val NN: ChainNeuralNetwork[Type1, Type2]) 
 	extends InstanceOfMergedNeuralNetwork [Type1, Type2](NN) {
-  type StructureType = ChainNeuralNetwork[Type1, Type2]
+  type StructureType <: ChainNeuralNetwork[Type1, Type2]
 
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     // first compute secondInstance, then compute firstInstance
@@ -258,6 +265,33 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
     secondInstance.backpropagate(firstInstance.backpropagate(eta, mem), mem)
   }
   override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"
+}
+
+class ShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val first:Type1, override val second: Type2)
+		extends MergedNeuralNetwork[Type1, Type2] (first, second) {
+  assert (first.inputDimension == second.inputDimension)
+  type InstanceType <: InstanceOfShareNeuralNetwork[Type1, Type2]
+  def inputDimension = first.inputDimension
+  def outputDimension = first.outputDimension + second.outputDimension
+  def create():InstanceOfShareNeuralNetwork[Type1,Type2] = new InstanceOfShareNeuralNetwork(this)
+  override def toString() = "(" + first.toString + ") _ (" + second.toString() + ")"
+}
+
+class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val NN: ShareNeuralNetwork[Type1, Type2])
+		extends InstanceOfMergedNeuralNetwork(NN) {
+  type StructureType <: ShareNeuralNetwork[Type1, Type2]
+  def apply(x:NeuronVector, mem: SetOfMemorables) = {
+    val secondVec = secondInstance(x, mem)
+    val firstVec  = firstInstance(x, mem)
+    firstVec concatenate secondVec
+  }
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
+    val (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
+    firstInstance.backpropagate(firstEta, mem) + secondInstance.backpropagate(secondEta, mem)
+  }
+  override def toString() = "(" + firstInstance.toString + ") _ (" + secondInstance.toString + ")"
 }
 
 /********************************************************************************************/
