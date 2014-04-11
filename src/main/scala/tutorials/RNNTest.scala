@@ -20,13 +20,13 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
 	def main(args: Array[String]): Unit = {
 	  val wordLength = 10
 	  val tree = fullBinaryTree(5)
-	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.001, 0.0)).create()
+	  val enc  = (new RecursiveSimpleAE()(wordLength, 0.001, 0.1)).create()
 	  val input = (new IdentityAutoEncoder(wordLength)).create()
 	  val output = (new SingleLayerNeuralNetwork(1) TIMES new LinearNeuralNetwork(wordLength,1)).create()
 	  
 	  
-	  //nn = (output TIMES new RecursiveNeuralNetwork(tree, enc, input)).create() 
-	  nn = (output TIMES new RecursiveAutoEncoder(tree, enc, input, 1.0).encoCreate()).create()
+	  nn = (output TIMES new RecursiveNeuralNetwork(tree, enc.extract(), input)).create() 
+	  //nn = (output TIMES new RecursiveAutoEncoder(tree, enc, input, 1.0).encoCreate()).create()
 	  //nn = (enc TIMES enc).create()
 	  
 	  val w = getRandomWeightVector()

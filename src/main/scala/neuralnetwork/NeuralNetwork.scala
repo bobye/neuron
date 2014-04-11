@@ -1,5 +1,5 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
-// Last Updates: Mar 2014
+// Last Updated: April 2014
 // Copyright under MIT License
 package neuralnetwork
 
@@ -91,8 +91,9 @@ class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends Ins
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = eta
 }
 
+// Important change from (a,b) -> (a tensor b, a, b) to (a,b) -> (a tensor b)
 class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 
-	extends NeuralNetwork(firstDimension + secondDimension, (firstDimension+1)*(secondDimension+1) -1) {
+	extends NeuralNetwork(firstDimension + secondDimension, firstDimension*secondDimension) {
   type InstanceType = InstanceOfTensorNeuralNetwork
   def create() = new InstanceOfTensorNeuralNetwork(this)
 } 
@@ -123,17 +124,18 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x;
     val (firstVec, secondVec) = x.splice(NN.firstDimension)
-    (firstVec CROSS secondVec).vec() concatenate firstVec concatenate secondVec
+    (firstVec CROSS secondVec).vec() // concatenate firstVec concatenate secondVec
   }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
-    val (ord2Grad, ord1Grad) = eta.splice(NN.firstDimension * NN.secondDimension)
-    val ord2GradW = ord2Grad.asWeight(NN.firstDimension, NN.secondDimension)
-    val (firstOrd1Grad, secondOrd1Grad) = ord1Grad.splice(NN.firstDimension)
+    //val (ord2Grad, ord1Grad) = eta.splice(NN.firstDimension * NN.secondDimension)
+    val ord2GradW = eta.asWeight(NN.firstDimension, NN.secondDimension) //change ord2Grad -> eta (only)
+    //val (firstOrd1Grad, secondOrd1Grad) = ord1Grad.splice(NN.firstDimension)
     val (firstVec, secondVec) = mem(key).inputBuffer(mem(key).mirrorIndex).splice(NN.firstDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    val firstOrd2Grad = ord2GradW * secondVec 
-    val secondOrd2Grad = ord2GradW TransMult firstVec
-    (firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
+    //val firstOrd2Grad = ord2GradW * secondVec 
+    //val secondOrd2Grad = ord2GradW TransMult firstVec
+    //(firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
+    (ord2GradW * secondVec) concatenate (ord2GradW TransMult firstVec)
   }
 }
 

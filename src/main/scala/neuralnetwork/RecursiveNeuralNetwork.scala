@@ -1,3 +1,6 @@
+// Created by: Jianbo Ye, Penn State University jxy198@psu.edu
+// Last Updated: April 2014
+// Copyright under MIT License
 package neuralnetwork
 
 /********************************************************************************************/
@@ -80,12 +83,12 @@ case class Leaf extends Tree {
 
 
 class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
-						  	  val enc: RecursiveClass, 
+						  	  val enc: Operationable, // val enc: RecursiveClass, 
 						  	  val input: Operationable) 
 	extends Operationable with EncoderWorkspace {
-    assert(input.outputDimension == enc.wordLength)
+    assert(2*input.outputDimension == enc.inputDimension)
 	val inputDimension = tree.numOfLeaves * input.inputDimension
-	val outputDimension = enc.wordLength
+	val outputDimension = enc.outputDimension
 
 	val (leftRNN, rightRNN) = tree match {
       case Leaf() => (null, null)
@@ -95,7 +98,7 @@ class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
     
 	def create() = tree match{
 	  case Leaf() => input.create()
-	  case Branch(left, right) => (enc.extract() TIMES (leftRNN PLUS rightRNN)).create()
+	  case Branch(left, right) => (enc TIMES (leftRNN PLUS rightRNN)).create()
 	}
 	
 	

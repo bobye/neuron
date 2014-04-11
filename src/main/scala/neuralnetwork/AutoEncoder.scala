@@ -1,5 +1,7 @@
+// Created by: Jianbo Ye, Penn State University jxy198@psu.edu
+// Last Updated: April 2014
+// Copyright under MIT License
 package neuralnetwork
-
 import scala.concurrent.stm._
 
 /********************************************************************************************/
@@ -35,17 +37,22 @@ abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClas
 }
 
 // It implicitly requires the dimensional constraints
+/*
+ * 
 abstract trait RecursiveClass extends EncodeClass {
-  val wordLength: Int
+  //val wordLength: Int
   // some bugs here, but works fine for running
   //assert(wordLength == encodeDimension)
   //assert(wordLength*2 == inputDimension)
 }
+
 abstract trait RecursiveEncoder extends Operationable with RecursiveClass {
   override def create(): InstanceOfRecursiveEncoder
 }
 abstract trait InstanceOfRecursiveEncoder extends InstanceOfNeuralNetwork with RecursiveClass 
 
+* 
+*/
 // Convert Encoder and InstanceOfEncoder to new NeuralNetwork by replacing apply() with encode()
 // However, the weights of both are not changed, which means in back propagation 
 // only part of weights are got updated
@@ -240,7 +247,7 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 	
 class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
 	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0) 
-	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) with RecursiveEncoder {
+	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) /* with RecursiveEncoder {
   type Instance <: InstanceOfRecursiveLinearAE
   override def create() : InstanceOfRecursiveLinearAE = new InstanceOfRecursiveLinearAE(this)
 }
@@ -248,10 +255,12 @@ class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE)
 	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
   val wordLength = NN.wordLength
 }
+* 
+*/
 
 class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction) 
 	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0)
-	extends SimpleAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) with RecursiveEncoder {
+	extends SimpleAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) /* with RecursiveEncoder {
   type Instance <: InstanceOfRecursiveSimpleAE
   override def create() : InstanceOfRecursiveSimpleAE = new InstanceOfRecursiveSimpleAE(this)
 }
@@ -259,7 +268,8 @@ class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
 	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
   val wordLength = NN.wordLength
 }
-   
+* 
+*/
 
 
 

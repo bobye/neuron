@@ -1,3 +1,6 @@
+// Created by: Jianbo Ye, Penn State University jxy198@psu.edu
+// Last Updated: April 2014
+// Copyright under MIT License
 package neuralnetwork
 
 /********************************************************************************************/
@@ -291,7 +294,11 @@ abstract trait Optimizable {
     }
     
     val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
-	val w2 = new WeightVector(lbfgs.minimize(f, w.data))
+    val w2 = new WeightVector(lbfgs.minimize(f, w.data))
+    
+    //val sgd =  StochasticGradientDescent[DenseVector[Double]](1.0,maxIter)    
+    //val w2 = new WeightVector(sgd.minimize(f, w.data))
+    
     (f(w2.data), w2)
   }
   
