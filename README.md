@@ -1,4 +1,9 @@
-_This project is still under development, which aims at a generic framework to experiment heterogeneous neural network topologies. There is no release at current time._
+# neuron
+========
+
+This project is still under development, which aims at a generic framework to experiment heterogeneous neural network structures. There is no release at current time.
+
+Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
 
 ### How to build
 
