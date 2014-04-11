@@ -1,4 +1,4 @@
-# neuron
+neuron
 ========
 
 This project is still under development, which aims at a generic framework to experiment heterogeneous neural network structures. There is no release at current time.
