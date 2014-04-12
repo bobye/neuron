@@ -16,7 +16,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
 
 ### Features
  - template vs. module
- - algebra (PLUS, TIMES, TENSOR) for network structures
+ - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
  - multilayer perceptron
  - autoencoders
  - recursive neural network
