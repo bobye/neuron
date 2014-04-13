@@ -7,8 +7,8 @@ import neuralnetwork._
 
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
-class ImageAutoEncoder (val rows:Int, val cols:Int, override val hiddenDimension: Int) 
-	extends SparseAutoEncoder (3.0, .0001) (rows*cols, hiddenDimension)(){
+class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int) 
+	extends SparseAutoEncoder (3.0, .0001) (rowsMultCols, hiddenDimension)(){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -16,19 +16,19 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 	extends InstanceOfAutoEncoder(NN) //There is no InstanceOfSparseSingleLayerAE
 { 
   type Structure <: ImageAutoEncoder
-  def displayHiddenNetwork (str:String) : Unit = { 
-    val weightsVector = new WeightVector((NN.rows*NN.cols)*NN.hiddenDimension)
+  def displayHiddenNetwork () : Unit = { 
+    val weightsVector = new WeightVector((NN.rowsMultCols)*NN.hiddenDimension)
     val raw = NN.inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
-    weightsVector := raw.asWeight(NN.hiddenDimension, NN.rows*NN.cols).transpose.vec(false)
+    weightsVector := raw.asWeight(NN.hiddenDimension, NN.rowsMultCols).transpose.vec(false)
     
     //println(weightsVector.data)
         
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
-      val img = new Weight(NN.rows, NN.cols)
-      val b = new NeuronVector(0)//
-      weightsVector(img, b)
+      val imgNull = new Weight(0,0)
+      val img = new NeuronVector(NN.rowsMultCols)//
+      weightsVector(imgNull, img)
       //println(img.vec.data)
-      println((img.vec().data/norm(img.vec().data)).data.mkString("\t")) // Just print
+      println((img.data/norm(img.data)).data.mkString("\t")) // Just print
     }
   }
 }
@@ -48,7 +48,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  }
 	  yData = xData
 	  
-	  nn = new ImageAutoEncoder(rows, cols, hidden).create() // the same
+	  nn = new ImageAutoEncoder(rows*cols, hidden).create() // the same
 
 	  
 	  val w = getRandomWeightVector()
@@ -59,7 +59,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
-	  	.displayHiddenNetwork("hidden")
+	  	.displayHiddenNetwork()
 
 	}
 }

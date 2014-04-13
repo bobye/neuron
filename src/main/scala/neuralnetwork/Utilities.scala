@@ -226,9 +226,15 @@ abstract trait Optimizable {
     
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    totalCost = (0 until size).par.map(i => {
-      distance(nn(xData(i), initMemory()), yData(i))
-    }).reduce(_+_)
+    if (yData != null) {//supervised
+      totalCost = (0 until size).par.map(i => {
+    	  distance(nn(xData(i), initMemory()), yData(i))
+      }).reduce(_+_)
+    } else {//unsupervised
+      totalCost = (0 until size).par.map(i => {
+          nn(xData(i), initMemory()); 0.0
+      }).reduce(_+_)
+    }
     
     val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
     totalCost/size + regCost
@@ -236,7 +242,7 @@ abstract trait Optimizable {
   
   def getObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance): (Double, NeuronVector) = {
     val size = xData.length
-    assert(size >= 1 && size == yData.length)
+    assert(size >= 1 && (null == yData || size == yData.length))
     var totalCost:Double = 0.0
     /*
      * Compute objective and gradients in batch mode
@@ -254,13 +260,22 @@ abstract trait Optimizable {
     
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    totalCost = (0 until size).par.map(i => {
-      val mem = initMemory()
-      val x = nn(xData(i), mem); val y = yData(i)
-      val z = distance.grad(x, yData(i))
-      nn.backpropagate(z, mem) // update dw !
-      distance(x,y)
-    }).reduce(_+_)
+    if (yData != null) {//supervised
+      totalCost = (0 until size).par.map(i => {
+        val mem = initMemory()
+        val x = nn(xData(i), mem); val y = yData(i)
+        val z = distance.grad(x, yData(i))
+        nn.backpropagate(z, mem) // update dw !
+        distance(x,y)
+      }).reduce(_+_)
+    } else {//unsupervised
+      totalCost = (0 until size).par.map(i => {
+        val mem = initMemory()
+        val x = nn(xData(i), mem);
+        nn.backpropagate(new NeuronVector(x.length), mem)
+        0.0
+        }).reduce(_+_)
+    }
     /*
      * End parallel loop
      */

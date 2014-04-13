@@ -60,10 +60,9 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     if (status != seed) {
       status = seed
       // initialize W: it behaves quite different for Gaussian and Uniform Sampling
-      val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new Weight(outputDimension, inputDimension, new Gaussian(0, 1)) 
+      val amplitude:Double = scala.math.sqrt(6.0/(inputTensorDimension + outputTensorDimension + 1.0))
+      W := new Weight(outputTensorDimension, inputTensorDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
-      
       W.vec() concatenate b.vec() 
     }else {
       NullVector
