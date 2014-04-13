@@ -43,6 +43,9 @@ class Memorable {
   var inputBuffer  = Array [NeuronVector]()
   var outputBuffer = Array [NeuronVector]()
   var gradientBuffer= Array [NeuronVector] ()
+  
+  var inputBufferM = Array[Weight]()
+  var outputBufferM= Array[Weight]()
 }
 
 
@@ -142,7 +145,7 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     //val firstOrd2Grad = ord2GradW * secondVec 
     //val secondOrd2Grad = ord2GradW TransMult firstVec
     //(firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
-    (ord2GradW * secondVec) concatenate (ord2GradW TransMult firstVec)
+    (ord2GradW Mult secondVec) concatenate (ord2GradW TransMult firstVec)
   }
 }
 
@@ -472,7 +475,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     assert (x.length == inputDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
-    W* x + b 
+    (W Mult x) + b 
   }
 
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
@@ -508,7 +511,7 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
-      dW() = dW() + W * (NN.lambda * numOfSamples)
+      dW() = dW() + (W Mult (NN.lambda * numOfSamples))
       dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
       }
       W.euclideanSqrNorm * (NN.lambda /2)

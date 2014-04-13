@@ -15,7 +15,7 @@ import breeze.stats.distributions._
 
 
 class NeuronVector (var data: DenseVector[Double]) {
-  val length = data.length
+  def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
@@ -42,13 +42,20 @@ class NeuronVector (var data: DenseVector[Double]) {
   //override def toString() = data.toString
 }
 class Weight (var data:DenseMatrix[Double]){
+  def rows = data.rows
+  def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def +(that: Weight): Weight = new Weight(this.data + that.data)
-  def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
-  def Mult(x:NeuronVector) = this * x
+  def Add(that: NeuronVector): Weight = new Weight(this.data(::, *) + that.data)
+  def AddTrans(that:NeuronVector): Weight = new Weight(this.data(*, ::) + that.data)
+  //def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
+  def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
-  def *(x:Double): Weight = new Weight(this.data * x)
+  def Mult(x:Weight): Weight = new Weight(this.data * x.data)
+  def TransMult(x:Weight) = new Weight(this.data.t * x.data)
+  def MultTrans(x:Weight) = new Weight(this.data * x.data.t)
+  def Mult(x:Double): Weight = new Weight(this.data * x)
   def :=(that:Weight): Unit = {this.data := that.data}
   def +=(that:Weight): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
@@ -59,6 +66,8 @@ class Weight (var data:DenseMatrix[Double]){
   def sumCol() = new NeuronVector(sum(data, Axis._0).toDenseVector)
   def sumRow() = new NeuronVector(sum(data, Axis._1).toDenseVector)
 }
+
+
 
 class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   def this(n:Int) = this(DenseVector.zeros[Double](n))

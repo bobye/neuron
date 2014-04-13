@@ -19,8 +19,8 @@ object FeedForward extends Optimizable with Workspace{
 	val e = (d PLUS d) 
 	
 	// setup Optimizable members
-	nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
-	// nn = e.create(); println(nn); // print structure
+	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
+    nn = e.create(); println(nn); // print structure
 	
 	val numOfSamples = 100
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
