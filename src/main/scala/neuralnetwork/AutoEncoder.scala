@@ -85,7 +85,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 
 /********************************************************************************************/
 // AutoEncoder
-class AutoEncoder (val regCoeff:Double = 0.0,
+class AutoEncoder (var regCoeff:Double = 0.0,
     			   val encoder: Operationable, val decoder: Operationable)
 	extends SelfTransform (encoder.inputDimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
@@ -203,14 +203,14 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
 
   
 class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
-	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0) 
+	(dimension:Int, val hiddenDimension:Int, var lambda: Double = 0.0, regCoeff: Double = 0.0) 
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
 								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
 			new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
 class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
-	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0)
+	(dimension:Int, val hiddenDimension:Int, var lambda: Double = 0.0, regCoeff: Double = 0.0)
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
 								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
@@ -219,8 +219,8 @@ class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction)
 			
 
 	  
-class SparseLinearAE (val beta:Double = 0.0, // sparse penalty 
-    					   lambda: Double = 0.0, // L2 regularization
+class SparseLinearAE (var beta:Double = 0.0, // sparse penalty 
+    					   var lambda: Double = 0.0, // L2 regularization
     					   regCoeff: Double = 0.0, // autoencoding
     					   val penalty:NeuronFunction = new KL_divergenceFunction(0.01), // average activation
     					   val func: NeuronFunction = SigmoidFunction)
@@ -231,8 +231,8 @@ class SparseLinearAE (val beta:Double = 0.0, // sparse penalty
 	    new ChainNeuralNetwork(new SparseSingleLayerNN(hiddenDimension, beta, func, penalty), inputLayer),
 	    new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
-class SparseAutoEncoder (val beta:Double = 0.0,
-					  lambda:Double = 0.0,
+class SparseAutoEncoder (var beta:Double = 0.0,
+					  var lambda:Double = 0.0,
 					  regCoeff: Double = 0.0,
 					  val penalty: NeuronFunction = new KL_divergenceFunction(0.01),
 					  val func: NeuronFunction = SigmoidFunction,

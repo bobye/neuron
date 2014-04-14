@@ -351,7 +351,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 class SparseSingleLayerNN (override val dimension: Int, 
 						   var beta: Double = 0.0,
                            override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
-						   val penalty: NeuronFunction = new KL_divergenceFunction(0.04) /** Sparsity Penalty Function **/)
+						   var penalty: NeuronFunction = new KL_divergenceFunction(0.04) /** Sparsity Penalty Function **/)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType = InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
@@ -497,7 +497,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 }
 
-class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double = 0.0)
+class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, var lambda: Double = 0.0)
 	extends LinearNeuralNetwork (inputDimension, outputDimension) {
   type InstanceType = InstanceOfRegularizedLinearNN
   override def create(): InstanceOfRegularizedLinearNN = new InstanceOfRegularizedLinearNN(this) 
