@@ -1,4 +1,4 @@
-neuron
+neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](https://travis-ci.org/bobye/neuron)
 ========
 
 This project is _in progress_, which aims at a generic framework to experiment heterogeneous neural network structures. No release available for now.
