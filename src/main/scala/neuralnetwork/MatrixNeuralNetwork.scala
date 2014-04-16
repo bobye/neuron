@@ -48,7 +48,9 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
   override def setWeights(seed:String, w:WeightVector) : Unit = {
     if (status != seed) {
       status = seed
-      w(W, b.vec()) // get optimized weights
+      val tmp = NullVector
+      w(W, tmp) // get optimized weights
+      w(b, tmp)
       //dw(dW, db) // dW and db are distributed states 
       atomic { implicit txn =>
       dW().set(0.0) // reset derivative of weights
@@ -63,6 +65,7 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
       val amplitude:Double = scala.math.sqrt(6.0/(inputTensorDimension + outputTensorDimension + 1.0))
       W := new Weight(outputTensorDimension, inputTensorDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
+      b.set(0.0)
       W.vec() concatenate b.vec() 
     }else {
       NullVector
@@ -113,7 +116,7 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (W TransMult eta) Mult W // dgemv
+    (W TransMult eta) Mult W // dgemv      
   }
 }
 
