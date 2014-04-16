@@ -47,6 +47,7 @@ class Weight (var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def +(that: Weight): Weight = new Weight(this.data + that.data)
+  def -(that: Weight): Weight = new Weight(this.data - that.data)
   def Add(that: NeuronVector): Weight = new Weight(this.data(::, *) + that.data)
   def AddTrans(that:NeuronVector): Weight = new Weight(this.data(*, ::) + that.data)
   //def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
