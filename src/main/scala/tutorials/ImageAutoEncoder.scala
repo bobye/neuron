@@ -1,10 +1,9 @@
 package tutorials
 
 //import breeze.plot._
-import breeze.linalg._
 import breeze.stats.distributions._
 import neuralnetwork._
-
+import breeze.linalg._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int) 
@@ -33,27 +32,20 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
       val img = new NeuronVector(NN.rowsMultCols)//
       weightsVector(imgNull, img)
       //println(img.vec.data)
-      p.println((img.data/norm(img.data)).data.mkString("\t")) // Just print
+      //p.println((img.data/norm(img.data)).data.mkString("\t")) // Just print
+      p.println(img.normalized)
     })
   }
 }
 
 object ImageAutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {
-	  val rows = 8
-	  val cols = 8
 	  val hidden = 25
-	  
-	  val dataSource = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt").getLines.toArray
-	  val numOfSamples = dataSource.length
-	  xData = new Array(numOfSamples)
-	  for (i<- 0 until numOfSamples) {
-	    xData(i) = new NeuronVector(
-	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, rows*cols))
-	  }
+	  xData = LoadData.rawImages64()
+	  val numOfPixels = xData(0).length
 	  yData = xData
 	  
-	  nn = new ImageAutoEncoder(rows*cols, hidden).create() // the same
+	  nn = new ImageAutoEncoder(numOfPixels, hidden).create() // the same
 
 	  
 	  val w = getRandomWeightVector()

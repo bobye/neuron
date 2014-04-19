@@ -39,7 +39,8 @@ class NeuronVector (var data: DenseVector[Double]) {
   def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
   def last(): Double = data(data.length)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
-  //override def toString() = data.toString
+  def normalized(): NeuronVector = new NeuronVector(data/norm(data))
+  override def toString() = data.data.mkString("\t")
 }
 class Weight (var data:DenseMatrix[Double]){
   def rows = data.rows
