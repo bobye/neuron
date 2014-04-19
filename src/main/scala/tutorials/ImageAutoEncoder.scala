@@ -16,20 +16,25 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 	extends InstanceOfAutoEncoder(NN) //There is no InstanceOfSparseSingleLayerAE
 { 
   type Structure <: ImageAutoEncoder
-  def displayHiddenNetwork () : Unit = { 
+  def printToFile(f: java.io.File)(op: java.io.PrintWriter => Unit) {
+    	val p = new java.io.PrintWriter(f)
+    	try { op(p) } finally { p.close() }
+  }
+  
+  def displayHiddenNetwork (filename: String) : Unit = { 
     val weightsVector = new WeightVector((NN.rowsMultCols)*NN.hiddenDimension)
     val raw = NN.inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
     weightsVector := raw.asWeight(NN.hiddenDimension, NN.rowsMultCols).transpose.vec(false)
     
-    //println(weightsVector.data)
-        
+    import java.io._
+    printToFile(new File(filename))(p =>    
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
       val imgNull = new Weight(0,0)
       val img = new NeuronVector(NN.rowsMultCols)//
       weightsVector(imgNull, img)
       //println(img.vec.data)
-      println((img.data/norm(img.data)).data.mkString("\t")) // Just print
-    }
+      p.println((img.data/norm(img.data)).data.mkString("\t")) // Just print
+    })
   }
 }
 
@@ -59,7 +64,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
-	  	.displayHiddenNetwork()
+	  	.displayHiddenNetwork("data/UFLDL/sparseae/results25.txt")
 
 	}
 }
