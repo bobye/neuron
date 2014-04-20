@@ -334,22 +334,25 @@ abstract trait Optimizable {
    * Please NOTE there is no regularization penalty in training 
    * Regularization usually is done in distributed modules
    */ 
-  def train(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance): (Double, WeightVector) = {
+  def train(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 0, opt: String = "lbfgs"): (Double, WeightVector) = {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
-	    val (obj, grad) = getObjAndGrad(new WeightVector(x), distance)
+	    val (obj, grad) = getObjAndGrad(new WeightVector(x), distance, batchSize)
 	    (obj, grad.data)
 	  }    
     }
     
-    val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
-    val w2 = new WeightVector(lbfgs.minimize(f, w.data))
-    
-    //val sgd =  SGD[DenseVector[Double]](1.0,maxIter)    
-    //val w2 = new WeightVector(sgd.minimize(f, w.data))
-    
-    (f(w2.data), w2)
+    var w2 = new WeightVector(w.length)
+    if (opt == "lbfgs") {
+      val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
+      w2 = new WeightVector(lbfgs.minimize(f, w.data))
+    }
+    else if (opt == "sgd") {
+      val sgd =  SGD[DenseVector[Double]](1.0,maxIter)    
+      w2 = new WeightVector(sgd.minimize(f, w.data))
+    }
+    (f(w2.data), w2)    
   }
   
   def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {

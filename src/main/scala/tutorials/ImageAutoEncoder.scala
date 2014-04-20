@@ -40,8 +40,11 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
 	def main(args: Array[String]): Unit = {
-	  val hidden = 25
-	  xData = LoadData.rawImages64()
+	  //val hidden = 25
+	  //xData = LoadData.rawImages64()
+	  val hidden = 500
+	  xData = LoadData.mnistTrain()
+	  
 	  val numOfPixels = xData(0).length
 	  yData = xData
 	  
@@ -52,11 +55,12 @@ object ImageAutoEncoderTest extends Optimizable {
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w)
-	  println(System.currentTimeMillis() - time, obj)
+	  val (obj, w2) = train(w, 100, L2Distance, 100, "sgd")
+	  val (obj2, w3) = train(w2, 100, L2Distance, 1000, "sgd")
+	  println(System.currentTimeMillis() - time, obj2)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
-	  	.displayHiddenNetwork("data/UFLDL/sparseae/results25.txt")
+	  	.displayHiddenNetwork("data/UFLDL/sparseae/results500.txt")
 
 	}
 }
