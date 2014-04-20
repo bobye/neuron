@@ -6,8 +6,8 @@ import neuralnetwork._
 import breeze.linalg._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
-class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int) 
-	extends SparseAutoEncoder (3.0, .0001) (rowsMultCols, hiddenDimension)(){
+class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int, val sparsityParam: Double) 
+	extends SparseAutoEncoder (3.0, .0001, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)(){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -40,26 +40,28 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
-      //val hidden = 25
-	  //xData = LoadData.rawImages64()
-      //val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      val hidden = 25
+	  xData = LoadData.rawImages64()
+      val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      val sparsityParam = 0.01  
       
-	  val hidden = 500
-	  xData = LoadData.mnistTrain()
-	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+	  //val hidden = 200
+	  //xData = LoadData.mnistTrain()
+	  //val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+      //val sparsityParam = 0.1 
 	    
 	  val numOfPixels = xData(0).length
 	  yData = xData
     }
     
 	def main(args: Array[String]): Unit = {
-	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden).create() // the same
+	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden, ioParam.sparsityParam).create() // the same
 
 	  val w = getRandomWeightVector()
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w, 20)
+	  val (obj, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
