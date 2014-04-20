@@ -242,7 +242,7 @@ abstract trait Optimizable {
     totalCost/size + regCost
   }
   
-  def getObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance): (Double, NeuronVector) = {
+  def getObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xData.length
     assert(size >= 1 && (null == yData || size == yData.length))
     var totalCost:Double = 0.0
@@ -254,8 +254,14 @@ abstract trait Optimizable {
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     
-    
-    (0 until size).par.foreach(i => {
+    var sampleArray = (0 until size).toList.par
+    if (batchSize <= 0) {
+      // use full-batch as default
+    } else {
+      sampleArray = scala.util.Random.shuffle((0 until size).toList).slice(0, batchSize).par
+    }
+      
+    sampleArray.foreach(i => {
       nn(xData(i),initMemory())
     })
     
@@ -263,7 +269,7 @@ abstract trait Optimizable {
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yData != null) {//supervised
-      totalCost = (0 until size).par.map(i => {
+      totalCost = sampleArray.map(i => {
         val mem = initMemory()
         val x = nn(xData(i), mem); val y = yData(i)
         val z = distance.grad(x, yData(i))
@@ -271,7 +277,7 @@ abstract trait Optimizable {
         distance(x,y)
       }).reduce(_+_)
     } else {//unsupervised
-      totalCost = (0 until size).par.map(i => {
+      totalCost = sampleArray.map(i => {
         val mem = initMemory()
         val x = nn(xData(i), mem);
         nn.backpropagate(new NeuronVector(x.length), mem)
@@ -283,9 +289,9 @@ abstract trait Optimizable {
      */
     
     
-    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, sampleArray.size)
     //println(totalCost/size, regCost)
-    (totalCost/size + regCost, dw/size)
+    (totalCost/sampleArray.size + regCost, dw/sampleArray.size)
   }
   
   def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
@@ -304,6 +310,24 @@ abstract trait Optimizable {
     (getObj(w, distance), dW)
   }
   
+  
+  object SGD {
+    import breeze.math.MutableCoordinateSpace
+    def apply[T](initialStepSize: Double=4, maxIter: Int=100)(implicit vs: MutableCoordinateSpace[T, Double]) :StochasticGradientDescent[T]  = {
+      new SimpleSGD(initialStepSize,maxIter)
+    }
+
+    class SimpleSGD[T](eta: Double=4,
+                     maxIter: Int=100)
+                    (implicit vs: MutableCoordinateSpace[T, Double]) extends StochasticGradientDescent[T](eta,maxIter) {
+      type History = Unit
+      def initialHistory(f: StochasticDiffFunction[T],init: T)= ()
+      def updateHistory(newX: T, newGrad: T, newValue: Double, f: StochasticDiffFunction[T], oldState: State) = ()
+      override def determineStepSize(state: State, f: StochasticDiffFunction[T], dir: T) = {
+        defaultStepSize // / math.pow(0.001*state.iter + 1, 2.0 / 3.0)
+      }
+    }
+  }
 
   /*
    * Train neural network using first order minimizer (L-BFGS)
@@ -322,7 +346,7 @@ abstract trait Optimizable {
     val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
     val w2 = new WeightVector(lbfgs.minimize(f, w.data))
     
-    //val sgd =  StochasticGradientDescent[DenseVector[Double]](1.0,maxIter)    
+    //val sgd =  SGD[DenseVector[Double]](1.0,maxIter)    
     //val w2 = new WeightVector(sgd.minimize(f, w.data))
     
     (f(w2.data), w2)
