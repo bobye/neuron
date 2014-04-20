@@ -352,6 +352,11 @@ abstract trait Optimizable {
       val sgd =  SGD[DenseVector[Double]](1.0,maxIter)    
       w2 = new WeightVector(sgd.minimize(f, w.data))
     }
+    else if (opt == "sagd") {
+      val batchf = BatchDiffFunction.wrap(f)
+      val sagd = new StochasticAveragedGradient[DenseVector[Double]](maxIter, 1.0)
+      w2 = new WeightVector(sagd.minimize(batchf, w.data))
+    }
     (f(w2.data), w2)    
   }
   

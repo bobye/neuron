@@ -39,28 +39,31 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 }
 
 object ImageAutoEncoderTest extends Optimizable {
-	def main(args: Array[String]): Unit = {
-	  //val hidden = 25
+    object ioParam {
+      //val hidden = 25
 	  //xData = LoadData.rawImages64()
+      //val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      
 	  val hidden = 500
 	  xData = LoadData.mnistTrain()
-	  
+	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+	    
 	  val numOfPixels = xData(0).length
 	  yData = xData
-	  
-	  nn = new ImageAutoEncoder(numOfPixels, hidden).create() // the same
+    }
+    
+	def main(args: Array[String]): Unit = {
+	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden).create() // the same
 
-	  
 	  val w = getRandomWeightVector()
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w, 100, L2Distance, 100, "sgd")
-	  val (obj2, w3) = train(w2, 100, L2Distance, 1000, "sgd")
-	  println(System.currentTimeMillis() - time, obj2)
+	  val (obj, w2) = train(w, 20)
+	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]
-	  	.displayHiddenNetwork("data/UFLDL/sparseae/results500.txt")
+	  	.displayHiddenNetwork(ioParam.hiddenUnitsFile)
 
 	}
 }
