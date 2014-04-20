@@ -44,8 +44,8 @@ class Memorable {
   var outputBuffer = Array [NeuronVector]()
   var gradientBuffer= Array [NeuronVector] ()
   
-  var inputBufferM = Array[Weight]()
-  var outputBufferM= Array[Weight]()
+  var inputBufferM = Array[NeuronMatrix]()
+  var outputBufferM= Array[NeuronMatrix]()
 }
 
 
@@ -427,7 +427,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       status = seed
       // initialize W: it behaves quite different for Gaussian and Uniform Sampling
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new Weight(outputDimension, inputDimension, new Gaussian(0, 1)) 
+      W := new NeuronMatrix(outputDimension, inputDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
       
       W.vec() concatenate b 
@@ -467,9 +467,9 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     } else {}
     this
   }  
-  val W: Weight = new Weight(outputDimension, inputDimension) 
+  val W: NeuronMatrix = new NeuronMatrix(outputDimension, inputDimension) 
   val b: NeuronVector = new NeuronVector (outputDimension)
-  protected val dW = Ref(new Weight(outputDimension, inputDimension))
+  protected val dW = Ref(new NeuronMatrix(outputDimension, inputDimension))
   protected val db = Ref(new NeuronVector (outputDimension))
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)

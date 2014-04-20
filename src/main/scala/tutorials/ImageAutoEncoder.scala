@@ -28,7 +28,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
     import java.io._
     printToFile(new File(filename))(p =>    
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
-      val imgNull = new Weight(0,0)
+      val imgNull = new NeuronMatrix(0,0)
       val img = new NeuronVector(NN.rowsMultCols)//
       weightsVector(imgNull, img)
       //println(img.vec.data)

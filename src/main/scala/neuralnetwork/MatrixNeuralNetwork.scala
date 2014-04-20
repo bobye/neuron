@@ -12,7 +12,6 @@ abstract class MatrixNeuralNetwork (val inputX: Int, val inputY:Int, val outputX
 
 abstract class InstanceOfMatrixNeuralNetwork (override val NN: MatrixNeuralNetwork) 
 	extends InstanceOfNeuralNetwork(NN) {
-  type NeuronMatrix = Weight 
   def applyMatrix(x: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix 
   def backpropagateMatrix(eta: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix
   
@@ -39,9 +38,9 @@ class BiLinearSymmetricNN (val inputTensorDimension: Int, val outputTensorDimens
 class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) extends InstanceOfMatrixNeuralNetwork(NN) {
   val inputTensorDimension = NN.inputTensorDimension
   val outputTensorDimension= NN.outputTensorDimension
-  val W: Weight = new Weight(outputTensorDimension, inputTensorDimension) 
+  val W: NeuronMatrix = new NeuronMatrix(outputTensorDimension, inputTensorDimension) 
   val b: NeuronMatrix = new NeuronMatrix (outputTensorDimension, outputTensorDimension)
-  protected val dW = Ref(new Weight(outputTensorDimension, inputTensorDimension))
+  protected val dW = Ref(new NeuronMatrix(outputTensorDimension, inputTensorDimension))
   protected val db = Ref(new NeuronMatrix (outputTensorDimension, outputTensorDimension))
   
   type StructureType <: BiLinearSymmetricNN
@@ -63,7 +62,7 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
       status = seed
       // initialize W: it behaves quite different for Gaussian and Uniform Sampling
       val amplitude:Double = scala.math.sqrt(6.0/(inputTensorDimension + outputTensorDimension + 1.0))
-      W := new Weight(outputTensorDimension, inputTensorDimension, new Gaussian(0, 1)) 
+      W := new NeuronMatrix(outputTensorDimension, inputTensorDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
       b.set(0.0)
       W.vec() concatenate b.vec() 

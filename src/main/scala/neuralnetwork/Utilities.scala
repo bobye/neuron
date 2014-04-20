@@ -31,38 +31,38 @@ class NeuronVector (var data: DenseVector[Double]) {
   def :/=(x:Double): Unit = {this.data :/= x}
   def euclideanSqrNorm = {val z = norm(data); z*z}
   def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
-  def CROSS (that: NeuronVector): Weight = new Weight(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
+  def CROSS (that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   
   def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = data.sum
-  def asWeight(rows:Int, cols:Int): Weight = new Weight (data.asDenseMatrix.reshape(rows, cols)) 
+  def asWeight(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
   def last(): Double = data(data.length)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
   override def toString() = data.data.mkString("\t")
 }
-class Weight (var data:DenseMatrix[Double]){
+class NeuronMatrix (var data:DenseMatrix[Double]){
   def rows = data.rows
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
-  def +(that: Weight): Weight = new Weight(this.data + that.data)
-  def -(that: Weight): Weight = new Weight(this.data - that.data)
-  def Add(that: NeuronVector): Weight = new Weight(this.data(::, *) + that.data)
-  def AddTrans(that:NeuronVector): Weight = new Weight(this.data(*, ::) + that.data)
+  def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data + that.data)
+  def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data - that.data)
+  def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, *) + that.data)
+  def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*, ::) + that.data)
   //def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
-  def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
-  def Mult(x:Weight): Weight = new Weight(this.data * x.data)
-  def TransMult(x:Weight) = new Weight(this.data.t * x.data)
-  def MultTrans(x:Weight) = new Weight(this.data * x.data.t)
-  def Mult(x:Double): Weight = new Weight(this.data * x)
-  def :=(that:Weight): Unit = {this.data := that.data}
-  def +=(that:Weight): Unit = {this.data :+= that.data}
-  def :*=(x:Double): Unit = {this.data :*= x}
+  def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(NeuronMatrix.this.data.t * x.data)
+  def Mult(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data * x.data)
+  def TransMult(x:NeuronMatrix) = new NeuronMatrix(NeuronMatrix.this.data.t * x.data)
+  def MultTrans(x:NeuronMatrix) = new NeuronMatrix(NeuronMatrix.this.data * x.data.t)
+  def Mult(x:Double): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data * x)
+  def :=(that:NeuronMatrix): Unit = {NeuronMatrix.this.data := that.data}
+  def +=(that:NeuronMatrix): Unit = {NeuronMatrix.this.data :+= that.data}
+  def :*=(x:Double): Unit = {NeuronMatrix.this.data :*= x}
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
-  def transpose = new Weight(data.t)
+  def transpose = new NeuronMatrix(data.t)
   def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
   def sumCol() = new NeuronVector(sum(data, Axis._0).toDenseVector)
@@ -76,7 +76,7 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
   var ptr : Int = 0
   def reset(): Unit = {ptr = 0; }
-  def apply(W:Weight, b:NeuronVector): Int = {
+  def apply(W:NeuronMatrix, b:NeuronVector): Int = {
     val rows = W.data.rows
     val cols = W.data.cols
     
@@ -86,7 +86,7 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
     ptr = (ptr + b.length) % length
     ptr
   }
-  def get(W:Weight, b:NeuronVector): Int = {
+  def get(W:NeuronMatrix, b:NeuronVector): Int = {
     val rows = W.data.rows
     val cols = W.data.cols
     
@@ -108,7 +108,7 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
 object NullVector extends NeuronVector (0)
 object OneVector extends NeuronVector(DenseVector(1.0)) 
 
-object NullWeight extends Weight (0,0)
+object NullWeight extends NeuronMatrix (0,0)
 
 abstract class NeuronFunction {
   def grad(x:NeuronVector): NeuronVector
