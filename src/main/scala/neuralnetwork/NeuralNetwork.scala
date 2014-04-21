@@ -353,18 +353,18 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
-    //inputBuffer(mirrorIndex) = x
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x)
-    //outputBuffer(mirrorIndex) = NN.func(x)
+    val output = NN.func(x)
+    mem(key).gradientBuffer(mem(key).mirrorIndex) = output DOT (output * -1.0 + 1.0)//NN.func.grad(x)
     
-    NN.func(x) // outputBuffer(cIndex)
+    output // outputBuffer(cIndex)
   }
   def apply (xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert(xs.rows == inputDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs)
-    NN.func(xs)
+    val output = NN.func(xs)
+    mem(key).gradientBufferM(mem(key).mirrorIndex) = output DOT ((output Mult -1.0) + 1.0)
+    output
   }
   override def init(seed:String, mem:SetOfMemorables) = {
     if (!mem.isDefinedAt(key) || mem(key).status != seed) {

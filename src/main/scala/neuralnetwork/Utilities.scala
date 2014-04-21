@@ -59,8 +59,10 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
   def Mult(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data * x.data)
   def TransMult(x:NeuronMatrix) = new NeuronMatrix(this.data.t * x.data)
-  def MultTrans(x:NeuronMatrix) = new NeuronMatrix(this.data * x.data.t)
+  def MultTrans(x:NeuronMatrix) = new NeuronMatrix(this.data * x.data.t)  
   def Mult(x:Double): NeuronMatrix = new NeuronMatrix(this.data * x)
+  def +(x:Double): NeuronMatrix = new NeuronMatrix(this.data + x)
+  def -(x:Double): NeuronMatrix = new NeuronMatrix(this.data - x)
   def :=(that:NeuronMatrix): Unit = {this.data := that.data}
   def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
@@ -138,13 +140,15 @@ object inverse extends UFunc with MappingUFunc {
       def apply(a:Double) = 1.0/a
     }  
 }
-
+/* sigmoid is included in breeze.numerics
+ * 
 object sigmoid extends UFunc with MappingUFunc{
     implicit object implDouble extends Impl [Double, Double] {
       def apply(a:Double) = 1/(1+scala.math.exp(-a))
     }
 }
-object dsgm extends UFunc with MappingUFunc{
+*/
+object dsgm extends UFunc with MappingUFunc{ //computing gradient of sigmoid is expensive
     implicit object implDouble extends Impl [Double, Double] {
       def apply(a:Double) = {
         var b = scala.math.exp(-a)
