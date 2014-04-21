@@ -41,7 +41,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
       val hidden = 25
-	  xData = LoadData.rawImages64()
+	  xDataM = LoadData.rawImages64M()
       val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
       val sparsityParam = 0.01  
       
@@ -50,8 +50,8 @@ object ImageAutoEncoderTest extends Optimizable {
 	  //val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
       //val sparsityParam = 0.1 
 	    
-	  val numOfPixels = xData(0).length
-	  yData = xData
+	  val numOfPixels = xDataM.rows
+	  yDataM = xDataM
     }
     
 	def main(args: Array[String]): Unit = {
@@ -61,7 +61,7 @@ object ImageAutoEncoderTest extends Optimizable {
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = train(w)
+	  val (obj, w2) = trainx(w)
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]

@@ -50,7 +50,7 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data + that.data)
-  def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data - that.data)
+  def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data - that.data)  
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, *) + that.data)
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*, ::) + that.data)
   def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*,::) :* that.data)
@@ -117,7 +117,7 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
 object NullVector extends NeuronVector (0)
 class OnesVector(n:Int) extends NeuronVector(DenseVector.ones[Double](n)) 
 
-object NullWeight extends NeuronMatrix (0,0)
+object NullMatrix extends NeuronMatrix (0,0)
 class OnesMatrix(r:Int, c:Int) extends NeuronMatrix(DenseMatrix.ones[Double](r,c))
 
 abstract class NeuronFunction {

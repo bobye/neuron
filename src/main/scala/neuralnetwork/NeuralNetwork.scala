@@ -439,7 +439,7 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     val y = super.apply(x, mem)
     atomic { implicit txn =>
     // This part has parallel side effects
-    rhoOnUpdate() = rhoOnUpdate() + y; // it still has problems
+    rhoOnUpdate() = rhoOnUpdate() + y; 
     totalUsageOnUpdate() = totalUsageOnUpdate() + 1 // for computation of average activation
     }
     y
@@ -448,8 +448,8 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     val ys = super.apply(xs, mem)
     atomic { implicit txn =>
     // This part has parallel side effects
-    rhoOnUpdate() = rhoOnUpdate() + ys.sumRow(); // it still has problems
-    totalUsageOnUpdate() = totalUsageOnUpdate() + 1 // for computation of average activation
+    rhoOnUpdate() = rhoOnUpdate() + ys.sumRow() // it still has problems
+    totalUsageOnUpdate() = totalUsageOnUpdate() + ys.cols // for computation of average activation
     }
     ys  
   }
