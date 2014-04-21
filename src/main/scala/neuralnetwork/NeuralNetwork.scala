@@ -355,15 +355,14 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     assert (x.length == inputDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     val output = NN.func(x)
-    mem(key).gradientBuffer(mem(key).mirrorIndex) = output DOT (output * -1.0 + 1.0)//NN.func.grad(x)
-    
+    mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output)    
     output // outputBuffer(cIndex)
   }
   def apply (xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert(xs.rows == inputDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     val output = NN.func(xs)
-    mem(key).gradientBufferM(mem(key).mirrorIndex) = output DOT ((output Mult -1.0) + 1.0)
+    mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output)
     output
   }
   override def init(seed:String, mem:SetOfMemorables) = {
