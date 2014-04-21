@@ -557,10 +557,9 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     }
     * 
     */
-    
+    val dWincr = eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)
     atomic { implicit txn =>
-    //println(key, mem(key).mirrorIndex, eta.data)
-    dW() = dW() + (eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)) // dgemm and daxpy
+    dW() = dW() + dWincr // dgemm and daxpy
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -568,10 +567,12 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     
   }
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    val dWincr = etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex) // dgemm and daxpy
+    val dbincr = etas.sumRow()
     atomic { implicit txn =>
     //println(key, mem(key).mirrorIndex, eta.data)
-    dW() = dW() + (etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex)) // dgemm and daxpy
-    db() = db() + etas.sumRow()
+    dW() = dW() + dWincr
+    db() = db() + dbincr
     }    
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W TransMult etas

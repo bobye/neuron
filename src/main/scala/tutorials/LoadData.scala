@@ -44,10 +44,20 @@ object LoadData {
     source.close()
     xData
   }
-  /*
-  def mnistTrain(): NeuronMatrix = {
+  
+  def mnistTrainM(): NeuronMatrix = {
+    import java.io._
+    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/train-images.idx3-ubyte"))
+    println("magic: " + source.readInt())
+    val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
+    val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
+    val numOfCols = source.readInt(); println("numOfCols: " + numOfCols)
+    val numOfPixels = numOfRows * numOfCols
     
+    val buf = new Array[Byte](numOfPixels * numOfSamples)
+    source.read(buf)
+    val dataBlock = buf.map(b => (0xff & b).toDouble / 255.00)
+    source.close()
+    new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock))
   }
-  * 
-  */
 }

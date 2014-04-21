@@ -49,22 +49,21 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
-  def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data + that.data)
-  def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data - that.data)  
+  def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data + that.data)
+  def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data - that.data)  
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, *) + that.data)
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*, ::) + that.data)
   def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*,::) :* that.data)
   def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::,*) :* that.data)
-  //def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
-  def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(NeuronMatrix.this.data.t * x.data)
-  def Mult(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data * x.data)
-  def TransMult(x:NeuronMatrix) = new NeuronMatrix(NeuronMatrix.this.data.t * x.data)
-  def MultTrans(x:NeuronMatrix) = new NeuronMatrix(NeuronMatrix.this.data * x.data.t)
-  def Mult(x:Double): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data * x)
-  def :=(that:NeuronMatrix): Unit = {NeuronMatrix.this.data := that.data}
-  def +=(that:NeuronMatrix): Unit = {NeuronMatrix.this.data :+= that.data}
-  def :*=(x:Double): Unit = {NeuronMatrix.this.data :*= x}
+  def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
+  def Mult(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data * x.data)
+  def TransMult(x:NeuronMatrix) = new NeuronMatrix(this.data.t * x.data)
+  def MultTrans(x:NeuronMatrix) = new NeuronMatrix(this.data * x.data.t)
+  def Mult(x:Double): NeuronMatrix = new NeuronMatrix(this.data * x)
+  def :=(that:NeuronMatrix): Unit = {this.data := that.data}
+  def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
+  def :*=(x:Double): Unit = {this.data :*= x}
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new NeuronMatrix(data.t)
   def set(x: Double) : Unit={data:=x; }
