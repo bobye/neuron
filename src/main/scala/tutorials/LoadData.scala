@@ -4,17 +4,25 @@ import breeze.linalg._
 
 object LoadData {
   def rawImages64(): Array[NeuronVector] = {
-      val rows = 8
-	  val cols = 8
-	  
-	  val dataSource = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt").getLines.toArray
+      val numOfPixels = 8*8	  
+	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
+	  val dataSource = source.getLines.toArray
 	  val numOfSamples = dataSource.length
 	  val xData = new Array[NeuronVector](numOfSamples)
 	  for (i<- 0 until numOfSamples) {
 	    xData(i) = new NeuronVector(
-	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, rows*cols))
+	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, numOfPixels))
 	  }
+      source.close()
       xData
+  }
+  
+  def rawImages64M(): NeuronMatrix = {
+      val numOfPixels = 8*8	  
+	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
+	  val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
+	  source.close()
+	  new NeuronMatrix(new DenseMatrix(numOfPixels, dataBlock.length/numOfPixels, dataBlock))
   }
   
   def mnistTrain(): Array[NeuronVector] = {
@@ -36,4 +44,10 @@ object LoadData {
     source.close()
     xData
   }
+  /*
+  def mnistTrain(): NeuronMatrix = {
+    
+  }
+  * 
+  */
 }

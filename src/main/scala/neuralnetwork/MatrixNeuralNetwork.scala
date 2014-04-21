@@ -18,8 +18,16 @@ abstract class InstanceOfMatrixNeuralNetwork (override val NN: MatrixNeuralNetwo
   def apply(x: NeuronVector, mem:SetOfMemorables): NeuronVector = {
     applyMatrix(x.asWeight(NN.inputX, NN.inputY), mem).vec()
   }
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    xs
+  }  
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
     backpropagateMatrix(eta.asWeight(NN.outputX, NN.outputY), mem).vec()
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    etas
   }
 }
 

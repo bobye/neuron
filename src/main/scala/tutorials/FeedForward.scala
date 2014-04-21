@@ -22,7 +22,7 @@ object FeedForward extends Optimizable with Workspace{
 	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
     nn = e.create(); println(nn); // print structure
 	
-	val numOfSamples = 100
+	val numOfSamples = 1000
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
 	for (i<- 0 until numOfSamples) {
 	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 

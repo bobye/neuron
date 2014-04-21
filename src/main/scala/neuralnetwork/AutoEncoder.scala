@@ -71,10 +71,18 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   def apply (x:NeuronVector, mem:SetOfMemorables) = {
     INN.encode(x, mem)
   }
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    xs
+  }
   override def init(seed:String, mem:SetOfMemorables) = INN.init(seed, mem)
   override def allocate(seed:String, mem:SetOfMemorables) = INN.allocate(seed, mem)
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
     INN.encodingBP(eta, mem)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    etas
   }
   
   override def setWeights(seed:String, w:WeightVector) = INN.setWeights(seed, w)
@@ -131,6 +139,10 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     
     mem(key).outputBuffer(mem(key).mirrorIndex)    
   }
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    xs
+  }
   
   
   override def init(seed:String, mem:SetOfMemorables) = {
@@ -151,6 +163,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     if (mem(key).status == seed) {
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).inputBufferM = new Array[NeuronMatrix](mem(key).numOfMirrors)
+      mem(key).outputBufferM= new Array[NeuronMatrix](mem(key).numOfMirrors)
       mem(key).status = ""
     } else {
     }
@@ -164,6 +178,10 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     main.backpropagate(eta + z, mem) - z 
   }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    etas
+  }
   
   def encodingBP(eta:NeuronVector, mem:SetOfMemorables): NeuronVector = {
     val z= L2Distance.grad(mem(key).outputBuffer(mem(key).mirrorIndex), mem(key).inputBuffer(mem(key).mirrorIndex)) * 
@@ -172,9 +190,17 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     encoderInstance.backpropagate(z2 + eta, mem) - z
   }
+  def encodingBP(etas:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
+    // INCOMPLETE: To be implemented    
+    etas
+  }
   
   def decodingBP(eta:NeuronVector, mem:SetOfMemorables): NeuronVector = {
     decoderInstance.backpropagate(eta, mem)
+  }
+  def decodingBP(etas:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
+    // INCOMPLETE: To be implemented 
+    etas
   }
 
   

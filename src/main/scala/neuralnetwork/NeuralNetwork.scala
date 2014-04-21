@@ -46,6 +46,7 @@ class Memorable {
   
   var inputBufferM = Array[NeuronMatrix]()
   var outputBufferM= Array[NeuronMatrix]()
+  var gradientBufferM=Array[NeuronMatrix]()
 }
 
 
@@ -66,6 +67,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def outputDimension= NN.outputDimension
   def create() = this // self reference
   def apply (x: NeuronVector, mem:SetOfMemorables) : NeuronVector
+  def apply (xs: NeuronMatrix, mem:SetOfMemorables) : NeuronMatrix 
 
   
   // structure to vectorization functions
@@ -79,6 +81,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def init(seed:String, mem: SetOfMemorables) : InstanceOfNeuralNetwork = {this} // default: do nothing
   def allocate(seed:String, mem: SetOfMemorables) : InstanceOfNeuralNetwork = {this} // 
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables): NeuronVector
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables): NeuronMatrix 
   
   // display
   override def toString() = "#" + toStringGeneric
@@ -94,7 +97,9 @@ class IdentityTransform(dimension: Int) extends SelfTransform(dimension) {
 }
 class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends InstanceOfSelfTransform(NN) {
   def apply(x:NeuronVector, mem:SetOfMemorables) = x
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = xs
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = eta
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = etas
 }
 
 // Important change from (a,b) -> (a tensor b, a, b) to (a,b) -> (a tensor b)
@@ -136,6 +141,10 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     val (firstVec, secondVec) = x.splice(NN.firstDimension)
     (firstVec CROSS secondVec).vec() // concatenate firstVec concatenate secondVec
   }
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    xs
+  }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
     //val (ord2Grad, ord1Grad) = eta.splice(NN.firstDimension * NN.secondDimension)
     val ord2GradW = eta.asWeight(NN.firstDimension, NN.secondDimension) //change ord2Grad -> eta (only)
@@ -146,6 +155,10 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     //val secondOrd2Grad = ord2GradW TransMult firstVec
     //(firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
     (ord2GradW Mult secondVec) concatenate (ord2GradW TransMult firstVec)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    // INCOMPLETE: To be implemented
+    etas
   }
 }
 
@@ -233,10 +246,22 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
     val firstVec =  firstInstance(first, mem)
     firstVec concatenate secondVec
   }
+  
+  def apply (xs: NeuronMatrix, mem:SetOfMemorables) = {
+    val (first, second) = xs.spliceRow(NN.first.inputDimension)
+    val secondMat=  secondInstance(second, mem)
+    val firstMat =  firstInstance(first, mem)
+    firstMat padRow secondMat
+  }
 
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
     val (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
     firstInstance.backpropagate(firstEta, mem) concatenate secondInstance.backpropagate(secondEta, mem)
+  }
+  
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    val (firstEta, secondEta) = etas.spliceRow(NN.first.outputDimension)
+    firstInstance.backpropagate(firstEta, mem) padRow secondInstance.backpropagate(secondEta, mem)
   }
   
   override def toString() = firstInstance.toString + " + " + secondInstance.toString
@@ -263,9 +288,15 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
     // which is the inverse order of backpropagation
     firstInstance(secondInstance(x, mem), mem) 
   }
+  def apply(xs: NeuronMatrix, mem:SetOfMemorables) = {
+    firstInstance(secondInstance(xs, mem), mem)
+  }
   
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) ={
     secondInstance.backpropagate(firstInstance.backpropagate(eta, mem), mem)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    secondInstance.backpropagate(firstInstance.backpropagate(etas, mem), mem)
   }
   override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"
 }
@@ -290,9 +321,18 @@ class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
     val firstVec  = firstInstance(x, mem)
     firstVec concatenate secondVec
   }
+  def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
+    val secondMat = secondInstance(x, mem)
+    val firstMat = firstInstance(x, mem)
+    firstMat padRow secondMat
+  }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
     val (firstEta, secondEta) = eta.splice(NN.first.outputDimension)
     firstInstance.backpropagate(firstEta, mem) + secondInstance.backpropagate(secondEta, mem)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+	val (firstEta, secondEta) = etas.spliceRow(NN.first.outputDimension)
+	firstInstance.backpropagate(firstEta, mem) + secondInstance.backpropagate(secondEta, mem)
   }
   override def toString() = "(" + firstInstance.toString + ") _ (" + secondInstance.toString + ")"
 }
@@ -320,6 +360,12 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     
     NN.func(x) // outputBuffer(cIndex)
   }
+  def apply (xs:NeuronMatrix, mem:SetOfMemorables) = {
+    assert(xs.rows == inputDimension)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs)
+    NN.func(xs)
+  }
   override def init(seed:String, mem:SetOfMemorables) = {
     if (!mem.isDefinedAt(key) || mem(key).status != seed) {
       mem. += (key -> new Memorable)
@@ -336,6 +382,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   override def allocate(seed:String, mem:SetOfMemorables) ={
     if (mem(key).status == seed) {
       mem(key).gradientBuffer= new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).gradientBufferM=new Array[NeuronMatrix] (mem(key).numOfMirrors)
       mem(key).status = "" // reset status to make sure *Buffer are allocated only once
     } else {} 
     this
@@ -344,6 +391,11 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     eta DOT mem(key).gradientBuffer(cIndex) // there is no penalty for sparsity
+  }
+  def backpropagate(etas:NeuronMatrix, mem: SetOfMemorables) = {
+    val cIndex = mem(key).mirrorIndex
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    etas DOT mem(key).gradientBufferM(cIndex)
   }
 }
 
@@ -392,6 +444,15 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     }
     y
   }
+  override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    val ys = super.apply(xs, mem)
+    atomic { implicit txn =>
+    // This part has parallel side effects
+    rhoOnUpdate() = rhoOnUpdate() + ys.sumRow(); // it still has problems
+    totalUsageOnUpdate() = totalUsageOnUpdate() + 1 // for computation of average activation
+    }
+    ys  
+  }
   private val rho : NeuronVector = new NeuronVector(outputDimension)
   private val rhoOnUpdate = Ref(new NeuronVector(outputDimension))
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
@@ -399,7 +460,11 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) DOT mem(key).gradientBuffer(cIndex)
   }
-  
+  override def backpropagate(etas: NeuronMatrix, mem:SetOfMemorables) = {
+    val cIndex = mem(key).mirrorIndex 
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    (etas Add NN.penalty.grad(rho/totalUsage) * NN.beta) DOT mem(key).gradientBufferM(cIndex)    
+  }
 }
 
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/
@@ -463,6 +528,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   override def allocate(seed:String, mem:SetOfMemorables) ={
     if (mem(key).status == seed) {
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).inputBufferM = new Array[NeuronMatrix] (mem(key).numOfMirrors)
       mem(key).status = ""
     } else {}
     this
@@ -476,6 +542,12 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
     (W Mult x) + b 
+  }
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    assert (xs.rows == inputDimension)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    mem(key).inputBufferM(mem(key).mirrorIndex) = xs
+    (W Mult xs) Add b     
   }
 
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
@@ -494,6 +566,15 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W TransMult eta // dgemv
     
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    atomic { implicit txn =>
+    //println(key, mem(key).mirrorIndex, eta.data)
+    dW() = dW() + (etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex)) // dgemm and daxpy
+    db() = db() + etas.sumRow()
+    }    
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    W TransMult etas
   }
 }
 

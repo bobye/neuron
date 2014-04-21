@@ -9,8 +9,8 @@ import breeze.generic._
 import breeze.linalg._
 import breeze.numerics._
 import breeze.optimize._
-
 import breeze.stats.distributions._
+import java.sql.SQLClientInfoException
 //import breeze.math._
 
 
@@ -23,6 +23,8 @@ class NeuronVector (var data: DenseVector[Double]) {
 
   def -(that:NeuronVector): NeuronVector = new NeuronVector(this.data - that.data)
   def +(that:NeuronVector): NeuronVector = new NeuronVector(this.data + that.data)
+  def +(x:Double) : NeuronVector = new NeuronVector(this.data + x)
+  def -(x:Double) : NeuronVector = new NeuronVector(this.data - x)
   def *(x:Double) : NeuronVector = new NeuronVector(this.data * x)
   def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
   def :=(that: NeuronVector): Unit = {this.data := that.data; }
@@ -51,6 +53,8 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(NeuronMatrix.this.data - that.data)
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, *) + that.data)
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*, ::) + that.data)
+  def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(*,::) :* that.data)
+  def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::,*) :* that.data)
   //def *(x:NeuronVector):NeuronVector = new NeuronVector(data * x.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(NeuronMatrix.this.data.t * x.data)
@@ -65,8 +69,13 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def transpose = new NeuronMatrix(data.t)
   def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
-  def sumCol() = new NeuronVector(sum(data, Axis._0).toDenseVector)
-  def sumRow() = new NeuronVector(sum(data, Axis._1).toDenseVector)
+  def sumCol() = new NeuronVector(sum(data(::,*)).toDenseVector)
+  def sumRow() = new NeuronVector(sum(data(*,::)).toDenseVector)
+  def sumAll():Double = sum(data)
+  def colVec(i: Int) = new NeuronVector(data(::,i))
+  def DOT(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
+  def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
+  def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
 }
 
 
@@ -106,18 +115,29 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
 
 
 object NullVector extends NeuronVector (0)
-object OneVector extends NeuronVector(DenseVector(1.0)) 
+class OnesVector(n:Int) extends NeuronVector(DenseVector.ones[Double](n)) 
 
 object NullWeight extends NeuronMatrix (0,0)
+class OnesMatrix(r:Int, c:Int) extends NeuronMatrix(DenseMatrix.ones[Double](r,c))
 
 abstract class NeuronFunction {
   def grad(x:NeuronVector): NeuronVector
   def apply(x:NeuronVector): NeuronVector
+  def grad(x:NeuronMatrix): NeuronMatrix
+  def apply(x:NeuronMatrix): NeuronMatrix
 }
 
-object IndentityFunction extends NeuronFunction {
-  def grad(x:NeuronVector): NeuronVector = new NeuronVector(DenseVector.ones[Double](x.data.length))
+object IdentityFunction extends NeuronFunction {
+  def grad(x:NeuronVector): NeuronVector = new OnesVector(x.length)
   def apply(x:NeuronVector) = x
+  def grad(x:NeuronMatrix): NeuronMatrix = new OnesMatrix(x.rows, x.cols)
+  def apply(x:NeuronMatrix) = x
+}
+
+object inverse extends UFunc with MappingUFunc {
+    implicit object implDouble extends Impl [Double, Double] {
+      def apply(a:Double) = 1.0/a
+    }  
 }
 
 object sigmoid extends UFunc with MappingUFunc{
@@ -153,6 +173,8 @@ class dKLd (rho:Double) extends UFunc with MappingUFunc {
 object SigmoidFunction extends NeuronFunction {
   def grad(x:NeuronVector): NeuronVector = new NeuronVector(dsgm(x.data)) // can be simplified, if apply() is applied first
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(sigmoid(x.data))
+  def grad(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(dsgm(x.data))
+  def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(sigmoid(x.data))
 }
 
 
@@ -161,16 +183,22 @@ class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   object KLdiv extends KLdiv(rho)
   def grad(x:NeuronVector): NeuronVector = new NeuronVector(dKLdfunc(x.data))
   def apply(x:NeuronVector): NeuronVector = new NeuronVector(KLdiv(x.data))
+  def grad(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(dKLdfunc(x.data))
+  def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(KLdiv(x.data))
 }
 
 abstract class DistanceFunction {
   def grad(x:NeuronVector, y:NeuronVector): NeuronVector
   def apply(x:NeuronVector, y:NeuronVector): Double
+  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix
+  def apply(x:NeuronMatrix, y:NeuronMatrix): Double
 }
 
 object L2Distance extends DistanceFunction {
   def grad(x:NeuronVector, y:NeuronVector): NeuronVector = (x - y)
   def apply(x:NeuronVector, y:NeuronVector) = (x - y).euclideanSqrNorm /2.0
+  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = (x - y)
+  def apply(x:NeuronMatrix, y:NeuronMatrix) = (x - y).euclideanSqrNorm /2.0
 }
 object SoftMaxDistance extends DistanceFunction {
   def grad(x:NeuronVector, y:NeuronVector): NeuronVector ={
@@ -178,10 +206,21 @@ object SoftMaxDistance extends DistanceFunction {
     val x1 = new NeuronVector(exp(x.data))
     (x1/x1.sum - y)
   }
+  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix ={
+    assert((y.sumCol() - 1.0).euclideanSqrNorm < 1E-6)
+    val x1 = new NeuronMatrix(exp(x.data))
+    val x1SumInv = new NeuronVector(inverse(x1.sumCol().data))
+    (x1 MultElemTrans x1SumInv) - y
+  }
   def apply(x:NeuronVector, y:NeuronVector): Double = {
     val x1 = new NeuronVector(exp(x.data))
     val x2 = new NeuronVector(-log(x1.data / x1.data.sum))
     (y DOT x2).sum
+  }
+  def apply(x:NeuronMatrix, y:NeuronMatrix): Double = {
+    val x1 = new NeuronMatrix(exp(x.data))
+    val x1SumInv = new NeuronVector(inverse(x1.sumCol().data))
+    (y DOT (x1 MultElemTrans x1SumInv)).sumAll
   }
 }
 
@@ -195,6 +234,11 @@ abstract trait Optimizable {
   var yData : Array[NeuronVector] = null
   var xDataTest : Array[NeuronVector] = null
   var yDataTest : Array[NeuronVector] = null
+  
+  var xDataM : NeuronMatrix = null
+  var yDataM : NeuronMatrix = null
+  var xDataTestM: NeuronMatrix = null
+  var yDataTestM: NeuronMatrix = null
   /*************************************/
   
   final var randomGenerator = new scala.util.Random
@@ -293,6 +337,55 @@ abstract trait Optimizable {
     //println(totalCost/size, regCost)
     (totalCost/sampleArray.size + regCost, dw/sampleArray.size)
   }
+  def getObjM(w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
+    val size = xDataM.cols
+    assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+    var totalCost:Double = 0.0
+
+    val dw = new WeightVector(w.length)  
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)        
+    nn(xDataM,initMemory())
+
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    if (yDataM != null) {//supervised
+    	totalCost = distance(nn(xDataM, initMemory()), yDataM)
+    } else {//unsupervised
+      nn(xDataM, initMemory());
+      totalCost = 0.0
+    }
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    totalCost/size + regCost
+  }
+  
+  def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+    val size = xDataM.cols
+    assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+    var totalCost:Double = 0.0
+    
+    val dw = new WeightVector(w.length)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    nn(xDataM,initMemory())
+    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    if (yDataM != null) {//supervised
+        val mem = initMemory()
+        val x = nn(xDataM, mem); val y = yDataM
+        val z = distance.grad(x, yDataM)
+        nn.backpropagate(z, mem) // update dw !
+        totalCost = distance(x,y)
+    } else {//unsupervised
+        val mem = initMemory()
+        val x = nn(xDataM, mem);
+        nn.backpropagate(new NeuronMatrix(x.rows, x.cols), mem)
+        totalCost = 0.0
+    }
+    
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    //println(totalCost/size, regCost)
+    (totalCost/size + regCost, dw/size)
+  }
   
   def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
     // Compute gradient using numerical approximation
@@ -309,7 +402,21 @@ abstract trait Optimizable {
 	}
     (getObj(w, distance), dW)
   }
-  
+  def getApproximateObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
+    // Compute gradient using numerical approximation
+    var dW = w.copy()
+    for (i<- 0 until w.length) {
+	  val epsilon = 0.00001
+	  val w2 = w.copy
+	  w2.data(i) = w.data(i) + epsilon
+	  val cost1 = getObjM(w2, distance)
+	  w2.data(i) = w.data(i) - epsilon
+	  val cost2 = getObjM(w2, distance)
+	  
+	  dW.data(i) = (cost1 - cost2) / (2*epsilon)
+	}
+    (getObjM(w, distance), dW)
+  }  
   
   object SGD {
     import breeze.math.MutableCoordinateSpace
@@ -359,7 +466,32 @@ abstract trait Optimizable {
     }
     (f(w2.data), w2)    
   }
-  
+  def trainx(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 0, opt: String = "lbfgs"): (Double, WeightVector) = {
+
+    val f = new DiffFunction[DenseVector[Double]] {
+	  def calculate(x: DenseVector[Double]) = {
+	    val (obj, grad) = getObjAndGradM(new WeightVector(x), distance, batchSize)
+	    (obj, grad.data)
+	  }    
+    }
+    
+    var w2 = new WeightVector(w.length)
+    if (opt == "lbfgs") {
+      val lbfgs = new LBFGS[DenseVector[Double]](maxIter)
+      w2 = new WeightVector(lbfgs.minimize(f, w.data))
+    }
+    else if (opt == "sgd") {
+      val sgd =  SGD[DenseVector[Double]](1.0,maxIter)    
+      w2 = new WeightVector(sgd.minimize(f, w.data))
+    }
+    else if (opt == "sagd") {
+      val batchf = BatchDiffFunction.wrap(f)
+      val sagd = new StochasticAveragedGradient[DenseVector[Double]](maxIter, 1.0)
+      w2 = new WeightVector(sagd.minimize(batchf, w.data))
+    }
+    (f(w2.data), w2)    
+  }
+    
   def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
     val size = xDataTest.length
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
