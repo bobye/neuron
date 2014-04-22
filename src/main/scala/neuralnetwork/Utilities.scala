@@ -77,6 +77,7 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def DOT(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
+  def Cols(range: Range) = new NeuronMatrix(data(::,range))
 }
 
 
@@ -376,24 +377,33 @@ abstract trait Optimizable {
   def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+    val blockSize = 500
+    val numOfBlock: Int = (size-1)/blockSize + 1
+    val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
+    
     var totalCost:Double = 0.0
     
     val dw = new WeightVector(w.length)
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    nn(xDataM,initMemory())
+    ranges.map(r =>
+    	nn(xDataM.Cols(r),initMemory())
+    )
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yDataM != null) {//supervised
+      totalCost = ranges.map(r => {
         val mem = initMemory()
-        val x = nn(xDataM, mem); val y = yDataM
-        val z = distance.grad(x, yDataM)
+        val x = nn(xDataM.Cols(r), mem); val y = yDataM.Cols(r)
+        val z = distance.grad(x, y)
         nn.backpropagate(z, mem) // update dw !
-        totalCost = distance(x,y)
+        distance(x,y)}).reduce(_+_)
     } else {//unsupervised
+      ranges.map(r => {
         val mem = initMemory()
-        val x = nn(xDataM, mem);
+        val x = nn(xDataM.Cols(r), mem);
         nn.backpropagate(new NeuronMatrix(x.rows, x.cols), mem)
-        totalCost = 0.0
+      })
+      totalCost = 0.0
     }
     
     

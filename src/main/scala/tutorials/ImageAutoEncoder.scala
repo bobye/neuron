@@ -46,7 +46,7 @@ object ImageAutoEncoderTest extends Optimizable {
       val sparsityParam = 0.01  
       
 	  //val hidden = 200
-	  //xData = LoadData.mnistTrain()
+	  //xDataM = LoadData.mnistTrainM()
 	  //val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
       //val sparsityParam = 0.1 
 	    
