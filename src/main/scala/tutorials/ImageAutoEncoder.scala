@@ -40,15 +40,15 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
-      val hidden = 25
-	  xDataM = LoadData.rawImages64M()
-      val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
-      val sparsityParam = 0.01  
+      //val hidden = 25
+	  //xDataM = LoadData.rawImages64M()
+      //val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      //val sparsityParam = 0.01  
       
-	  //val hidden = 200
-	  //xDataM = LoadData.mnistTrainM()
-	  //val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
-      //val sparsityParam = 0.1 
+	  val hidden = 200
+	  xDataM = LoadData.mnistTrainM()
+	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+      val sparsityParam = 0.1 
 	    
 	  val numOfPixels = xDataM.rows
 	  yDataM = xDataM
