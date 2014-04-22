@@ -6,8 +6,9 @@ import neuralnetwork._
 import breeze.linalg._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
-class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int, val sparsityParam: Double) 
-	extends SparseAutoEncoder (3.0, .0001, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)(){
+class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int, 
+						val regularizedParam: Double, val sparsityParam: Double) 
+	extends SparseAutoEncoder (3.0, regularizedParam, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)(){
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
@@ -40,14 +41,17 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
-      //val hidden = 25
-	  //xDataM = LoadData.rawImages64M()
-      //val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
-      //val sparsityParam = 0.01  
-      
+      /*
+      val hidden = 25
+	  xDataM = LoadData.rawImages64M()
+      val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      val regularizedParam = 0.0001
+      val sparsityParam = 0.01  
+      */
 	  val hidden = 200
 	  xDataM = LoadData.mnistTrainM()
 	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+      val regularizedParam = 0.003
       val sparsityParam = 0.1 
 	    
 	  val numOfPixels = xDataM.rows
@@ -55,7 +59,8 @@ object ImageAutoEncoderTest extends Optimizable {
     }
     
 	def main(args: Array[String]): Unit = {
-	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden, ioParam.sparsityParam).create() // the same
+	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden, 
+	      ioParam.regularizedParam, ioParam.sparsityParam).create() // the same
 
 	  val w = getRandomWeightVector()
 	  var time:Long = 0

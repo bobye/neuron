@@ -1,4 +1,4 @@
-w=load('results25.txt');
+w=load('results500.txt');
 [numOfImages, numOfPixels] = size(w);
 inds = randperm(numOfImages);
 numOfImages = 25;

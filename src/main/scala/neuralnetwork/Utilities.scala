@@ -10,7 +10,6 @@ import breeze.linalg._
 import breeze.numerics._
 import breeze.optimize._
 import breeze.stats.distributions._
-import java.sql.SQLClientInfoException
 //import breeze.math._
 
 
@@ -377,7 +376,7 @@ abstract trait Optimizable {
   def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-    val blockSize = 500
+    val blockSize = 512
     val numOfBlock: Int = (size-1)/blockSize + 1
     val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
     
