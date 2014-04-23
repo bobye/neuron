@@ -24,7 +24,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
   def displayHiddenNetwork (filename: String) : Unit = { 
     val weightsVector = new WeightVector((NN.rowsMultCols)*NN.hiddenDimension)
     val raw = NN.inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
-    weightsVector := raw.asWeight(NN.hiddenDimension, NN.rowsMultCols).transpose.vec(false)
+    weightsVector := raw.asNeuronMatrix(NN.hiddenDimension, NN.rowsMultCols).transpose.vec(false)
     
     import java.io._
     printToFile(new File(filename))(p =>    

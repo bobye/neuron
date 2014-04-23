@@ -142,22 +142,23 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     (firstVec CROSS secondVec).vec() // concatenate firstVec concatenate secondVec
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
-    // INCOMPLETE: To be implemented
-    xs
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    mem(key).inputBufferM(mem(key).mirrorIndex) = xs;
+    val (firstVec, secondVec) = xs.spliceRow(NN.firstDimension)
+    (firstVec CROSS secondVec).mat()
   }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
-    //val (ord2Grad, ord1Grad) = eta.splice(NN.firstDimension * NN.secondDimension)
-    val ord2GradW = eta.asWeight(NN.firstDimension, NN.secondDimension) //change ord2Grad -> eta (only)
-    //val (firstOrd1Grad, secondOrd1Grad) = ord1Grad.splice(NN.firstDimension)
+    val ord2GradW = eta.asNeuronMatrix(NN.firstDimension, NN.secondDimension) //change ord2Grad -> eta (only)
     val (firstVec, secondVec) = mem(key).inputBuffer(mem(key).mirrorIndex).splice(NN.firstDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    //val firstOrd2Grad = ord2GradW * secondVec 
-    //val secondOrd2Grad = ord2GradW TransMult firstVec
-    //(firstOrd2Grad + firstOrd1Grad) concatenate (secondOrd2Grad + secondOrd1Grad)
     (ord2GradW Mult secondVec) concatenate (ord2GradW TransMult firstVec)
   }
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     // INCOMPLETE: To be implemented
+    val ord2GradW = etas.asNeuronTensor(NN.firstDimension, NN.secondDimension)
+    val (firstVec, secondVec) = mem(key).inputBufferM(mem(key).mirrorIndex).spliceRow(NN.firstDimension)
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    (ord2GradW Mult secondVec) padRow (ord2GradW TransMult firstVec)
     etas
   }
 }

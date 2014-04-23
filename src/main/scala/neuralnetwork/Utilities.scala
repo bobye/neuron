@@ -37,7 +37,7 @@ class NeuronVector (var data: DenseVector[Double]) {
   def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = data.sum
-  def asWeight(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
+  def asNeuronMatrix(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
   def last(): Double = data(data.length)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
@@ -65,6 +65,7 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def :=(that:NeuronMatrix): Unit = {this.data := that.data}
   def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
+  def reshape(r: Int, c: Int, isView: Boolean = true) = new NeuronMatrix(data.reshape(r,c, isView))
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new NeuronMatrix(data.t)
   def set(x: Double) : Unit={data:=x; }
@@ -77,8 +78,57 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
   def Cols(range: Range) = new NeuronMatrix(data(::,range))
+  def Rows(range: Range) = new NeuronMatrix(data(range, ::))
+  def CROSS (that: NeuronMatrix): NeuronTensor = {
+    assert(this.cols == that.cols)
+    val m = new NeuronMatrix(this.rows * that.rows, this.cols)
+    for (i<- 0 until that.rows) {// vercat that this.rows times
+      m.Rows(i*this.rows until (i+1)*this.rows) := new NeuronMatrix(this.data(*, ::) :* that.data(i, ::).t)
+    }
+    new NeuronTensor(m.data, this.rows, that.rows)
+  }
+  def asNeuronTensor(rows:Int, cols:Int): NeuronTensor = new NeuronTensor(data, rows, cols)
 }
 
+// solution to 3-order tensor
+class NeuronTensor(var data: DenseMatrix[Double], val d1: Int, val d2: Int) {
+  assert(d1*d2 == data.rows)
+  val d3 = data.cols
+  def this(d1: Int, d2: Int, d3: Int) = this(DenseMatrix.zeros[Double](d1*d2,d3), d1, d2)
+  def this(d1: Int, d2: Int, d3: Int, rand: Rand[Double]) = this(DenseMatrix.rand(d1*d2,d3,rand), d1, d2)
+  def mat(isView: Boolean = true) = new NeuronMatrix({if (isView) data; else data.copy})
+  def Mult(that: NeuronMatrix): NeuronMatrix = {// matrix-vector mult with batch
+    assert(d2 == that.rows && d3 == that.cols)
+    val m = new NeuronMatrix(d1, d3) 
+    for (i<- 0 until d3) {
+      m.data(::, i) := data(::,i).asDenseMatrix.reshape(d1, d2) * that.data(::,i)
+    }
+    m
+  }
+  def TransMult(that: NeuronMatrix): NeuronMatrix = {// matrix-vector mult with batch
+    assert(d1 == that.rows && d3 == that.cols)
+    val m = new NeuronMatrix(d1, d3) 
+    for (i<- 0 until d3) {
+      m.data(::, i) := data(::,i).asDenseMatrix.reshape(d1, d2).t * that.data(::,i)
+    }
+    m
+  }
+  def MultLeft(left: NeuronMatrix): NeuronTensor = {// (id)matrix-matrix mult with batch
+    assert(left.cols == d1)
+    new NeuronTensor((left.data * data.reshape(d1, d2*d3)).reshape(left.rows * d2, d3), left.rows, d2)
+    }
+  def MultRight(right: NeuronMatrix): NeuronTensor = {// matrix-(id)matrix mult with batch
+    assert(right.rows == d2)
+    val m = new NeuronTensor(d1, right.cols, d3)
+	  for (i<- 0 until d3) {
+	    m.data(::, i) := (data(::, i).asDenseMatrix.reshape(d1, d2) * right.data).flatten()
+	  }
+     m
+    }
+  def MultLeftAndRight(left: NeuronMatrix, right:NeuronMatrix) = {
+    this.MultLeft(left).MultRight(right)
+    }
+} 
 
 
 class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
