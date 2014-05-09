@@ -13,7 +13,9 @@ abstract class MatrixNeuralNetwork (val inputX: Int, val inputY:Int, val outputX
 abstract class InstanceOfMatrixNeuralNetwork (override val NN: MatrixNeuralNetwork) 
 	extends InstanceOfNeuralNetwork(NN) {
   def applyMatrix(x: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix 
+  //def applyTensor(x: NeuronTensor, mem:SetOfMemorables): NeuronTensor
   def backpropagateMatrix(eta: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix
+  //def backpropagateTensor(etas: NeuronTensor, mem: SetOfMemorables): NeuronTensor
   
   def apply(x: NeuronVector, mem:SetOfMemorables): NeuronVector = {
     applyMatrix(x.asNeuronMatrix(NN.inputX, NN.inputY), mem).vec()
@@ -117,9 +119,10 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     ((W Mult x) MultTrans W) + b
   }
   def backpropagateMatrix(eta: NeuronMatrix, mem: SetOfMemorables) = {
+    val dWincr = ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 2.0)
     atomic { implicit txn =>
     //println(key, mem(key).mirrorIndex, eta.data)
-    dW() = dW() + ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 2.0) // dgemm and daxpy
+    dW() = dW() +  dWincr// dgemm and daxpy
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
