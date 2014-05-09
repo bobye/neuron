@@ -1,4 +1,6 @@
-w=load('results500.txt');
+filename='results25s';
+
+w=load([filename, '.txt']);
 [numOfImages, numOfPixels] = size(w);
 inds = randperm(numOfImages);
 numOfImages = 25;
@@ -6,6 +8,10 @@ d = sqrt(numOfPixels);
 rows = floor(sqrt(numOfImages));
 cols = ceil(numOfImages / rows);
 
+
+ha = tight_subplot(rows, cols, 0.01, 0.01, 0.01);
 for i=1:numOfImages
-    subplot(rows, cols, i), imshow(reshape(w(inds(i),:),[d d]),[])
+    axes(ha(i)), imshow(reshape(w(inds(i),:),[d d]),[])
 end
+
+print ha tmp.eps -depsc2
