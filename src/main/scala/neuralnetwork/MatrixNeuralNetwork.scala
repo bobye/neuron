@@ -122,7 +122,9 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     val dWincr = ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 2.0)
     atomic { implicit txn =>
     //println(key, mem(key).mirrorIndex, eta.data)
-    dW() = dW() +  dWincr// dgemm and daxpy
+    dW() = dW() +  dWincr
+    }
+    atomic { implicit txn =>
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
