@@ -1,15 +1,13 @@
 package neuralnetwork
 import scala.concurrent.stm._
-import breeze.linalg.Transpose
+
 
 class TiledWeightLinearNN (inputDimension: Int, outputDimension: Int) 
 	extends LinearNeuralNetwork(inputDimension, outputDimension) {
 	type InstanceType = InstanceOfTiledWeightLinearNN
 	// def create() is identical to LinearNeuralNetwork
-    def create(W: NeuronMatrix, dW: Ref[NeuronMatrix], transpose: Boolean) = 
+    def create(W: NeuronMatrix, dW: Ref[NeuronMatrix], transpose: Boolean = false) = 
       	new InstanceOfTiledWeightLinearNN(this, W: NeuronMatrix, dW: Ref[NeuronMatrix], transpose) 
-	def create(W: NeuronMatrix, dW: Ref[NeuronMatrix]) = 
-      	new InstanceOfTiledWeightLinearNN(this, W: NeuronMatrix, dW: Ref[NeuronMatrix])
 }
 
 class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN, 
@@ -65,10 +63,10 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
       (W Mult xs) Add b
   }
   override def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
-    val dWincr = eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)
+    val dWincr = if (isTranspose) mem(key).inputBuffer(mem(key).mirrorIndex) CROSS eta
+    			 else eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)
     atomic { implicit txn =>
-    if (isTranspose) dW() = dW() + dWincr.transpose // dgemm and daxpy
-    else dW() = dW() + dWincr
+    dW() = dW() + dWincr
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -78,12 +76,12 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
       W TransMult eta
   }
   override def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
-    val dWincr = etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex) // dgemm and daxpy
+    val dWincr = if (isTranspose) mem(key).inputBufferM(mem(key).mirrorIndex) MultTrans etas
+    			 else etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex) // dgemm and daxpy
     val dbincr = etas.sumRow()
     atomic { implicit txn =>
     //println(key, mem(key).mirrorIndex, eta.data)
-    if (isTranspose) dW() = dW() + dWincr.transpose
-    else dW() = dW() + dWincr
+    dW() = dW() + dWincr
     db() = db() + dbincr
     }    
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors

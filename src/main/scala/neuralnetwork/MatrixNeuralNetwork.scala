@@ -57,9 +57,8 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
   override def setWeights(seed:String, w:WeightVector) : Unit = {
     if (status != seed) {
       status = seed
-      val tmp = NullVector
-      w(W, tmp) // get optimized weights
-      w(b, tmp)
+      w(W, null) // get optimized weights
+      w(b, null)
       //dw(dW, db) // dW and db are distributed states 
       atomic { implicit txn =>
       dW().set(0.0) // reset derivative of weights
