@@ -4,7 +4,7 @@ import breeze.linalg._
 import breeze.numerics._
 import breeze.optimize._
 
-class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 40000){
+class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 500){
 	
 	def minimize(f: DiffFunction[DenseVector[Double]], 
 				 init: DenseVector[Double]): DenseVector[Double] = {
@@ -18,7 +18,7 @@ class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 40000
 	    u *= momentum
 	    u -= (grad * lr)
 	    x += u
-	    //println("fval: " + fval)
+	    println(i + " fval: " + fval)
 	  }
 	  x
 	}
