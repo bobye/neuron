@@ -19,6 +19,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
  - multilayer perceptron
  - autoencoders
+ - tiled weight
  - recursive neural network
  - metrics (L1/L2, Softmax)
  - parallel framework: atomic parameters + distributed states
