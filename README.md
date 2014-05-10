@@ -23,6 +23,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - recursive neural network
  - metrics (L1/L2, Softmax)
  - parallel framework: atomic parameters + distributed states
+ - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
 ### Get Started
 TBA
