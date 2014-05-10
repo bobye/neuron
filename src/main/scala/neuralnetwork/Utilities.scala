@@ -315,11 +315,11 @@ abstract trait Optimizable {
     mem
   }
   
-  def getRandomWeightVector () : WeightVector = {
+  def getRandomWeightVector (coeff: Double = 1.0) : WeightVector = {
     
     val wdefault = nn.getRandomWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
     val rv = new WeightVector(wdefault.length) 
-    rv := wdefault
+    rv := (wdefault * coeff)
     rv
   }
   
