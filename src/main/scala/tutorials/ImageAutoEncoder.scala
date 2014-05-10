@@ -29,9 +29,8 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
     import java.io._
     printToFile(new File(filename))(p =>    
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
-      val imgNull = new NeuronMatrix(0,0)
       val img = new NeuronVector(NN.rowsMultCols)//
-      weightsVector(imgNull, img)
+      weightsVector(null, img)
       //println(img.vec.data)
       //p.println((img.data/norm(img.data)).data.mkString("\t")) // Just print
       p.println(img.normalized)
@@ -41,19 +40,19 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
-      /*
+      
       val hidden = 25
 	  xDataM = LoadData.rawImages64M()
       val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
       val regularizedParam = 0.0001
       val sparsityParam = 0.01  
-      */
+      /*
 	  val hidden = 200
 	  xDataM = LoadData.mnistTrainM()
 	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
       val regularizedParam = 0.003
       val sparsityParam = 0.1 
-	    
+	  */  
 	  val numOfPixels = xDataM.rows
 	  yDataM = xDataM
     }

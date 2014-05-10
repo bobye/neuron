@@ -137,23 +137,31 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   var ptr : Int = 0
   def reset(): Unit = {ptr = 0; }
   def apply(W:NeuronMatrix, b:NeuronVector): Int = {
+    if (W != null) {
     val rows = W.data.rows
     val cols = W.data.cols
     
     W.data = data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
     ptr = (ptr + rows * cols) % length
+    }
+    if (b != null) {
     b.data = data(ptr until ptr + b.length)
     ptr = (ptr + b.length) % length
+    }
     ptr
   }
   def get(W:NeuronMatrix, b:NeuronVector): Int = {
+    if (W != null) {
     val rows = W.data.rows
     val cols = W.data.cols
     
     data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols) := W.data
     ptr = (ptr + rows * cols) % length
+    }
+    if (b != null) {
     data(ptr until ptr + b.length) := b.data
     ptr = (ptr + b.length) % length
+    }
     ptr
   }
   def set(wv: NeuronVector): Int = {
