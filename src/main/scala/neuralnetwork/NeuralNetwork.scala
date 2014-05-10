@@ -535,8 +535,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }  
   val W: NeuronMatrix = new NeuronMatrix(outputDimension, inputDimension) 
   val b: NeuronVector = new NeuronVector (outputDimension)
-  protected val dW = Ref(new NeuronMatrix(outputDimension, inputDimension))
-  protected val db = Ref(new NeuronVector (outputDimension))
+  val dW = Ref(new NeuronMatrix(outputDimension, inputDimension))
+  val db = Ref(new NeuronVector (outputDimension))
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
@@ -551,12 +551,6 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
-    /*
-    if (mirrorIndex == 0) { // start a new backpropagation
-      dW.set(0.0); db.set(0.0)
-    }
-    * 
-    */
     val dWincr = eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)
     atomic { implicit txn =>
     dW() = dW() + dWincr // dgemm and daxpy
@@ -599,9 +593,7 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
       W.euclideanSqrNorm * (NN.lambda /2)
     } else {
       0.0
-    }
-    
-    
+    }    
   }
 }
 

@@ -8,7 +8,9 @@ import breeze.linalg._
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int, 
 						val regularizedParam: Double, val sparsityParam: Double) 
-	extends SparseAutoEncoder (3.0, regularizedParam, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)(){
+	//extends SparseAutoEncoder (3.0, regularizedParam, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)()
+	extends TiledWeightSparseAE (3.0, regularizedParam, 0.0, new KL_divergenceFunction(sparsityParam)) (rowsMultCols, hiddenDimension)()
+{
   type Instance <: InstanceOfImageAutoEncoder
   override def create() = new InstanceOfImageAutoEncoder(this)
 }
