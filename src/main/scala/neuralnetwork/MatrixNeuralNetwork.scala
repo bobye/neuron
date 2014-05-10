@@ -50,8 +50,8 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
   val outputTensorDimension= NN.outputTensorDimension
   val W: NeuronMatrix = new NeuronMatrix(outputTensorDimension, inputTensorDimension) 
   val b: NeuronMatrix = new NeuronMatrix (outputTensorDimension, outputTensorDimension)
-  protected val dW = Ref(new NeuronMatrix(outputTensorDimension, inputTensorDimension))
-  protected val db = Ref(new NeuronMatrix (outputTensorDimension, outputTensorDimension))
+  val dW = Ref(new NeuronMatrix(outputTensorDimension, inputTensorDimension))
+  val db = Ref(new NeuronMatrix (outputTensorDimension, outputTensorDimension))
   
   type StructureType <: BiLinearSymmetricNN
   override def setWeights(seed:String, w:WeightVector) : Unit = {
