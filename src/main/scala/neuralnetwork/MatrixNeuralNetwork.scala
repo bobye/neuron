@@ -79,6 +79,14 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
       NullVector
     }
   }
+  override def getDimensionOfWeights(seed:String): Int = {
+    if (status != seed) {
+      status = seed
+      W.cols * W.rows + b.cols * b.rows
+    } else {
+      0
+    }
+  }
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
     if (status != seed) {
       status = seed

@@ -74,7 +74,8 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   var status:String = ""
 
   def setWeights(seed:String, w:WeightVector) : Unit = {}// return regularization term
-  def getRandomWeights(seed:String) : NeuronVector = NullVector
+  def getRandomWeights(seed:String) : NeuronVector = NullVector // reset internal weights and return a vector
+  def getDimensionOfWeights(seed: String): Int = 0
   def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = 0.0
   
   // dynamic operations
@@ -189,6 +190,14 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
         firstInstance.getRandomWeights(seed) concatenate secondInstance.getRandomWeights(seed)
       }else {
       NullVector
+    }
+  }
+  override def getDimensionOfWeights(seed: String): Int = {
+    if (status != seed) {
+      status = seed
+      firstInstance.getDimensionOfWeights(seed) + secondInstance.getDimensionOfWeights(seed)
+    } else {
+      0
     }
   }
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
@@ -498,6 +507,14 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       W.vec() concatenate b 
     }else {
       NullVector
+    }
+  }
+  override def getDimensionOfWeights(seed: String): Int = {
+    if (status != seed) {
+      status = seed
+      W.cols * W.rows + b.length
+    } else {
+      0
     }
   }
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
