@@ -323,9 +323,9 @@ abstract trait Optimizable {
     mem
   }
   
-  def getRandomWeightVector (coeff: Double = 1.0) : WeightVector = {
+  def getRandomWeightVector (coeff: Double = 1.0, inn: InstanceOfNeuralNetwork = nn) : WeightVector = {
     
-    val wdefault = nn.getRandomWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
+    val wdefault = inn.getRandomWeights(System.currentTimeMillis().hashCode.toString) // get dimension of weights
     val rv = new WeightVector(wdefault.length) 
     rv := (wdefault * coeff)
     rv
