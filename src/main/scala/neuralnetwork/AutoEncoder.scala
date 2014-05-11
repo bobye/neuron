@@ -234,6 +234,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     main.setWeights(seed, w) 
   }
   override def getRandomWeights(seed:String) : NeuronVector = main.getRandomWeights(seed)
+  override def getDimensionOfWeights(seed: String): Int = main.getDimensionOfWeights(seed)
   
   // For Auto-Encoder, the encoding error can be used a regularization term in addition
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
