@@ -42,6 +42,7 @@ class NeuronVector (var data: DenseVector[Double]) {
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
   override def toString() = data.data.mkString("\t")
+  def toWeightVector(): WeightVector = new WeightVector(data)
 }
 class NeuronMatrix (var data:DenseMatrix[Double]){
   def rows = data.rows
@@ -134,6 +135,7 @@ class NeuronTensor(var data: DenseMatrix[Double], val d1: Int, val d2: Int) {
 class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
   def this(n:Int) = this(DenseVector.zeros[Double](n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand))
+  def concatenate (that: WeightVector) : WeightVector = new WeightVector(DenseVector.vertcat(this.data, that.data))
   var ptr : Int = 0
   def reset(): Unit = {ptr = 0; }
   def apply(W:NeuronMatrix, b:NeuronVector): Int = {
