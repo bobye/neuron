@@ -258,8 +258,10 @@ class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction)
 								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
 			new RegularizedLinearNN(hiddenDimension, dimension, lambda))
 
-class SimpleAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
-	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0)
+class SimpleAutoEncoder (lambda: Double = 0.0, 
+     					 regCoeff: Double = 0.0, 
+    					 val func:NeuronFunction = SigmoidFunction) 
+	(dimension:Int, val hiddenDimension:Int)
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
 								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
@@ -284,14 +286,13 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 					  lambda:Double = 0.0,
 					  regCoeff: Double = 0.0,
 					  val penalty: NeuronFunction = new KL_divergenceFunction(0.01),
-					  val func: NeuronFunction = SigmoidFunction,
-					  val outputFunc: NeuronFunction = SigmoidFunction)
+					  val func: NeuronFunction = SigmoidFunction)
 	(dimension: Int, val hiddenDimension:Int)
 	(val inputLayer: InstanceOfRegularizedLinearNN = 
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern
 	extends AutoEncoder(regCoeff, 
 	    new ChainNeuralNetwork(new SparseSingleLayerNN(hiddenDimension, beta, func, penalty), inputLayer),
-	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func),
+	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), 
 	    					   new RegularizedLinearNN(hiddenDimension, dimension, lambda)))
 	
 class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
@@ -307,9 +308,9 @@ class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE)
 * 
 */
 
-class RecursiveSimpleAE (func:NeuronFunction =SigmoidFunction) 
-	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0)
-	extends SimpleAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) /* with RecursiveEncoder {
+class RecursiveSimpleAE (lambda: Double = 0.0, regCoeff:Double = 0.0, func:NeuronFunction =SigmoidFunction) 
+	(val wordLength: Int)
+	extends SimpleAutoEncoder(lambda, regCoeff, func)(wordLength*2, wordLength) /* with RecursiveEncoder {
   type Instance <: InstanceOfRecursiveSimpleAE
   override def create() : InstanceOfRecursiveSimpleAE = new InstanceOfRecursiveSimpleAE(this)
 }

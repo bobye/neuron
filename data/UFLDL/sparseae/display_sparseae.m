@@ -9,7 +9,7 @@ rows = floor(sqrt(numOfImages));
 cols = ceil(numOfImages / rows);
 
 
-ha = tight_subplot(rows, cols, [0.05, -0.25], 0.01, 0.01);
+ha = tight_subplot(rows, cols, [0.01, -0.25], 0.01, 0.01);
 for i=1:numOfImages
     axes(ha(i)), imshow(reshape(w(inds(i),:),[d d]),[])
 end
