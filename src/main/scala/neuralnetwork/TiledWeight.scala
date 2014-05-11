@@ -35,6 +35,14 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
       NullVector
     }
   }
+  override def getDimensionOfWeights(seed: String): Int = {
+    if (status != seed) {
+      status = seed
+      b.length
+    } else {
+      0
+    }
+  }
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
     if (status != seed) {
       status = seed
