@@ -33,9 +33,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
     for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
       val img = new NeuronVector(NN.rowsMultCols)//
       weightsVector(null, img)
-      //println(img.vec.data)
-      //p.println((img.data/norm(img.data)).data.mkString("\t")) // Just print
-      p.println(img.normalized)
+      p.println(img)
     })
   }
 }
