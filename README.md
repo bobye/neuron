@@ -35,7 +35,7 @@ run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php
 	cd data/UFLDL/sparseae/
 	matlab -r "display_sparseae.m"
 
-
+ ![UFLDL SAE](https://raw.githubusercontent.com/bobye/neuron/master/data/UFLDL/sparseae/results25.png)
 
 ### Reference
 * [Breeze](https://github.com/dlwh/breeze/): a set of libraries for machine learning and numerical computing

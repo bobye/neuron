@@ -46,13 +46,13 @@ object ImageAutoEncoderTest extends Optimizable {
       val hidden = 25
 	  xDataM = LoadData.rawImages64M()
       val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
-      val regularizedParam = 0.0001
+      val regularizedParam = 0.0002
       val sparsityParam = 0.01  
       /*
 	  val hidden = 200
 	  xDataM = LoadData.mnistTrainM()
 	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
-      val regularizedParam = 0.003
+      val regularizedParam = 0.005
       val sparsityParam = 0.1 
 	  */  
 	  val numOfPixels = xDataM.rows

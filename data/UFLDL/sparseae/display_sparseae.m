@@ -1,4 +1,4 @@
-filename='results25s';
+filename='results25';
 
 w=load([filename, '.txt']);
 [numOfImages, numOfPixels] = size(w);
