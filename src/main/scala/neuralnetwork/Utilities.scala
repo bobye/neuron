@@ -70,6 +70,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def Mult(x:Double): NeuronMatrix = new NeuronMatrix(this.data * x)
   def +(x:Double): NeuronMatrix = new NeuronMatrix(this.data + x)
   def -(x:Double): NeuronMatrix = new NeuronMatrix(this.data - x)
+  def /(x:Double) : NeuronMatrix = new NeuronMatrix(this.data / x)
   def :=(that:NeuronMatrix): Unit = {this.data := that.data}
   def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
