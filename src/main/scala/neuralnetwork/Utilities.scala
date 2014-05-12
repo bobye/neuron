@@ -43,6 +43,13 @@ class NeuronVector (val data: DenseVector[Double]) {
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
   override def toString() = data.data.mkString("\t")
   def toWeightVector(): WeightVector = new WeightVector(data)
+  def importFromFile(filename: String): Unit = {
+    val source = scala.io.Source.fromFile(filename)
+    val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
+    source.close()
+    assert(dataBlock.length == length)
+    data := new DenseVector(dataBlock)
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -89,6 +96,13 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     new NeuronTensor(m.data, this.rows, that.rows)
   }
   def asNeuronTensor(rows:Int, cols:Int): NeuronTensor = new NeuronTensor(data, rows, cols)
+  def importFromFile(filename: String): Unit = {
+    val source = scala.io.Source.fromFile(filename)
+    val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
+    source.close()
+    assert(dataBlock.length == rows*cols)
+    data := new DenseMatrix(rows, cols, dataBlock)
+  }
 }
 
 // solution to 3-order tensor
