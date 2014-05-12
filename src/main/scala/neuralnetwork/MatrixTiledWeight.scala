@@ -31,6 +31,14 @@ class InstanceOfTiledWeightBiLinearSymNN (override val NN: TiledWeightBiLinearSy
       NullVector
     }
   }
+  override def getDimensionOfWeights(seed: String): Int = {
+    if (status != seed) {
+      status = seed
+      b.rows * b.cols
+    } else {
+      0
+    }
+  }
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
     if (status != seed) {
       status = seed
