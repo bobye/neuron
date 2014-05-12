@@ -1,3 +1,4 @@
+
 neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](https://travis-ci.org/bobye/neuron)
 ========
 
@@ -19,13 +20,13 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
  - multilayer perceptron
  - autoencoders (w or w/o tiled weight)
- - recursive neural network
+ - activation functions: logistic
  - metrics (L1/L2, Softmax)
- - parallel framework: atomic parameters + distributed states
+ - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
 ### Get Started
-TBA
+TBA, please look at test examples in folder `src/main/scala/neuron.tutorials/`
 
 ### Examples
 
@@ -37,11 +38,20 @@ run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php
 
  ![UFLDL SAE](https://raw.githubusercontent.com/bobye/neuron/master/data/UFLDL/sparseae/results25.png)
 
+### FAQ
+
+_How is neuron different from other deep learning libraries, besides it is Scala based?_
+We argue that not only the number of parameters contributes to the representation ability of neural network, but also its infrastructure (network topology, train strategy, etc.) Neuron focuses on fast prototyping novel network architecture ...
+
+_How is the performance of neruon?_
+Neuron is currently backed by [breeze](https://github.com/dlwh/breeze/) for numerical computation, the extra cost for data flow is minimal. 
+
 ### Reference
 * [Breeze](https://github.com/dlwh/breeze/): a set of libraries for machine learning and numerical computing
 * [UFLDL Tutorial](http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial): a Stanford course, find solutions at [Github](https://github.com/search?q=UFLDL+Tutorial)
 * [DeepLearnToolbox](https://github.com/rasmusbergpalm/DeepLearnToolbox): Matlab toolbox for deep learning
 * [ScalaSTM](http://nbronson.github.io/scala-stm/):  a lightweight software transactional memory for Scala 
+* [Ivan Vasilev's neuralnetworks library](https://github.com/ivan-vasilev/neuralnetworks): java deep neural networks with gpu acceleration
 
 ----
 The MIT License (MIT)
