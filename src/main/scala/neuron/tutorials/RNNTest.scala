@@ -1,6 +1,9 @@
-package tutorials
+package neuron.tutorials
 
-import neuralnetwork._
+import neuron.core._
+import neuron.autoencoder._
+import neuron.math._
+import neuron.misc._
 import breeze.stats.distributions._
 import breeze.linalg._
 import breeze.optimize._

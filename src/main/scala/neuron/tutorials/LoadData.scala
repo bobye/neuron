@@ -1,5 +1,5 @@
-package tutorials
-import neuralnetwork._
+package neuron.tutorials
+import neuron.math._
 import breeze.linalg._
 
 object LoadData {

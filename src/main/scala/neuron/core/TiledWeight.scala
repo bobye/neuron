@@ -1,5 +1,7 @@
-package neuralnetwork
+package neuron.core
 import scala.concurrent.stm._
+import neuron.autoencoder.AutoEncoder
+import neuron.math._
 
 
 class TiledWeightLinearNN (inputDimension: Int, outputDimension: Int) 

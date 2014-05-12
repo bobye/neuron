@@ -1,5 +1,8 @@
-package neuralnetwork
+package neuron.matnn
 import scala.concurrent.stm._
+import neuron.core._
+import neuron.math._
+
 
 class TiledWeightBiLinearSymNN (inputTensorDimension: Int, outputTensorDimension: Int) 
 	extends BiLinearSymmetricNN(inputTensorDimension, outputTensorDimension){

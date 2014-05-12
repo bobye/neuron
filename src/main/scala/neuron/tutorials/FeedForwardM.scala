@@ -1,6 +1,7 @@
-package tutorials
+package neuron.tutorials
 import breeze.stats.distributions._
-import neuralnetwork._
+import neuron.core._
+import neuron.math._
 
 // This is an example about creating a mixed type feedforward neural network
 // and how to get objective and gradient in terms of internal weights

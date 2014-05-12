@@ -1,6 +1,7 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
-package neuralnetwork
+package neuron.core
 import scala.concurrent.stm._
+import neuron.math._
 
 /** SingleLayerNeuralNetwork is sigmoid functional layer 
  *  that takes in signals and transform them to activations [0,1] **/

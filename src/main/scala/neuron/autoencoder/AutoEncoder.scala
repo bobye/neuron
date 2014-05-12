@@ -1,6 +1,8 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
-package neuralnetwork
+package neuron.autoencoder
 import scala.concurrent.stm._
+import neuron.core._
+import neuron.math._
 
 /********************************************************************************************/
 // Encoder and Recursive Neural Network
@@ -300,29 +302,11 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 	
 class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
 	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0) 
-	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) /* with RecursiveEncoder {
-  type Instance <: InstanceOfRecursiveLinearAE
-  override def create() : InstanceOfRecursiveLinearAE = new InstanceOfRecursiveLinearAE(this)
-}
-class InstanceOfRecursiveLinearAE(override val NN:RecursiveLinearAE) 
-	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
-  val wordLength = NN.wordLength
-}
-* 
-*/
+	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) 
 
 class RecursiveSimpleAE (lambda: Double = 0.0, regCoeff:Double = 0.0, func:NeuronFunction =SigmoidFunction) 
 	(val wordLength: Int)
-	extends SimpleAutoEncoder(lambda, regCoeff, func)(wordLength*2, wordLength)() /* with RecursiveEncoder {
-  type Instance <: InstanceOfRecursiveSimpleAE
-  override def create() : InstanceOfRecursiveSimpleAE = new InstanceOfRecursiveSimpleAE(this)
-}
-class InstanceOfRecursiveSimpleAE(override val NN:RecursiveSimpleAE)
-	extends InstanceOfAutoEncoder(NN) with InstanceOfRecursiveEncoder {
-  val wordLength = NN.wordLength
-}
-* 
-*/
+	extends SimpleAutoEncoder(lambda, regCoeff, func)(wordLength*2, wordLength)() 
 
 
 

@@ -1,7 +1,8 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
-package neuralnetwork
+package neuron.core
 import breeze.stats.distributions._
 import scala.concurrent.stm._
+import neuron.math._
 
 
 /** LinearNeuralNetwork computes a linear transform, which is also possible to enforce L1/L2 regularization  **/

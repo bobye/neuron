@@ -14,4 +14,4 @@ for i=1:numOfImages
     axes(ha(i)), imshow(reshape(w(inds(i),:),[d d]),[])
 end
 
-print ha tmp.eps -depsc2
+%print ha tmp.eps -depsc2

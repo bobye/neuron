@@ -1,12 +1,11 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
 // Last Updated: April 2014
 // Copyright under MIT License
-package neuralnetwork
-
-/********************************************************************************************/
-// Graph data structure
-import scala.collection.SortedSet
+package neuron.misc
 import scala.collection.Set
+import neuron.autoencoder._
+import neuron.math._
+import neuron.core._
 
 abstract class GreedyMergeGraph {
   type DataType

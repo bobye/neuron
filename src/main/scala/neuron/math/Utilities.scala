@@ -1,7 +1,7 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
 // Last Updated: April 2014
 // Copyright under MIT License
-package neuralnetwork
+package neuron.math
 
 /********************************************************************************************/
 // Numerical classes and their operations : interface to breeze
@@ -10,6 +10,7 @@ import breeze.linalg._
 import breeze.numerics._
 import breeze.optimize._
 import breeze.stats.distributions._
+import neuron.core._
 //import breeze.math._
 
 

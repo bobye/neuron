@@ -1,9 +1,11 @@
-package tutorials
+package neuron.tutorials
 
 //import breeze.plot._
 import breeze.stats.distributions._
-import neuralnetwork._
 import breeze.linalg._
+import neuron.autoencoder._
+import neuron.core._
+import neuron.math._
 
 // create custom Image AutoEncoder from SparseSingleLayerAE
 class ImageAutoEncoder (val rowsMultCols:Int, override val hiddenDimension: Int, 

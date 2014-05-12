@@ -1,9 +1,11 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
 // Last Updated: April 2014
 // Copyright under MIT License
-package neuralnetwork
+package neuron.matnn
 import breeze.stats.distributions._
 import scala.concurrent.stm._
+import neuron.core._
+import neuron.math._
 
 abstract class MatrixNeuralNetwork (val inputX: Int, val inputY:Int, val outputX:Int, val outputY:Int)
 	extends NeuralNetwork(inputX*inputY, outputX*outputY){

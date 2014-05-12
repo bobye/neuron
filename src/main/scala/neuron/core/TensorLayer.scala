@@ -1,5 +1,8 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
-package neuralnetwork
+package neuron.core
+
+import neuron.math.NeuronVector
+import neuron.math.NeuronMatrix
 
 // Important change from (a,b) -> (a tensor b, a, b) to (a,b) -> (a tensor b)
 class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 

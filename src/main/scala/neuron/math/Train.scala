@@ -1,4 +1,4 @@
-package neuralnetwork
+package neuron.math
 import breeze.generic._
 import breeze.linalg._
 import breeze.numerics._

@@ -1,6 +1,7 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
-package neuralnetwork
+package neuron.core
 import scala.collection.mutable._
+import neuron.math._
 
 /********************************************************************************************/
 // Highest level classes for Neural Network
