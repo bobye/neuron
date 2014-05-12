@@ -18,8 +18,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - template vs. module
  - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
  - multilayer perceptron
- - autoencoders
- - tiled weight
+ - autoencoders (w or w/o tiled weight)
  - recursive neural network
  - metrics (L1/L2, Softmax)
  - parallel framework: atomic parameters + distributed states
@@ -27,6 +26,15 @@ Start _Scala IDE for Eclipse_ and import the project directory
  
 ### Get Started
 TBA
+
+### Examples
+
+run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php/Exercise:Sparse_Autoencoder) in parallel. It should take about 12 seconds on my PC:) 
+
+	sbt 'run-main neuron.tutorials.ImageAutoEncoderTest'
+	matlab -r "data/UFLDL/sparseae/display_sparseae.m"
+
+
 
 ### Reference
 * [Breeze](https://github.com/dlwh/breeze/): a set of libraries for machine learning and numerical computing
