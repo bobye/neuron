@@ -32,7 +32,8 @@ TBA
 run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php/Exercise:Sparse_Autoencoder) in parallel. It should take about 12 seconds on my PC:) 
 
 	sbt 'run-main neuron.tutorials.ImageAutoEncoderTest'
-	matlab -r "data/UFLDL/sparseae/display_sparseae.m"
+	cd data/UFLDL/sparse/
+	matlab -r "display_sparseae.m"
 
 
 
