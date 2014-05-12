@@ -13,7 +13,7 @@ import breeze.stats.distributions._
 //import breeze.math._
 
 
-class NeuronVector (var data: DenseVector[Double]) {
+class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
@@ -44,7 +44,7 @@ class NeuronVector (var data: DenseVector[Double]) {
   override def toString() = data.data.mkString("\t")
   def toWeightVector(): WeightVector = new WeightVector(data)
 }
-class NeuronMatrix (var data:DenseMatrix[Double]){
+class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
@@ -92,7 +92,7 @@ class NeuronMatrix (var data:DenseMatrix[Double]){
 }
 
 // solution to 3-order tensor
-class NeuronTensor(var data: DenseMatrix[Double], val d1: Int, val d2: Int) {
+class NeuronTensor(val data: DenseMatrix[Double], val d1: Int, val d2: Int) {
   assert(d1*d2 == data.rows)
   val d3 = data.cols
   def this(d1: Int, d2: Int, d3: Int) = this(DenseMatrix.zeros[Double](d1*d2,d3), d1, d2)
@@ -143,11 +143,11 @@ class WeightVector (data: DenseVector[Double]) extends NeuronVector(data) {
     val rows = W.data.rows
     val cols = W.data.cols
     
-    W.data = data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
+    W.data := data(ptr until ptr + rows*cols).asDenseMatrix.reshape(rows, cols)
     ptr = (ptr + rows * cols) % length
     }
     if (b != null) {
-    b.data = data(ptr until ptr + b.length)
+    b.data := data(ptr until ptr + b.length)
     ptr = (ptr + b.length) % length
     }
     ptr
