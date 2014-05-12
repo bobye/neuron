@@ -1,6 +1,4 @@
-// Created by: Jianbo Ye, Penn State University jxy198@psu.edu
-// Last Updated: April 2014
-// Copyright under MIT License
+// Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
 package neuralnetwork
 import scala.concurrent.stm._
 
