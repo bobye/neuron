@@ -26,10 +26,20 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
       }
     }
   }
+  override def getWeights(seed:String) : NeuronVector = {
+    if (status != seed) {
+      status = seed
+      // W is tiled
+      b 
+    }else {
+      NullVector
+    }
+  }  
   override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
       // W is tiled
+      b.set(0.0)
       b 
     }else {
       NullVector

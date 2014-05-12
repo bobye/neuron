@@ -74,6 +74,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   var status:String = ""
 
   def setWeights(seed:String, w:WeightVector) : Unit = {}// return regularization term
+  def getWeights(seed:String): NeuronVector = NullVector // return internal weight as a vector
   def getRandomWeights(seed:String) : NeuronVector = NullVector // reset internal weights and return a vector
   def getDimensionOfWeights(seed: String): Int = 0
   def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = 0.0
@@ -182,6 +183,14 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
       firstInstance.setWeights(seed, w) 
       secondInstance.setWeights(seed, w)
     } else {
+    }
+  }
+  override def getWeights(seed:String) : NeuronVector = {
+    if (status != seed) {
+        status = seed
+        firstInstance.getWeights(seed) concatenate secondInstance.getWeights(seed)
+      }else {
+      NullVector
     }
   }
   override def getRandomWeights(seed:String) : NeuronVector = {
@@ -496,6 +505,14 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       }
     }
   }
+  override def getWeights(seed:String): NeuronVector = {
+    if (status != seed) {
+      status = seed
+      W.vec() concatenate b
+    } else {
+      NullVector
+    }
+  }
   override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
@@ -503,7 +520,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
       W := new NeuronMatrix(outputDimension, inputDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
-      
+      b.set(0.0)
       W.vec() concatenate b 
     }else {
       NullVector

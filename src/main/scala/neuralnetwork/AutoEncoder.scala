@@ -89,7 +89,9 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
   }
   
   override def setWeights(seed:String, w:WeightVector) = INN.setWeights(seed, w)
+  override def getWeights(seed:String): NeuronVector = INN.getWeights(seed)
   override def getRandomWeights(seed:String) : NeuronVector = INN.getRandomWeights(seed)
+  override def getDimensionOfWeights(seed: String): Int = INN.getDimensionOfWeights(seed)
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = 
     INN.getDerativeOfWeights(seed, dw, numOfSamples)
 }
@@ -233,6 +235,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     }
     main.setWeights(seed, w) 
   }
+  override def getWeights(seed:String): NeuronVector = main.getWeights(seed)
   override def getRandomWeights(seed:String) : NeuronVector = main.getRandomWeights(seed)
   override def getDimensionOfWeights(seed: String): Int = main.getDimensionOfWeights(seed)
   

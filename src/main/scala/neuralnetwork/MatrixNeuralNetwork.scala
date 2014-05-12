@@ -66,6 +66,14 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
       }
     }
   }
+  override def getWeights(seed:String): NeuronVector = {
+    if (status != seed) {
+      status = seed
+      W.vec() concatenate b.vec()
+    } else {
+      NullVector
+    }    
+  }
   override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed

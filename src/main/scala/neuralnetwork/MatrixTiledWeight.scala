@@ -22,6 +22,14 @@ class InstanceOfTiledWeightBiLinearSymNN (override val NN: TiledWeightBiLinearSy
       }
     }
   }
+  override def getWeights(seed:String) : NeuronVector = {
+    if (status != seed) {
+      status = seed
+      b.vec() 
+    }else {
+      NullVector
+    }
+  }  
   override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
