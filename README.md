@@ -41,8 +41,11 @@ run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php
 ### FAQ
 
 - _How is neuron different from other deep learning libraries (such as theano, torch7, etc), besides it is Scala based?_
+
   We argue that not only the number of parameters contributes to the representation ability of neural network, but also its infrastructure (network topology, train strategy, etc.) Neuron focuses on fast prototyping novel network architecture ... but neuron is not at the mature shape to be industrial proven.
+
 - _How is the performance of neruon?_
+
   Neuron is currently backed by [breeze](https://github.com/dlwh/breeze/) for numerical computation, the extra cost for data flow is minimal. 
 
 ### Reference
