@@ -1,9 +1,9 @@
-filename='results25';
+filename='results200s';
 
 w=load([filename, '.txt']);
 [numOfImages, numOfPixels] = size(w);
 inds = randperm(numOfImages);
-numOfImages = 25;
+numOfImages = 196;
 d = sqrt(numOfPixels);
 rows = floor(sqrt(numOfImages));
 cols = ceil(numOfImages / rows);
@@ -14,4 +14,4 @@ for i=1:numOfImages
     axes(ha(i)), imshow(reshape(w(inds(i),:),[d d]),[])
 end
 
-%print ha tmp.eps -depsc2
+print ha tmp.eps -depsc2

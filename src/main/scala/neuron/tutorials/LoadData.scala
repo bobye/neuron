@@ -56,7 +56,7 @@ object LoadData {
     
     val buf = new Array[Byte](numOfPixels * numOfSamples)
     source.read(buf)
-    val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00) * 0.8 + 0.1) // normalized to [0.1, 0.9]
+    val dataBlock = buf.map(b => (0xff & b).toDouble / 255.00) 
     source.close()
     new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock))
   }
