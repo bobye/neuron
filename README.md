@@ -20,8 +20,8 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
  - multilayer perceptron
  - autoencoders (w or w/o tiled weight)
- - activation functions: logistic
- - metrics (L1/L2, Softmax)
+ - activation functions: logistic, tanh, ReLU, softplus
+ - metrics (L1, L2, Softmax)
  - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
