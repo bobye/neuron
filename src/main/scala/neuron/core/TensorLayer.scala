@@ -4,7 +4,7 @@ package neuron.core
 import neuron.math.NeuronVector
 import neuron.math.NeuronMatrix
 
-// Important change from (a,b) -> (a tensor b, a, b) to (a,b) -> (a tensor b)
+/** (a,b) -> (a tensor b) **/
 class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 
 	extends NeuralNetwork(firstDimension + secondDimension, firstDimension*secondDimension) {
   type InstanceType = InstanceOfTensorNeuralNetwork
@@ -12,6 +12,7 @@ class TensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int)
   def createAdHoc() = new InstanceOfTensorNeuralNetworkAdHoc(this)
 } 
 
+/** (a,b) -> (a tensor b),a,b **/
 class MTensorNeuralNetwork(val firstDimension: Int, val secondDimension: Int) 
 	extends ShareNeuralNetwork(new TensorNeuralNetwork(firstDimension, secondDimension), 
 							   new IdentityTransform(firstDimension + secondDimension))
@@ -66,6 +67,7 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
   }
 }
 
+/** change to: (a, b) -> \sum a tensor b **/
 class InstanceOfTensorNeuralNetworkAdHoc (override val NN:TensorNeuralNetwork) 
 	extends InstanceOfTensorNeuralNetwork(NN) {
   override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
@@ -82,7 +84,7 @@ class InstanceOfTensorNeuralNetworkAdHoc (override val NN:TensorNeuralNetwork)
 }
 
 
-// Important change from (a,b) -> (a tensor b, a, b) to (a,b) -> (a tensor b)
+/** a -> a tensor a **/
 class SelfTensorNeuralNetwork(val dimension: Int) 
 	extends NeuralNetwork(dimension, dimension*dimension) {
   type InstanceType = InstanceOfSelfTensorNeuralNetwork
@@ -139,6 +141,7 @@ class InstanceOfSelfTensorNeuralNetwork(override val NN:SelfTensorNeuralNetwork)
   }
 }
 
+/** change to: a -> \sum a tensor a **/
 class InstanceOfSelfTensorNeuralNetworkAdHoc (override val NN:SelfTensorNeuralNetwork) 
 	extends InstanceOfSelfTensorNeuralNetwork(NN) {
   override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
