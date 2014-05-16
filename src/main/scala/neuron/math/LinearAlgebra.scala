@@ -1,6 +1,6 @@
 package neuron.math
 
-/********************************************************************************************/
+/*******************************************************************************************/
 // Numerical classes and their operations : interface to breeze
 import breeze.generic._
 import breeze.linalg._

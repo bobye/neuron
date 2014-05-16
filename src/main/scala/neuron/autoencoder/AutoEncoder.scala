@@ -4,7 +4,7 @@ import scala.concurrent.stm._
 import neuron.core._
 import neuron.math._
 
-/********************************************************************************************/
+/*******************************************************************************************/
 // Encoder and Recursive Neural Network
 abstract trait EncoderWorkspace {
   implicit class extractClass [T<:EncodeClass]( x:T) {
@@ -96,7 +96,7 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
     INN.getDerativeOfWeights(seed, dw, numOfSamples)
 }
 
-/********************************************************************************************/
+/*******************************************************************************************/
 // AutoEncoder
 class AutoEncoder (val regCoeff:Double = 0.0,
     			   val encoder: Operationable, val decoder: Operationable)
@@ -310,7 +310,7 @@ class RecursiveSimpleAE (lambda: Double = 0.0, regCoeff:Double = 0.0, func:Neuro
 
 
 
-/********************************************************************************************/
+/*******************************************************************************************/
 // Context Aware Auto Encoder (NOT YET TESTED!)
 // The following section is far from complete! Don't use it.
 /* 

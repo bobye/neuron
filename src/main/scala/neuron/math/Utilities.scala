@@ -10,10 +10,10 @@ import neuron.core._
 //import breeze.math._
 
 
-/********************************************************************************************/
+/*******************************************************************************************/
 // Implement batch mode training 
 abstract trait Optimizable {
-  /*************************************/
+  /************************************/
   // To be specified 
   var nn: InstanceOfNeuralNetwork = null
   var xData : Array[NeuronVector] = null
@@ -25,7 +25,7 @@ abstract trait Optimizable {
   var yDataM : NeuronMatrix = null
   var xDataTestM: NeuronMatrix = null
   var yDataTestM: NeuronMatrix = null
-  /*************************************/
+  /************************************/
   
   final var randomGenerator = new scala.util.Random
   

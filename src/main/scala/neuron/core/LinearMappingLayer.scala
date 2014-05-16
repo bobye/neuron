@@ -5,7 +5,7 @@ import scala.concurrent.stm._
 import neuron.math._
 
 
-/** LinearNeuralNetwork computes a linear transform **/
+/** LinearNeuralNetwork computes a linear transform */
 class LinearNeuralNetwork (inputDimension: Int, outputDimension: Int) 
 	extends NeuralNetwork (inputDimension, outputDimension) {
   type InstanceType <: InstanceOfLinearNeuralNetwork
@@ -127,7 +127,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   }
 }
 
-/** Equipped LinearNeuralNetwork with weight decay by sigma **/
+/** Equipped LinearNeuralNetwork with weight decay by sigma */
 class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double = 0.0)
 	extends LinearNeuralNetwork (inputDimension, outputDimension) {
   type InstanceType = InstanceOfRegularizedLinearNN

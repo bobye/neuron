@@ -3,10 +3,10 @@ package neuron.core
 import scala.collection.mutable._
 import neuron.math._
 
-/********************************************************************************************/
+/******************************************************************************************/
 // Highest level classes for Neural Network
 
-/** defined operations for Operationable neural network (or its instance) **/
+/** defined operations for Operationable neural network (or its instance) */
 abstract trait Workspace{// 
   implicit class Helper[T1<:Operationable](x:T1) { 
     // Two basic operations to support combination 
@@ -20,7 +20,7 @@ abstract trait Workspace{//
       (x TENSOR y) SHARE (x PLUS y)
   } 
 }
-/** Operationable is a generic trait that supports operations in Workspace **/
+/** Operationable is a generic trait that supports operations in Workspace */
 abstract trait Operationable extends Workspace {
   def inputDimension:Int
   def outputDimension:Int
@@ -35,7 +35,7 @@ abstract trait Operationable extends Workspace {
 
 class SetOfMemorables extends HashMap[String, Memorable]
 
-/** Memorable is state buffer associate a neural network that keep temporary data which is independent of the parameters of neural network**/
+/** Memorable is state buffer associate a neural network that keep temporary data which is independent of the parameters of neural network*/
 class Memorable {
   var status = ""
   var numOfMirrors:Int = 0
@@ -52,14 +52,14 @@ class Memorable {
 
 
 
-/** Class for (template) neural network, where parameters are not instantiated **/
+/** Class for (template) neural network, where parameters are not instantiated */
 abstract class NeuralNetwork (val inputDimension:Int, val outputDimension:Int) extends Operationable{
   type InstanceType <: InstanceOfNeuralNetwork
   def create() : InstanceOfNeuralNetwork 
   override def toString() = "?" + toStringGeneric
 }
 
-/** Class for instance of neural network, which can be applied and trained **/
+/** Class for instance of neural network, which can be applied and trained */
 abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operationable {
   type StructureType <: Operationable
   
@@ -68,7 +68,7 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   def outputDimension= NN.outputDimension
   def create() = this // self reference
   
-  /** Instance of neural network are basically function which works on either a single NeuronVector or a set of them as NeuronMatrix **/
+  /** Instance of neural network are basically function which works on either a single NeuronVector or a set of them as NeuronMatrix */
   def apply (x: NeuronVector, mem:SetOfMemorables) : NeuronVector
   def apply (xs: NeuronMatrix, mem:SetOfMemorables) : NeuronMatrix 
 
@@ -76,22 +76,22 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   // structure to vectorization functions
   var status:String = ""
   
-  /** set parameters of neural network by passing a WeightVector **/
+  /** set parameters of neural network by passing a WeightVector */
   def setWeights(seed:String, w:WeightVector) : Unit = {}
-  /** get parameters of neural network as a NeuronVector **/
+  /** get parameters of neural network as a NeuronVector */
   def getWeights(seed:String): NeuronVector = NullVector 
-  /** reset internal parameters (by random) and return a vector **/
+  /** reset internal parameters (by random) and return a vector */
   def getRandomWeights(seed:String) : NeuronVector = NullVector 
-  /** get the dimension of parameters **/
+  /** get the dimension of parameters */
   def getDimensionOfWeights(seed: String): Int = 0
-  /** get the data of derivative of parameters and return (sample dependent) regularization term **/
+  /** get the data of derivative of parameters and return (sample dependent) regularization term */
   def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = 0.0
   
   // dynamic operations
   def init(seed:String, mem: SetOfMemorables) : InstanceOfNeuralNetwork = {this} // default: do nothing
   def allocate(seed:String, mem: SetOfMemorables) : InstanceOfNeuralNetwork = {this} // 
   
-  /** backpropagate propagates the partial derivative chain rule **/
+  /** backpropagate propagates the partial derivative chain rule */
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables): NeuronVector
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables): NeuronMatrix 
   
@@ -115,7 +115,7 @@ class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends Ins
 }
 
 
-/** basic operation to derive hierarchy structures of two operational neural network **/
+/** basic operation to derive hierarchy structures of two operational neural network */
 abstract class MergedNeuralNetwork [Type1 <:Operationable, Type2 <:Operationable] 
 		(val first:Type1, val second:Type2) extends Operationable{ 
 }
@@ -181,7 +181,7 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
   
 }
 
-/** {f PLUS g} ([x,y]) := [f(x), g(y)] **/
+/** {f PLUS g} ([x,y]) := [f(x), g(y)] */
 class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		( override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1,Type2](first,second) {
@@ -192,7 +192,7 @@ class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   override def toString() = "(" + first.toString + " + " + second.toString + ")"
 }
 
-/** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) **/
+/** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
 class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends Operationable {
   assert (n>=1)
   val inputDimension = x.inputDimension * n
@@ -239,7 +239,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   override def toString() = firstInstance.toString + " + " + secondInstance.toString
 }
 
-/** {f TIMES g} (x) := f(g(x)) **/
+/** {f TIMES g} (x) := f(g(x)) */
 class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
 		(override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1, Type2] (first, second) {
@@ -274,7 +274,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
   override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"
 }
 
-/** {f SHARE g} (x) := [f(x), g(x)] **/
+/** {f SHARE g} (x) := [f(x), g(x)] */
 class ShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
 		(override val first:Type1, override val second: Type2)
 		extends MergedNeuralNetwork[Type1, Type2] (first, second) {

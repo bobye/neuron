@@ -4,8 +4,8 @@ import scala.concurrent.stm._
 import neuron.math._
 
 /** SingleLayerNeuralNetwork is sigmoid functional layer 
- *  that takes in signals and transform them to activations [0,1] **/
-class SingleLayerNeuralNetwork (override val dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function **/ ) 
+ *  that takes in signals and transform them to activations [0,1] */
+class SingleLayerNeuralNetwork (override val dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function */ ) 
 	extends SelfTransform (dimension) {
   type InstanceType <: InstanceOfSingleLayerNeuralNetwork
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
@@ -61,11 +61,11 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   }
 }
 
-/** SparseSingleLayer computes average activation and enforce sparsity penalty **/
+/** SparseSingleLayer computes average activation and enforce sparsity penalty */
 class SparseSingleLayerNN (override val dimension: Int, 
 						   var beta: Double = 0.0,
-                           override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function **/,
-						   val penalty: NeuronFunction = new KL_divergenceFunction(0.04) /** Sparsity Penalty Function **/)
+                           override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function */,
+						   val penalty: NeuronFunction = new KL_divergenceFunction(0.04) /** Sparsity Penalty Function */)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType = InstanceOfSparseSingleLayerNN
   override def create (): InstanceOfSparseSingleLayerNN = new InstanceOfSparseSingleLayerNN(this)
