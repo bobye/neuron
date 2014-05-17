@@ -112,6 +112,19 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
   }  
 }
 
+class TiledWeightSimpleAE (lambda:Double = 0.0,
+					  regCoeff: Double = 0.0,
+					  val func: NeuronFunction = SigmoidFunction,
+					  val outputFunc: NeuronFunction = SigmoidFunction)
+	(dimension: Int, val hiddenDimension:Int)
+	(val inputLayer: InstanceOfRegularizedLinearNN = 
+	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern
+	extends AutoEncoder(regCoeff, 
+	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
+	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, outputFunc),
+	    					   new TiledWeightLinearNN(hiddenDimension, dimension).create(inputLayer.W, inputLayer.dW, true)))
+
+
 
 class TiledWeightSparseAE (val beta:Double = 0.0,
 					  lambda:Double = 0.0,
@@ -124,7 +137,7 @@ class TiledWeightSparseAE (val beta:Double = 0.0,
 	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create()) // for visualization concern
 	extends AutoEncoder(regCoeff, 
 	    new ChainNeuralNetwork(new SparseSingleLayerNN(hiddenDimension, beta, func, penalty), inputLayer),
-	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func),
+	    new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, outputFunc),
 	    					   new TiledWeightLinearNN(hiddenDimension, dimension).create(inputLayer.W, inputLayer.dW, true)))
 
 
