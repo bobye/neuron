@@ -161,6 +161,20 @@ object SoftplusFunction extends NeuronFunction {
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(softplus(x.data))
 }
 
+class PowerFunction (r: Double) extends NeuronFunction {
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector(pow(x.data, r)) 
+  def apply(x:NeuronVector): NeuronVector= new NeuronVector(pow(x.data, r-1)*r)
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(pow(x.data, r))
+  def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(pow(x.data, r-1)*r)
+}
+
+object SquareFunction extends NeuronFunction {
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x
+  def apply(x:NeuronVector): NeuronVector= (x DOT x)*0.5
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x
+  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) Mult 0.5
+}
+
 class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   object dKLdfunc extends dKLd(rho)
   object KLdiv extends KLdiv(rho)
