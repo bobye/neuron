@@ -285,7 +285,7 @@ abstract trait Optimizable {
       w2 = new WeightVector(sagd.minimize(batchf, w.data))
     }
     else if (opt == "sgdm") {
-      val sgdm  = new SGDmTrain()
+      val sgdm  = new SGDmTrain(0.9, 0.01, maxIter)
       w2 = new WeightVector(sgdm.minimize(f, w.data))
     }
     (f(w2.data), w2)    
