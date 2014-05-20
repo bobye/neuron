@@ -66,8 +66,10 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
   }
   override def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
+    if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
+    }
     if (isTranspose)
       (W TransMult x) + b 
     else
@@ -75,8 +77,10 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
   }
   override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert (xs.rows == inputDimension)
+    if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBufferM(mem(key).mirrorIndex) = xs
+    }
     if (isTranspose) 
       (W TransMult xs) Add b     
     else

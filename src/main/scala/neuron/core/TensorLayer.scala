@@ -41,14 +41,19 @@ class InstanceOfTensorNeuralNetwork(override val NN:TensorNeuralNetwork)
     this
   }
   def apply(x:NeuronVector, mem:SetOfMemorables) = {
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
-    mem(key).inputBuffer(mem(key).mirrorIndex) = x;
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    	mem(key).inputBuffer(mem(key).mirrorIndex) = x;
+    }
     val (firstVec, secondVec) = x.splice(NN.firstDimension)
     (firstVec CROSS secondVec).vec() // concatenate firstVec concatenate secondVec
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
-    mem(key).inputBufferM(mem(key).mirrorIndex) = xs;
+    if (mem != null) {
+      mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+      mem(key).inputBufferM(mem(key).mirrorIndex) = xs;
+    }
+    
     val (firstVec, secondVec) = xs.spliceRow(NN.firstDimension)
     (firstVec CROSS secondVec).mat()
   }
@@ -117,13 +122,17 @@ class InstanceOfSelfTensorNeuralNetwork(override val NN:SelfTensorNeuralNetwork)
     this
   }
   def apply(x:NeuronVector, mem:SetOfMemorables) = {
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
-    mem(key).inputBuffer(mem(key).mirrorIndex) = x;
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    	mem(key).inputBuffer(mem(key).mirrorIndex) = x;
+    }
     (x CROSS x).vec() // concatenate firstVec concatenate secondVec
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
     mem(key).inputBufferM(mem(key).mirrorIndex) = xs;
+    }
     (xs CROSS xs).mat()
   }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {

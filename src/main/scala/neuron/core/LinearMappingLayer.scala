@@ -93,14 +93,18 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
   val db = Ref(new NeuronVector (outputDimension))
   def apply (x: NeuronVector, mem:SetOfMemorables) = {
     assert (x.length == inputDimension)
-    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    mem(key).inputBuffer(mem(key).mirrorIndex) = x
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).inputBuffer(mem(key).mirrorIndex) = x
+    }
     (W Mult x) + b 
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert (xs.rows == inputDimension)
-    mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    mem(key).inputBufferM(mem(key).mirrorIndex) = xs
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).inputBufferM(mem(key).mirrorIndex) = xs
+    }
     (W Mult xs) Add b     
   }
 
@@ -130,13 +134,13 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 /** Equipped LinearNeuralNetwork with weight decay by sigma */
 class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double = 0.0)
 	extends LinearNeuralNetwork (inputDimension, outputDimension) {
-  type InstanceType = InstanceOfRegularizedLinearNN
+  type InstanceType <: InstanceOfRegularizedLinearNN
   override def create(): InstanceOfRegularizedLinearNN = new InstanceOfRegularizedLinearNN(this) 
 }
 
 class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN) 
 	extends InstanceOfLinearNeuralNetwork(NN) {
-  type StructureType = RegularizedLinearNN
+  type StructureType <: RegularizedLinearNN
 
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
     if (status != seed) {

@@ -30,12 +30,8 @@ abstract trait Encoder extends Operationable with EncodeClass{
 } 
 abstract trait InstanceOfEncoder extends InstanceOfNeuralNetwork with EncodeClass {
   type StructureType <: Encoder
-  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {
-    apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
-  }
-  def encode(xs:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
-    apply(xs, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrentM
-  }
+  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector
+  def encode(xs:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix 
   //def applyEncodingErr(x:NeuronVector, mem:SetOfMemorables): NeuronVector
   def encodingBP(eta:NeuronVector, mem: SetOfMemorables): NeuronVector 
   def encodingBP(etas:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix
@@ -123,6 +119,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   
   private val aeError = Ref(0.0);
   def apply (x:NeuronVector, mem:SetOfMemorables) = { 
+    if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
     mem(key).asInstanceOf[EncoderMemorable].encodeCurrent = encoderInstance(x, mem) // buffered
@@ -142,9 +139,13 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     }
 
     
-    mem(key).outputBuffer(mem(key).mirrorIndex)    
+    mem(key).outputBuffer(mem(key).mirrorIndex)
+    } else {
+      decoderInstance(encoderInstance(x, null), null)
+    }
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBufferM(mem(key).mirrorIndex) = xs
     mem(key).asInstanceOf[EncoderMemorable].encodeCurrentM = encoderInstance(xs, mem) // buffered
@@ -162,8 +163,25 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     }      
     
     mem(key).outputBufferM(mem(key).mirrorIndex)  
+    } else {
+      decoderInstance(encoderInstance(xs, null), null)
+    }
   }
   
+  def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {
+    if (mem != null) {
+      apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
+    } else {
+      encoderInstance(x, null)
+    }
+  }
+  def encode(xs:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
+    if (mem != null) {
+      apply(xs, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrentM
+    } else {
+      encoderInstance(xs, null)
+    }
+  }
   
   override def init(seed:String, mem:SetOfMemorables) = {
     main.init(seed, mem)

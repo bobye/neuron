@@ -249,8 +249,7 @@ object SoftMaxDistance extends DistanceFunction {
   def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix ={
     assert((y.sumCol() - 1.0).euclideanSqrNorm < 1E-6)
     val x1 = new NeuronMatrix(exp(x.data))
-    val x1SumInv = new NeuronVector(inverse(x1.sumCol().data))
-    (x1 MultElemTrans x1SumInv) - y
+    new NeuronMatrix(x1.data(*,::) :/ sum(x1.data(::,*)).toDenseVector) - y
   }
   def apply(x:NeuronVector, y:NeuronVector): Double = {
     val x1 = new NeuronVector(exp(x.data))
@@ -259,7 +258,7 @@ object SoftMaxDistance extends DistanceFunction {
   }
   def apply(x:NeuronMatrix, y:NeuronMatrix): Double = {
     val x1 = new NeuronMatrix(exp(x.data))
-    val x1SumInv = new NeuronVector(inverse(x1.sumCol().data))
-    (y DOT (x1 MultElemTrans x1SumInv)).sumAll
+    val x2 = new NeuronMatrix(-log(x1.data(*,::) :/ sum(x1.data(::,*)).toDenseVector))
+    (y DOT x2).sumAll
   }
 }
