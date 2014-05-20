@@ -191,13 +191,13 @@ object SquareFunction extends NeuronFunction {
   def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) 
 }
 
-object CubicAbsFunction extends NeuronFunction {
+object CubicFunction extends NeuronFunction {
   def grad(x:Double) = 3*x*abs(x)
   def apply(x:Double) = x* x* x
-  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector(( x DOT AbsFunction(x)).data) * 3
-  def apply(x:NeuronVector): NeuronVector= AbsFunction(x DOT x DOT x)
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(( x DOT AbsFunction(x)).data) Mult 3
-  def apply(x:NeuronMatrix): NeuronMatrix = AbsFunction(x DOT x DOT x)
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector((x DOT x).data) * 3
+  def apply(x:NeuronVector): NeuronVector= (x DOT x DOT x)
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix((x DOT x).data) Mult 3
+  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x DOT x)
 }
 
 object AbsFunction extends NeuronFunction {
