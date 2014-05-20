@@ -9,6 +9,9 @@ import breeze.optimize._
 import breeze.stats.distributions._
 //import breeze.math._
 
+class LabelVector(val data:DenseVector[Int]) {
+  def length = data.length
+}
 class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
@@ -33,6 +36,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = data.sum
+  def max(): Double = data.max
+  def argmax(): Int = data.argmax(Ordering.Double)
   def asNeuronMatrix(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
   def last(): Double = data(data.length)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
@@ -78,6 +83,9 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def sumCol() = new NeuronVector(sum(data(::,*)).toDenseVector)
   def sumRow() = new NeuronVector(sum(data(*,::)).toDenseVector)
   def sumAll():Double = sum(data)
+  def maxCol() = new NeuronVector(max(data(::,*)).toDenseVector)
+  def maxAll(): Double = max(data)
+  def argmaxCol() = new LabelVector(argmax(data(::,*)).toDenseVector)
   def colVec(i: Int) = new NeuronVector(data(::,i))
   def DOT(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
