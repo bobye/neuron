@@ -169,10 +169,24 @@ class PowerFunction (r: Double) extends NeuronFunction {
 }
 
 object SquareFunction extends NeuronFunction {
-  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x
-  def apply(x:NeuronVector): NeuronVector= (x DOT x)*0.5
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x
-  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) Mult 0.5
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x * 2
+  def apply(x:NeuronVector): NeuronVector= (x DOT x)
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x Mult 2
+  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) 
+}
+
+object CubicAbsFunction extends NeuronFunction {
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector(( x DOT AbsFunction(x)).data) * 3
+  def apply(x:NeuronVector): NeuronVector= AbsFunction(x DOT x DOT x)
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(( x DOT AbsFunction(x)).data) Mult 3
+  def apply(x:NeuronMatrix): NeuronMatrix = AbsFunction(x DOT x DOT x)
+}
+
+object AbsFunction extends NeuronFunction {
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector(signum(x.data))
+  def apply(x:NeuronVector): NeuronVector= new NeuronVector(abs(x.data))
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(signum(x.data))
+  def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(abs(x.data))
 }
 
 class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
