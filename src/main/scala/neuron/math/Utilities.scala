@@ -50,13 +50,6 @@ abstract trait Optimizable {
     var totalCost: Double = 0.0
     val dw = new WeightVector(w.length)
     
-    
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)    
-    (0 until size).par.foreach(i => {
-      nn(xData(i),initMemory())
-    })
-    
-    
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yData != null) {//supervised
       totalCost = (0 until size).par.map(i => {
@@ -90,11 +83,6 @@ abstract trait Optimizable {
     } else {
       sampleArray = scala.util.Random.shuffle((0 until size).toList).slice(0, batchSize).par
     }
-      
-    sampleArray.foreach(i => {
-      nn(xData(i),initMemory())
-    })
-    
     
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
@@ -129,8 +117,6 @@ abstract trait Optimizable {
     var totalCost:Double = 0.0
 
     val dw = new WeightVector(w.length)  
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)        
-    nn(xDataM,initMemory())
 
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yDataM != null) {//supervised
@@ -154,10 +140,6 @@ abstract trait Optimizable {
     var totalCost:Double = 0.0
     
     val dw = new WeightVector(w.length)
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
-    ranges.map(r =>
-    	nn(xDataM.Cols(r),initMemory())
-    )
     
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yDataM != null) {//supervised

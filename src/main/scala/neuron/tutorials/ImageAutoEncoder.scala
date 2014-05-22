@@ -41,6 +41,65 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 }
 
 object ImageAutoEncoderTest extends Optimizable {
+   override def getObjM(w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
+    val size = xDataM.cols
+    assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+    var totalCost:Double = 0.0
+
+    val dw = new WeightVector(w.length)  
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)        
+    nn(xDataM,initMemory())
+
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    if (yDataM != null) {//supervised
+    	totalCost = distance(nn(xDataM, initMemory()), yDataM)
+    } else {//unsupervised
+      nn(xDataM, initMemory());
+      totalCost = 0.0
+    }
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    totalCost/size + regCost
+  }
+  
+  override def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+    val size = xDataM.cols
+    assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+    val blockSize = 512
+    val numOfBlock: Int = (size-1)/blockSize + 1
+    val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
+    
+    var totalCost:Double = 0.0
+    
+    val dw = new WeightVector(w.length)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    ranges.map(r =>
+    	nn(xDataM.Cols(r),initMemory())
+    )
+    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    if (yDataM != null) {//supervised
+      totalCost = ranges.map(r => {
+        val mem = initMemory()
+        val x = nn(xDataM.Cols(r), mem); val y = yDataM.Cols(r)
+        val z = distance.grad(x, y)
+        nn.backpropagate(z, mem) // update dw !
+        distance(x,y)}).reduce(_+_)
+    } else {//unsupervised
+      ranges.map(r => {
+        val mem = initMemory()
+        val x = nn(xDataM.Cols(r), mem);
+        nn.backpropagate(new NeuronMatrix(x.rows, x.cols), mem)
+      })
+      totalCost = 0.0
+    }
+    
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
+    //println(totalCost/size, regCost)
+    (totalCost/size + regCost, dw/size)
+  }
+  
     object ioParam {
       
       val hidden = 25
