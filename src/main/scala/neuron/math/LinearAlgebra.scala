@@ -89,6 +89,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def maxAll(): Double = max(data)
   def argmaxCol() = new LabelVector(argmax(data(::,*)).toDenseVector)
   def colVec(i: Int) = new NeuronVector(data(::,i))
+  def rowVec(i: Int) = new NeuronVector(data(i,::).t)
   def DOT(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
