@@ -95,6 +95,7 @@ object LoadData {
     new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock))
   }
   
+  
   def unique[A](ls: List[A]) = {
   def loop(set: Set[A], ls: List[A]): List[A] = ls match {
     case hd :: tail if set contains hd => loop(set, tail)
@@ -122,4 +123,20 @@ object LoadData {
     })
     return labelMat
   }
+  
+  def mnistImageAndLabelsM_rbimg(): (NeuronMatrix, NeuronMatrix) = {
+      val numOfPixels = 28*28	  
+	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/mnist_background_images/mnist_background_images_train.amat")
+	  val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
+	  val data = new NeuronMatrix(new DenseMatrix(numOfPixels+1, dataBlock.length/numOfPixels, dataBlock))
+      val dataLabel = data.rowVec(numOfPixels).data.toArray.map(_.toInt)
+      
+      val numOfLabels = 10
+      val numOfSamples = dataLabel.length
+      val labelMat = new NeuronMatrix(numOfLabels, numOfSamples)
+      (0 until numOfSamples).map(i=> {
+    	  labelMat.data(dataLabel(i), i) = 1
+      })      
+      (data.Rows(0 until numOfPixels), labelMat)
+  }  
 }
