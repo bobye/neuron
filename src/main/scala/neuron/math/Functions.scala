@@ -16,7 +16,7 @@ abstract class NeuronFunction {
 }
 
 object IdentityFunction extends NeuronFunction {
-  def grad(x: Double) = 1.
+  def grad(x: Double) = 1.0
   def apply(x: Double) = x
   def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new OnesVector(x.length)
   def apply(x:NeuronVector) = x
@@ -253,7 +253,7 @@ object SoftMaxDistance extends DistanceFunction {
   }
   def apply(x:NeuronVector, y:NeuronVector): Double = {
     val x1 = new NeuronVector(exp(x.data))
-    val x2 = new NeuronVector(-log(x1.data / x1.data.sum))
+    val x2 = new NeuronVector(-log(x1.data / sum(x1.data)))
     (y DOT x2).sum
   }
   def apply(x:NeuronMatrix, y:NeuronMatrix): Double = {

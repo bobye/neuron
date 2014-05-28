@@ -37,9 +37,9 @@ class NeuronVector (val data: DenseVector[Double]) {
   
   def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
-  def sum(): Double = data.sum
-  def max(): Double = data.max
-  def argmax(): Int = data.argmax(Ordering.Double)
+  def sum(): Double = breeze.linalg.sum(data)
+  def max(): Double = breeze.linalg.max(data)
+  def argmax(): Int = breeze.linalg.argmax(data)
   def asNeuronMatrix(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
   def last(): Double = data(data.length)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )

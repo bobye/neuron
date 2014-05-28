@@ -77,7 +77,7 @@ case class Branch (val left:Tree, val right:Tree) extends Tree {
   val numOfLeaves = left.numOfLeaves + right.numOfLeaves
   override def toString() = "(" + left.toString() + " " + right.toString() + ")" 
 }
-case class Leaf extends Tree {
+case class Leaf() extends Tree {
   val numOfLeaves: Int = 1
   override def toString() = "x"
 }
