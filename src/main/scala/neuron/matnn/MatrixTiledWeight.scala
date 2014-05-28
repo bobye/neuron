@@ -71,8 +71,8 @@ class InstanceOfTiledWeightBiLinearSymNN (override val NN: TiledWeightBiLinearSy
   }
   override def backpropagateMatrix(eta: NeuronMatrix, mem: SetOfMemorables) = {
     // eta and inputBufferM are symmetric
-    val dWincr = if (isTranspose) ((mem(key).inputBufferM(mem(key).mirrorIndex) Mult W Mult eta) Mult 2.0)
-    			 else ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 2.0)
+    val dWincr = if (isTranspose) ((mem(key).inputBufferM(mem(key).mirrorIndex) Mult W Mult eta) * 2.0)
+    			 else ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) * 2.0)
     atomic { implicit txn =>
     dW() = dW() + dWincr
     }

@@ -218,7 +218,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   }
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     val z= L2Distance.grad(mem(key).outputBufferM(mem(key).mirrorIndex), 
-    					   mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 
+    					   mem(key).inputBufferM(mem(key).mirrorIndex)) * 
     			(NN.regCoeff/ mem(key).numOfMirrors)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     main.backpropagate(etas + z, mem) - z 
@@ -232,7 +232,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     encoderInstance.backpropagate(z2 + eta, mem) - z
   }
   def encodingBP(etas:NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
-    val z= L2Distance.grad(mem(key).outputBufferM(mem(key).mirrorIndex), mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 
+    val z= L2Distance.grad(mem(key).outputBufferM(mem(key).mirrorIndex), mem(key).inputBufferM(mem(key).mirrorIndex)) * 
     		(NN.regCoeff/ mem(key).numOfMirrors)
     val z2= decoderInstance.backpropagate(z, mem)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors

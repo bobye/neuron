@@ -97,7 +97,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBuffer(mem(key).mirrorIndex) = x
     }
-    (W Mult x) + b 
+    W * x + b 
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert (xs.rows == inputDimension)
@@ -105,7 +105,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBufferM(mem(key).mirrorIndex) = xs
     }
-    (W Mult xs) Add b     
+    (W * xs) Add b     
   }
 
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
@@ -146,7 +146,7 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
-      dW() = dW() + (W Mult (NN.lambda * numOfSamples))
+      dW() = dW() + (W * (NN.lambda * numOfSamples))
       dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
       }
       W.euclideanSqrNorm * (NN.lambda /2)

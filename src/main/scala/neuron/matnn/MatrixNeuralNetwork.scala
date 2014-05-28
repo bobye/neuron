@@ -133,10 +133,10 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     assert (x.rows == inputTensorDimension && x.cols == inputTensorDimension)
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBufferM(mem(key).mirrorIndex) = x
-    ((W Mult x) MultTrans W) + b
+    (W * x MultTrans W) + b
   }
   def backpropagateMatrix(eta: NeuronMatrix, mem: SetOfMemorables) = {
-    val dWincr = ((eta Mult W Mult mem(key).inputBufferM(mem(key).mirrorIndex)) Mult 2.0)
+    val dWincr = ((eta * W * mem(key).inputBufferM(mem(key).mirrorIndex)) * 2.0)
     atomic { implicit txn =>
     //println(key, mem(key).mirrorIndex, eta.data)
     dW() = dW() +  dWincr
@@ -145,7 +145,7 @@ class InstanceOfBiLinearSymmetricNN (override val NN: BiLinearSymmetricNN) exten
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (W TransMult eta) Mult W // dgemv      
+    (W TransMult eta) * W // dgemv      
   }
 }
 
@@ -162,7 +162,7 @@ class InstanceOfRegularizedBiLinearSymNN (override val NN: RegularizedBiLinearSy
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
-      dW() = dW() + (W Mult (NN.lambda * numOfSamples))
+      dW() = dW() + (W * (NN.lambda * numOfSamples))
       dw.get(dW(), db().vec())//(dW.vec + W.vec * (NN.lambda)) concatenate db
       }
       W.euclideanSqrNorm * (NN.lambda /2)

@@ -150,7 +150,7 @@ object TanhFunction extends NeuronFunction {
     if (buf == NullMatrix) 
       new NeuronMatrix(dtanh(x.data))
     else
-      ((buf DOT buf) Mult (-1)) +1
+      ((buf DOT buf) * (-1)) +1
   }
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(tanh(x.data))
 }
@@ -187,7 +187,7 @@ object SquareFunction extends NeuronFunction {
   def apply(x:Double) = x*x
   def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x * 2
   def apply(x:NeuronVector): NeuronVector= (x DOT x)
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x Mult 2
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x * 2
   def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) 
 }
 
@@ -196,7 +196,7 @@ object CubicFunction extends NeuronFunction {
   def apply(x:Double) = x* x* x
   def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector((x DOT x).data) * 3
   def apply(x:NeuronVector): NeuronVector= (x DOT x DOT x)
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix((x DOT x).data) Mult 3
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix((x DOT x).data) * 3
   def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x DOT x)
 }
 

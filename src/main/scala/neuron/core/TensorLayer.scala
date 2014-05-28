@@ -139,7 +139,7 @@ class InstanceOfSelfTensorNeuralNetwork(override val NN:SelfTensorNeuralNetwork)
     val ord2GradW = eta.asNeuronMatrix(NN.dimension, NN.dimension) //change ord2Grad -> eta (only)
     val x = mem(key).inputBuffer(mem(key).mirrorIndex)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (ord2GradW + ord2GradW.transpose) Mult x
+    (ord2GradW + ord2GradW.transpose) * x
   }
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     // INCOMPLETE: To be implemented
@@ -161,7 +161,7 @@ class InstanceOfSelfTensorNeuralNetworkAdHoc (override val NN:SelfTensorNeuralNe
   override def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     val xs = mem(key).inputBufferM(mem(key).mirrorIndex)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    ((etas + etas.transpose) Mult xs) / xs.cols
+    ((etas + etas.transpose) * xs) / xs.cols
   }
 }
 	
