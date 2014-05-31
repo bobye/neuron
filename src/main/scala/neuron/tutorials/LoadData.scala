@@ -79,22 +79,6 @@ object LoadData {
     source.close()
     xData
   }  
-  def mnistImagesM(dataName:String = "train"): NeuronMatrix = {
-    import java.io._
-    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-images.idx3-ubyte"))
-    println("magic: " + source.readInt())
-    val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
-    val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
-    val numOfCols = source.readInt(); println("numOfCols: " + numOfCols)
-    val numOfPixels = numOfRows * numOfCols
-    
-    val buf = new Array[Byte](numOfPixels * numOfSamples)
-    source.read(buf)
-    val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00) *0.8 + 0.1) // normalized to [0.1, 0.9]: improve convergence and prevent dead unit
-    source.close()
-    new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock))
-  }
-  
   
   def unique[A](ls: List[A]) = {
   def loop(set: Set[A], ls: List[A]): List[A] = ls match {
@@ -105,34 +89,55 @@ object LoadData {
 
   loop(Set(), ls)
   }
-  def mnistLabelsM(dataName:String = "train"): NeuronMatrix = {
-    
+  
+  def mnistDataM(dataName:String = "train"): (NeuronMatrix, NeuronMatrix) = {
     import java.io._
-    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-labels.idx1-ubyte"))
+    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
-    val buf = new Array[Byte](numOfSamples)
+    val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
+    val numOfCols = source.readInt(); println("numOfCols: " + numOfCols)
+    val numOfPixels = numOfRows * numOfCols
+    
+    val buf = new Array[Byte](numOfPixels * numOfSamples)
     source.read(buf)
-    val dataBlock = buf.map(_.toInt)
-    val numOfLabels = unique(dataBlock.toList).length
+    val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00)) 
+    //val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00) *0.8 + 0.1) // normalized to [0.1, 0.9]: improve convergence and prevent dead unit
     source.close()
     
-    val labelMat = new NeuronMatrix(numOfLabels, numOfSamples)
+    
+    val source2 = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-labels.idx1-ubyte"))
+    println("magic: " + source2.readInt())
+    val numOfSamples2 = source2.readInt(); println("numOfImages: " + numOfSamples2)
+    val buf2 = new Array[Byte](numOfSamples2)
+    source2.read(buf2)
+    val dataBlock2 = buf2.map(_.toInt)
+    val numOfLabels = unique(dataBlock2.toList).length
+    source2.close()
+    
+    val labelMat = new NeuronMatrix(numOfLabels, numOfSamples2)
     (0 until numOfSamples).map(i=> {
-      labelMat.data(dataBlock(i), i) = 1
-    })
-    return labelMat
+      labelMat.data(dataBlock2(i), i) = 1
+    })    
+    println("Finish Loading!")
+    (new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock)), labelMat)
   }
   
-  def mnistImageAndLabelsM_rbimg(): (NeuronMatrix, NeuronMatrix) = {
-      val numOfPixels = 28*28	  
-	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/mnist_background_images/mnist_background_images_train.amat")
-	  val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
-	  val data = new NeuronMatrix(new DenseMatrix(numOfPixels+1, dataBlock.length/(numOfPixels+1), dataBlock))
+  
+  
+  def mnistDataM_rbimg(dataName:String = "train", numOfSamples: Int = 12000): (NeuronMatrix, NeuronMatrix) = {
+      import java.io._
+    import java.util.Scanner
+      val numOfPixels: Int = 28*28	 
+      val numOfLabels = 10
+	  val source = new Scanner(new FileInputStream("data/UFLDL/sparseae/mnist_background_images/mnist_background_images_"+dataName+".amat"))
+	  val dataBlock: Array[Double] = new Array[Double](numOfSamples* (numOfPixels+1))
+	  for (i<- 0 until dataBlock.length) {dataBlock(i) = source.nextDouble()}
+      source.close()
+	  val data = new NeuronMatrix(new DenseMatrix(numOfPixels+1, numOfSamples, dataBlock))
       val dataLabel = data.rowVec(numOfPixels).data.toArray.map(_.toInt)
       
-      val numOfLabels = 10
-      val numOfSamples = dataLabel.length
+      
       val labelMat = new NeuronMatrix(numOfLabels, numOfSamples)
       (0 until numOfSamples).map(i=> {
     	  labelMat.data(dataLabel(i), i) = 1
