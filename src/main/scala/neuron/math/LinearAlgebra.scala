@@ -53,6 +53,7 @@ class NeuronVector (val data: DenseVector[Double]) {
     assert(dataBlock.length == length)
     data := new DenseVector(dataBlock)
   }
+  def filterMap(f: Double => Boolean) = new NeuronVector( data.map(x => if (f(x)) 1.0 else 0.0 ))
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -65,6 +66,8 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) + that.data)
   def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :* that.data)
   def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::,breeze.linalg.*) :* that.data)
+  def DivElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :/ that.data)
+  def DivElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :/ that.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
   def *(x:NeuronVector) = Mult(x)
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
@@ -113,6 +116,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     assert(dataBlock.length == rows*cols)
     data := new DenseMatrix(rows, cols, dataBlock)
   }
+  def filterMap(f: Double => Boolean) = new NeuronMatrix( data.map(x => if (f(x)) 1.0 else 0.0 ))
 }
 
 // solution to 3-order tensor
