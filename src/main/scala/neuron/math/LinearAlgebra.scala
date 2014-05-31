@@ -54,6 +54,14 @@ class NeuronVector (val data: DenseVector[Double]) {
     data := new DenseVector(dataBlock)
   }
   def filterMap(f: Double => Boolean) = new NeuronVector( data.map(x => if (f(x)) 1.0 else 0.0 ))
+  def shuffle(): NeuronVector = {
+    val buf = new NeuronVector(length)
+    val shuffedList = scala.util.Random.shuffle((0 until length).toList)
+    for (j<- 0 until length) {
+	      buf.data(j) = data(shuffedList(j))
+	}
+    buf
+  }   
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -117,6 +125,22 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     data := new DenseMatrix(rows, cols, dataBlock)
   }
   def filterMap(f: Double => Boolean) = new NeuronMatrix( data.map(x => if (f(x)) 1.0 else 0.0 ))
+  def shuffleCols(): NeuronMatrix = {
+    val buf = new NeuronMatrix(rows, cols)
+    val shuffedList = scala.util.Random.shuffle((0 until cols).toList)
+    for (j<- 0 until cols) {
+	      buf.colVec(j) := colVec(shuffedList(j))
+	}
+    buf
+  }
+  def shuffleRows(): NeuronMatrix = {
+    val buf = new NeuronMatrix(rows, cols)
+    val shuffedList = scala.util.Random.shuffle((0 until cols).toList)
+    for (j<- 0 until cols) {
+	      buf.rowVec(j) := rowVec(shuffedList(j))
+	}
+    buf
+  }  
 }
 
 // solution to 3-order tensor
