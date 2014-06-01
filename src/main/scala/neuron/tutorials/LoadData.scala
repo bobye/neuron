@@ -124,7 +124,7 @@ object LoadData {
   }
   
   
-  
+  /*
   def mnistDataM_rbimg(dataName:String = "train", numOfSamples: Int = 12000): (NeuronMatrix, NeuronMatrix) = {
       import java.io._
     import java.util.Scanner
@@ -137,11 +137,33 @@ object LoadData {
 	  val data = new NeuronMatrix(new DenseMatrix(numOfPixels+1, numOfSamples, dataBlock))
       val dataLabel = data.rowVec(numOfPixels).data.toArray.map(_.toInt)
       
-      
+      val dataMat = data.Rows(0 until numOfPixels)
       val labelMat = new NeuronMatrix(numOfLabels, numOfSamples)
       (0 until numOfSamples).map(i=> {
     	  labelMat.data(dataLabel(i), i) = 1
-      })      
-      (data.Rows(0 until numOfPixels), labelMat)
+      })     
+      
+      val os = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rbimg-images.idx3-ubyte"))
+      os.writeInt(1111) // magic number
+      os.writeInt(numOfSamples)
+      os.writeInt(28)
+      os.writeInt(28)
+      (0 until dataMat.cols).map(i=> {
+          os.write((data.colVec(i).data*255.0).data.map(_.toInt.toByte), 0, dataMat.rows)
+      })
+      os.close()
+      
+      val os2 = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rbimg-labels.idx1-ubyte"))
+      os2.writeInt(1111) // magic number
+      os2.writeInt(numOfSamples)
+      (0 until dataMat.cols).map(i=> {
+          os2.writeByte(dataLabel(i).toByte)
+      })
+      os2.close()      
+
+      
+      (dataMat, labelMat)
   }  
+  *  
+  */
 }
