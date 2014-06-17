@@ -17,7 +17,7 @@ object FeedForwardM extends Optimizable with Workspace{
  
 	val c = (a TIMES b).create()
 	val d = (b PLUS c) TIMES a2
-	val e = (d PLUS d) 
+	val e = (d MULT d) 
 	
 	// setup Optimizable members
     nn = e.create(); println(nn); // print structure

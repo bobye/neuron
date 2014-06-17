@@ -374,6 +374,8 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
     else {      
       mem(key).numOfMirrors = mem(key).numOfMirrors + 1
     }
+    firstInstance.init(seed, mem)
+    secondInstance.init(seed, mem)
     this
   }
   
@@ -383,6 +385,8 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
       mem(key).outputBufferM = new Array[NeuronMatrix] (mem(key).numOfMirrors)
       mem(key).status = "" // reset status to make sure *Buffer are allocated only once
     } else {} 
+    firstInstance.allocate(seed, mem)
+    secondInstance.allocate(seed, mem)
     this
   }  
   def apply(x:NeuronVector, mem: SetOfMemorables) = {
