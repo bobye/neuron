@@ -17,7 +17,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
 
 ### Features
  - template vs. module
- - algebra (PLUS, TIMES, SHARE, TENSOR) for network structures
+ - algebra (PLUS, TIMES, SHARE, ADD, MULT, TENSOR) for network structures
  - multilayer perceptron
  - autoencoders (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
@@ -26,7 +26,9 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
 ### Get Started
-TBA, please look at test examples in folder `src/main/scala/neuron.tutorials/`
+TBA
+
+Please look at test examples in folder `src/main/scala/neuron/tutorials/`
 
 ### Examples
 
@@ -53,7 +55,6 @@ run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php
 * [UFLDL Tutorial](http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial): a Stanford course, find solutions at [Github](https://github.com/search?q=UFLDL+Tutorial)
 * [DeepLearnToolbox](https://github.com/rasmusbergpalm/DeepLearnToolbox): Matlab toolbox for deep learning
 * [ScalaSTM](http://nbronson.github.io/scala-stm/):  a lightweight software transactional memory for Scala 
-* [Ivan Vasilev's neuralnetworks library](https://github.com/ivan-vasilev/neuralnetworks): java deep neural networks with gpu acceleration
 
 ----
 The MIT License (MIT)

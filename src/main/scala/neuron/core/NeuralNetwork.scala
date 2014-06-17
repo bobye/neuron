@@ -13,6 +13,8 @@ abstract trait Workspace{//
     def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
     def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
     def SHARE [T2<:Operationable](y:T2) = new ShareNeuralNetwork(x,y)
+    def ADD [T2<:Operationable](y:T2) = new AddedNeuralNetwork(x,y)
+    def MULT[T2<:Operationable](y:T2) = new MultipliedNeuralNetwork(x,y)
     def REPEAT (n:Int) = new RepeatNeuralNetwork(x, n)
     def TENSOR [T2<:Operationable](y:T2) = // second order tensor only
       new TensorNeuralNetwork(x.outputDimension, y.outputDimension) TIMES (x PLUS y)
@@ -311,7 +313,108 @@ class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
   override def toString() = "(" + firstInstance.toString + ") _ (" + secondInstance.toString + ")"
 }
 
+/** {f ADD g} (x) := f(x) + g(x) */
+class AddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val first: Type1, override val second: Type2)
+		extends MergedNeuralNetwork[Type1, Type2](first, second) {
+  assert (first.inputDimension == second.inputDimension && first.outputDimension == second.outputDimension)
+  type InstanceType <: InstanceOfAddedNeuralNetwork[Type1, Type2]
+  def inputDimension = first.inputDimension
+  def outputDimension = first.outputDimension
+  def create(): InstanceOfAddedNeuralNetwork[Type1, Type2] = new InstanceOfAddedNeuralNetwork(this)
+  override def toString() = "(" + first.toString +") Join(+) (" + second.toString() + ")"
+}
 
+class InstanceOfAddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val NN:AddedNeuralNetwork[Type1, Type2])
+		extends InstanceOfMergedNeuralNetwork(NN) {
+  type StructureType <: AddedNeuralNetwork[Type1, Type2]
+  def apply(x:NeuronVector, mem: SetOfMemorables) = {
+    val secondVec = secondInstance(x, mem)
+    val firstVec  = firstInstance(x, mem)
+    firstVec + secondVec
+  }
+  def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
+    val secondMat = secondInstance(x, mem)
+    val firstMat = firstInstance(x, mem)
+    firstMat + secondMat
+  }
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
+    firstInstance.backpropagate(eta, mem) + secondInstance.backpropagate(eta, mem)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+	firstInstance.backpropagate(etas, mem) + secondInstance.backpropagate(etas, mem)
+  }  
+  override def toString() = "(" + firstInstance.toString + ") Join(+) (" + secondInstance.toString + ")"  
+}
+
+/** {f Mult g} (x) := f(x) * g(x) */
+class MultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val first: Type1, override val second: Type2)
+		extends MergedNeuralNetwork[Type1, Type2](first, second) {
+  assert (first.inputDimension == second.inputDimension && first.outputDimension == second.outputDimension)
+  type InstanceType <: InstanceOfMultipliedNeuralNetwork[Type1, Type2]
+  def inputDimension = first.inputDimension
+  def outputDimension = first.outputDimension
+  def create(): InstanceOfMultipliedNeuralNetwork[Type1, Type2] = new InstanceOfMultipliedNeuralNetwork(this)
+  override def toString() = "(" + first.toString +") Join(+) (" + second.toString() + ")"
+}
+
+class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
+		(override val NN:MultipliedNeuralNetwork[Type1, Type2])
+		extends InstanceOfMergedNeuralNetwork(NN) {
+  type StructureType <: AddedNeuralNetwork[Type1, Type2]
+  override def init(seed:String, mem:SetOfMemorables) = {
+    if (!mem.isDefinedAt(key) || mem(key).status != seed) {
+      mem. += (key -> new Memorable)
+      mem(key).status = seed
+      mem(key).numOfMirrors = 1 // find a new instance
+      mem(key).mirrorIndex = 0
+    }
+    else {      
+      mem(key).numOfMirrors = mem(key).numOfMirrors + 1
+    }
+    this
+  }
+  
+  override def allocate(seed:String, mem:SetOfMemorables) ={
+    if (mem(key).status == seed) {
+      mem(key).outputBuffer= new Array[NeuronVector] (mem(key).numOfMirrors)
+      mem(key).outputBufferM = new Array[NeuronMatrix] (mem(key).numOfMirrors)
+      mem(key).status = "" // reset status to make sure *Buffer are allocated only once
+    } else {} 
+    this
+  }  
+  def apply(x:NeuronVector, mem: SetOfMemorables) = {
+    val secondVec = secondInstance(x, mem)
+    val firstVec  = firstInstance(x, mem)
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    	mem(key).outputBuffer(mem(key).mirrorIndex) = firstVec concatenate secondVec;
+    }
+    firstVec DOT secondVec
+  }
+  def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
+    val secondMat = secondInstance(x, mem)
+    val firstMat = firstInstance(x, mem)
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
+    	mem(key).outputBufferM(mem(key).mirrorIndex) = firstMat padRow secondMat;
+    }    
+    firstMat DOT secondMat
+  }
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
+    val (o1, o2) = mem(key).outputBuffer(mem(key).mirrorIndex) splice outputDimension
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+    firstInstance.backpropagate(eta DOT o2, mem) + secondInstance.backpropagate(eta DOT o1, mem)
+  }
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    val (o1, o2) = mem(key).outputBufferM(mem(key).mirrorIndex) spliceRow outputDimension
+    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors    
+	firstInstance.backpropagate(etas DOT o2, mem) + secondInstance.backpropagate(etas DOT o1, mem)
+  }  
+  override def toString() = "(" + firstInstance.toString + ") Join(+) (" + secondInstance.toString + ")"  
+}
 
 
 
