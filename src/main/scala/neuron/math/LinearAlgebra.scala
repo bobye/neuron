@@ -32,8 +32,9 @@ class NeuronVector (val data: DenseVector[Double]) {
   def :*=(x:Double): Unit = {this.data :*= x}
   def :/=(x:Double): Unit = {this.data :/= x}
   def euclideanSqrNorm = {val z = norm(data); z*z}
-  def DOT(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
+  def :*(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
+  def dot(that: NeuronVector): Double = this.data dot that.data
   
   def set(x:Double) : Unit = {data:=x; }
   def copy(): NeuronVector = new NeuronVector(data.copy)
@@ -103,7 +104,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def argmaxCol() = new LabelVector(argmax(data(::,breeze.linalg.*)).toDenseVector)
   def colVec(i: Int) = new NeuronVector(data(::,i))
   def rowVec(i: Int) = new NeuronVector(data(i,::).t)
-  def DOT(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
+  def :*(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
   def Cols(range: Range) = new NeuronMatrix(data(::,range))

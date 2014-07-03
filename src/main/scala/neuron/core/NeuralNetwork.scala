@@ -396,7 +396,7 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
     	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
     	mem(key).outputBuffer(mem(key).mirrorIndex) = firstVec concatenate secondVec;
     }
-    firstVec DOT secondVec
+    firstVec :* secondVec
   }
   def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
     val secondMat = secondInstance(x, mem)
@@ -405,17 +405,17 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
     	mem(key).mirrorIndex = (mem(key).mirrorIndex + mem(key).numOfMirrors - 1) % mem(key).numOfMirrors
     	mem(key).outputBufferM(mem(key).mirrorIndex) = firstMat padRow secondMat;
     }    
-    firstMat DOT secondMat
+    firstMat :* secondMat
   }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
     val (o1, o2) = mem(key).outputBuffer(mem(key).mirrorIndex) splice outputDimension
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    firstInstance.backpropagate(eta DOT o2, mem) + secondInstance.backpropagate(eta DOT o1, mem)
+    firstInstance.backpropagate(eta :* o2, mem) + secondInstance.backpropagate(eta :* o1, mem)
   }
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     val (o1, o2) = mem(key).outputBufferM(mem(key).mirrorIndex) spliceRow outputDimension
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors    
-	firstInstance.backpropagate(etas DOT o2, mem) + secondInstance.backpropagate(etas DOT o1, mem)
+	firstInstance.backpropagate(etas :* o2, mem) + secondInstance.backpropagate(etas :* o1, mem)
   }  
   override def toString() = "(" + firstInstance.toString + ") Join(+) (" + secondInstance.toString + ")"  
 }

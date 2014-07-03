@@ -124,14 +124,14 @@ object SigmoidFunction extends NeuronFunction {
     if (buf == NullVector) 
       new NeuronVector(dsgm(x.data)) // can be simplified, if apply() is applied first
     else
-      buf - (buf DOT buf)
+      buf - (buf :* buf)
   }
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(sigmoid(x.data))
   def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = {
     if (buf == NullMatrix) 
       new NeuronMatrix(dsgm(x.data))
     else
-      buf - (buf DOT buf)
+      buf - (buf :* buf)
   }
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(sigmoid(x.data))
 }
@@ -143,14 +143,14 @@ object TanhFunction extends NeuronFunction {
     if (buf == NullVector) 
       new NeuronVector(dtanh(x.data)) // can be simplified, if apply() is applied first
     else
-      (buf DOT buf)*(-1)+1
+      (buf :* buf)*(-1)+1
   }
   def apply(x:NeuronVector): NeuronVector= new NeuronVector(tanh(x.data))
   def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = {
     if (buf == NullMatrix) 
       new NeuronMatrix(dtanh(x.data))
     else
-      ((buf DOT buf) * (-1)) +1
+      ((buf :* buf) * (-1)) +1
   }
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(tanh(x.data))
 }
@@ -186,18 +186,18 @@ object SquareFunction extends NeuronFunction {
   def grad(x:Double) = 2*x
   def apply(x:Double) = x*x
   def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x * 2
-  def apply(x:NeuronVector): NeuronVector= (x DOT x)
+  def apply(x:NeuronVector): NeuronVector= (x :* x)
   def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x * 2
-  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x) 
+  def apply(x:NeuronMatrix): NeuronMatrix = (x :* x) 
 }
 
 object CubicFunction extends NeuronFunction {
   def grad(x:Double) = 3*x*x
   def apply(x:Double) = x* x* x
-  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector((x DOT x).data) * 3
-  def apply(x:NeuronVector): NeuronVector= (x DOT x DOT x)
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix((x DOT x).data) * 3
-  def apply(x:NeuronMatrix): NeuronMatrix = (x DOT x DOT x)
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector((x :* x).data) * 3
+  def apply(x:NeuronVector): NeuronVector= (x :* x :* x)
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix((x :* x).data) * 3
+  def apply(x:NeuronMatrix): NeuronMatrix = (x :* x :* x)
 }
 
 object AbsFunction extends NeuronFunction {
@@ -220,45 +220,3 @@ class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(KLdiv(x.data))
 }
 
-abstract class DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector): NeuronVector
-  def apply(x:NeuronVector, y:NeuronVector): Double
-  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix
-  def apply(x:NeuronMatrix, y:NeuronMatrix): Double
-}
-
-object L1Distance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector) = new NeuronVector(SoftThreshold((x-y).data))
-  def apply(x:NeuronVector, y:NeuronVector) = sum(abs((x-y).data))
-  def grad(x:NeuronMatrix, y:NeuronMatrix) = new NeuronMatrix(SoftThreshold((x-y).data))
-  def apply(x:NeuronMatrix, y:NeuronMatrix) = sum(abs((x-y).data))
-}
-
-object L2Distance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector): NeuronVector = (x - y)
-  def apply(x:NeuronVector, y:NeuronVector) = (x - y).euclideanSqrNorm /2.0
-  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = (x - y)
-  def apply(x:NeuronMatrix, y:NeuronMatrix) = (x - y).euclideanSqrNorm /2.0
-}
-object SoftMaxDistance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector): NeuronVector ={
-    assert(abs(y.sum - 1) < 1E-6) // y must be a probability distribution
-    val x1 = new NeuronVector(exp(x.data))
-    (x1/x1.sum - y)
-  }
-  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix ={
-    assert((y.sumCol() - 1.0).euclideanSqrNorm < 1E-6)
-    val x1 = new NeuronMatrix(exp(x.data))
-    new NeuronMatrix(x1.data(*,::) :/ sum(x1.data(::,*)).toDenseVector) - y
-  }
-  def apply(x:NeuronVector, y:NeuronVector): Double = {
-    val x1 = new NeuronVector(exp(x.data))
-    val x2 = new NeuronVector(-log(x1.data / sum(x1.data)))
-    (y DOT x2).sum
-  }
-  def apply(x:NeuronMatrix, y:NeuronMatrix): Double = {
-    val x1 = new NeuronMatrix(exp(x.data))
-    val x2 = new NeuronMatrix(-log(x1.data(*,::) :/ sum(x1.data(::,*)).toDenseVector))
-    (y DOT x2).sumAll
-  }
-}

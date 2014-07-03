@@ -56,12 +56,12 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    eta DOT mem(key).gradientBuffer(cIndex) // there is no penalty for sparsity
+    eta :* mem(key).gradientBuffer(cIndex) // there is no penalty for sparsity
   }
   def backpropagate(etas:NeuronMatrix, mem: SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    etas DOT mem(key).gradientBufferM(cIndex)
+    etas :* mem(key).gradientBufferM(cIndex)
   }
 }
 
@@ -124,11 +124,11 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) DOT mem(key).gradientBuffer(cIndex)
+    (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) :* mem(key).gradientBuffer(cIndex)
   }
   override def backpropagate(etas: NeuronMatrix, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (etas Add NN.penalty.grad(rho/totalUsage) * NN.beta) DOT mem(key).gradientBufferM(cIndex)    
+    (etas Add NN.penalty.grad(rho/totalUsage) * NN.beta) :* mem(key).gradientBufferM(cIndex)    
   }
 }
