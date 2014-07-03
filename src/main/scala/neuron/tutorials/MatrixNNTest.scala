@@ -2,7 +2,7 @@ package neuron.tutorials
 import breeze.stats.distributions._
 import neuron.core._
 import neuron.math._
-import neuron.matnn._
+import neuron.unstable._
 
 object MatrixNNTest extends Optimizable with Workspace {
   def main(args: Array[String]): Unit = {

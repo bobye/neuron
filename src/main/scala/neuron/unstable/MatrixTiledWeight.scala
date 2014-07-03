@@ -1,4 +1,4 @@
-package neuron.matnn
+package neuron.unstable
 import scala.concurrent.stm._
 import neuron.core._
 import neuron.math._

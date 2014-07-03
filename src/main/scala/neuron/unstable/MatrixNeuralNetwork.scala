@@ -1,7 +1,7 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
 // Last Updated: April 2014
 // Copyright under MIT License
-package neuron.matnn
+package neuron.unstable
 import breeze.stats.distributions._
 import scala.concurrent.stm._
 import neuron.core._
