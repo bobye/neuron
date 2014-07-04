@@ -164,6 +164,68 @@ abstract trait Optimizable {
     (totalCost/size + regCost, dw/size)
   }
   
+  
+    //var currentIndex: Int = 0 
+  def getObjAndGradM2L (w: WeightVector, distance:DistanceFunction = new KernelDistance(SquareFunction), batchSize: Int = 0): (Double, NeuronVector) = {
+    val size = xDataM.cols
+    assert(size >= 1 && (null == yDataM || size == yDataM.cols))
+     var blockSize: Int = 600
+    val numOfBlock: Int = (size-1)/blockSize + 1
+    //val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
+    val rangesAll = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par    
+    //val ranges = scala.util.Random.shuffle((0 until size-blockSize).toList).slice(0, batchSize).map(i=> i until i+blockSize).par
+    //val ranges = if (batchSize != 0 ) (currentIndex until currentIndex + batchSize).map(i=>rangesAll(i % rangesAll.size) ).par
+    //	         else rangesAll.par
+    //currentIndex = (currentIndex + batchSize) % rangesAll.size
+    //currentIndex = currentIndex + 1
+ 
+    
+
+    val dw = new WeightVector(w.length)
+    
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    
+    // Shuffle! Will improve over-fitting problem
+   // if (currentIndex % 100 == 0) xDataM = xDataM.shuffleCols
+    
+    
+    val totalCost =
+      rangesAll.map(r => {
+        val mem = initMemory()
+        val x = xDataM.Cols(r)
+        val y = nn(x, mem); 
+        
+        val z = new NeuronMatrix(x.rows, x.cols)
+        
+        // Start doing batch wise matrix multiplication
+        val numOfBatch: Int = r.size / batchSize
+        val ranges = (0 until (numOfBatch-1)).map(i =>  batchSize*i until batchSize*(i+1)).par
+        val miniBatchCost = ranges.map(minir => {
+        
+          val minix = x.Cols(minir)
+          val miniy = y.Cols(minir)
+
+          val (zval,zgrad) = distance.applyWithGrad(miniy, minix)
+          // compute kernel gradient and return value
+          z.Cols(minir) := zgrad
+          zval
+        }).reduce(_+_)
+        
+        //BP
+        nn.backpropagate(z, mem)
+        
+        // compute objective
+        miniBatchCost
+      }).reduce(_+_)
+ 
+    
+    val sampleSize = size/batchSize
+    
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, sampleSize)
+
+    (totalCost/sampleSize + regCost, dw/sampleSize)
+  }
+  
   def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
     // Compute gradient using numerical approximation
     var dW = w.copy()

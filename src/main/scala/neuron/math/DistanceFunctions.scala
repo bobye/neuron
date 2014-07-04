@@ -10,6 +10,7 @@ abstract class DistanceFunction {
   def apply(x:NeuronVector, y:NeuronVector): Double
   def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix
   def apply(x:NeuronMatrix, y:NeuronMatrix): Double
+  def applyWithGrad(x:NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = (apply(x,y), grad(x,y))
 }
 
 object L1Distance extends DistanceFunction {
@@ -63,7 +64,7 @@ class KernelDistance(kernel: NeuronFunction) extends DistanceFunction {
 	  (kernel(x TransMult x).sumAll - 2 * kernel(y TransMult x).sumAll + kernel(y TransMult y).sumAll)/ (2.0 * x.cols * x.cols)
 	}
 	
-	def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
+	override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
 	  val xxtensor = x TransMult x
 	  val yxtensor = y TransMult x
 	  val yytensor = y TransMult y
