@@ -14,6 +14,7 @@ abstract class GreedyMergeGraph {
   def link : (Node, Node) => (Double, Node) // need to be implemented
   
   class Node (val t:Tree, val data:DataType) {
+    def this(id: Int, data:DataType) = this(new Leaf(id), data)
     var neighbors: Set [Node] = Set()
     var connectedEdges: Set [Edge] = Set() 
   }
@@ -50,7 +51,7 @@ abstract class GreedyMergeGraph {
     n2.neighbors.foreach(x=>x.neighbors = x.neighbors - n2 + v)
     v.neighbors = n1.neighbors ++ n2.neighbors 
     v.connectedEdges = v.neighbors.map(n=> {
-      val e = new Edge(n, v)
+      val e = if (n.t.id < v.t.id) new Edge(n, v) else new Edge(v, n)
       n.connectedEdges = n.connectedEdges + e
       e
       })
@@ -74,11 +75,11 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
     
     var (head, xtmp) = x.splice(wordLength)
     
-    var h1 = new Node(new Leaf, head)
+    var h1 = new Node(1, head)
     nodes = nodes + h1
     for (i <- 1 until x.length/wordLength ) {      
       var (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
-      var h2 = new Node(new Leaf, head)
+      var h2 = new Node(i+1, head)
       nodes = nodes + h2
       h1.neighbors = h1.neighbors + h2
       h2.neighbors = h2.neighbors + h1
@@ -93,16 +94,18 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
 
 abstract class Tree {
   val numOfLeaves: Int
+  val id: Int
   def toString() : String
 }
 
 case class Branch (val left:Tree, val right:Tree) extends Tree {
   val numOfLeaves = left.numOfLeaves + right.numOfLeaves
+  val id = scala.math.min(left.id, right.id)
   override def toString() = "(" + left.toString() + " " + right.toString() + ")" 
 }
-case class Leaf() extends Tree {
+case class Leaf(val id: Int = 0) extends Tree {
   val numOfLeaves: Int = 1
-  override def toString() = "x"
+  override def toString() = id.toString()
 }
 
 
@@ -116,13 +119,13 @@ class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
 	val outputDimension = enc.outputDimension
 
 	val (leftRNN, rightRNN) = tree match {
-      case Leaf() => (null, null)
+      case Leaf(id) => (null, null)
       case Branch(left, right) =>  (new RecursiveNeuralNetwork(left, enc, input),
           new RecursiveNeuralNetwork(right, enc, input))
     }
     
 	def create() = tree match{
-	  case Leaf() => input.create()
+	  case Leaf(id) => input.create()
 	  case Branch(left, right) => (enc TIMES (leftRNN PLUS rightRNN)).create()
 	}
 	
@@ -164,7 +167,7 @@ class RecursiveAutoEncoder (val tree: Tree,
   val wordLength = encodeDimension
   
   def ae(tree:Tree): RAE = tree match {
-      case Leaf() => new RAELeaf(input)
+      case Leaf(id) => new RAELeaf(input)
       case Branch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
   }
   
