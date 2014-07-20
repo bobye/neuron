@@ -96,12 +96,15 @@ class AgglomerativeAutoEncoderFactory (val ae: InstanceOfAutoEncoder,
       val it = dataList.iterator
       
       val size = dataList.length
-      val dim  = dataList(0).length
+      val dim  = dataList(0)._1.length + dataList(0)._2.length
       val DataM = new NeuronMatrix(dim, size)
       val shuffedList = scala.util.Random.shuffle((0 until size).toList)
       
       for (j<- 0 until size) {
-	      DataM.colVec(shuffedList(j)) := it.next
+	      DataM.colVec(shuffedList(j)) := {
+	        val tuple = it.next
+	        tuple._1 concatenate tuple._2 // efficiency can be improved here
+	      }
 	    }
       DataM 
     }

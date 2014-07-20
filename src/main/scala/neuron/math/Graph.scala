@@ -63,14 +63,13 @@ abstract class AgglomerativeGraph {
   }
   
   /** agglomerative clustering */
-  def greedyMerge() : List[DataType] = {
-    var dataList = List[DataType]()
+  def greedyMerge() : List[(DataType, DataType)] = {
+    var dataList = List[(DataType, DataType)]()
     while (!edges.isEmpty) {
       val e = edges.min // find the minimum proximity pair of connected nodes
       val twoNodes = mergeNodesByEdge(e)
-      dataList =  twoNodes._1 :: twoNodes._2 :: dataList
+      dataList =  (twoNodes._1, twoNodes._2) :: dataList
     }
-    nodes.foreach(n => dataList = n.data :: dataList)
     dataList
   }
 }
