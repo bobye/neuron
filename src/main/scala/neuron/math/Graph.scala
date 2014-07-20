@@ -38,7 +38,7 @@ abstract class AgglomerativeGraph {
   }
   
   /** replace two nodes connected to edge e by a new node */
-  def mergeNodesByEdge(e: Edge): Unit = {
+  def mergeNodesByEdge(e: Edge): (DataType, DataType) = {
     val n1 = e.v1
     val n2 = e.v2
     val v = e.node // reference a merged node
@@ -59,14 +59,19 @@ abstract class AgglomerativeGraph {
     edges = edges ++ v.connectedEdges
     edges = edges -- n1.connectedEdges -- n2.connectedEdges 
     //edges = edges.filter(x => (x.v1 != n1 && x.v1 != n2 && x.v2 != n1 && x.v2 != n2 && x.v1 != v))    
+    (n1.data, n2.data)
   }
   
   /** agglomerative clustering */
-  def greedyMerge() : Unit = {
+  def greedyMerge() : List[DataType] = {
+    var dataList = List[DataType]()
     while (!edges.isEmpty) {
       val e = edges.min // find the minimum proximity pair of connected nodes
-      mergeNodesByEdge(e)
+      val twoNodes = mergeNodesByEdge(e)
+      dataList =  twoNodes._1 :: twoNodes._2 :: dataList
     }
+    nodes.foreach(n => dataList = n.data :: dataList)
+    dataList
   }
 }
 
