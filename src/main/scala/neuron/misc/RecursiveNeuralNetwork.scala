@@ -3,9 +3,11 @@
 // Copyright under MIT License
 package neuron.misc
 import scala.collection.Set
+import scala.collection.SortedSet
 import neuron.autoencoder._
 import neuron.math._
 import neuron.core._
+
 
 abstract class GreedyMergeGraph {
   type DataType
@@ -13,29 +15,47 @@ abstract class GreedyMergeGraph {
   
   class Node (val t:Tree, val data:DataType) {
     var neighbors: Set [Node] = Set()
+    var connectedEdges: Set [Edge] = Set() 
   }
   class Edge (val v1: Node, val v2:Node) {
     val (v, node) = link(v1,v2)
   }
+
+  object Edge {
+  	implicit val ord = new Ordering[Edge]{
+    	// Required as of Scala 2.11 for reasons unknown - the companion to Ordered
+    	// should already be in implicit scope
+    	import scala.math.Ordered.orderingToOrdered
+    	def compare(e1:Edge, e2: Edge): Int = (e1.v, e1.hashCode()) compare (e2.v, e2.hashCode())    
+    }        
+  }
   
   // initializing to empty
   var nodes = Set[Node]()
-  var edges = Set[Edge]()//SortedSet[Edge]()(Ordering[Double].on[Edge](_.v)) // Warning: every edge should have different v!
+  var edges = SortedSet[Edge]() // 
   
   def greedyMerge() : Unit = {
     while (!edges.isEmpty) {
-    val e = edges.min(Ordering.by((p:Edge)=>p.v)) // find the minimum proximity pair of connected nodes
+    val e = edges.min // find the minimum proximity pair of connected nodes
     val n1 = e.v1
     val n2 = e.v2
     val v = e.node // reference a merged node
     
     nodes = nodes - (n1, n2) + v
-    v.neighbors = n1.neighbors ++ n2.neighbors - (n1, n2) 
-    n1.neighbors.foreach(x=>x.neighbors = x.neighbors - n1 + v)
-    n2.neighbors.foreach(x=>x.neighbors = x.neighbors - n2 + v)
     
-    edges = edges ++ n1.neighbors.map(new Edge(_, v)) ++ n2.neighbors.map(new Edge(_, v))
-    edges = edges.filter(x => (x.v1 != n1 && x.v1 != n2 && x.v2 != n1 && x.v2 != n2 && x.v1 != v))
+    
+    n1.neighbors = n1.neighbors - n2
+    n2.neighbors = n2.neighbors - n1
+    n1.neighbors.foreach(x=>x.neighbors = x.neighbors - n1 + v) // n2.neighbors = n2.neighbors - n1 + v
+    n2.neighbors.foreach(x=>x.neighbors = x.neighbors - n2 + v)
+    v.neighbors = n1.neighbors ++ n2.neighbors 
+    v.connectedEdges = v.neighbors.map(n=> {
+      val e = new Edge(n, v)
+      n.connectedEdges = n.connectedEdges + e
+      e
+      })
+    edges = edges ++ v.connectedEdges
+    edges = edges -- n1.connectedEdges -- n2.connectedEdges //edges = edges.filter(x => (x.v1 != n1 && x.v1 != n2 && x.v2 != n1 && x.v2 != n2 && x.v1 != v))
     }
     
   }
@@ -57,12 +77,15 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
     var h1 = new Node(new Leaf, head)
     nodes = nodes + h1
     for (i <- 1 until x.length/wordLength ) {      
-      val (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
-      val h2 = new Node(new Leaf, head)
+      var (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
+      var h2 = new Node(new Leaf, head)
       nodes = nodes + h2
       h1.neighbors = h1.neighbors + h2
       h2.neighbors = h2.neighbors + h1
-      edges = edges + new Edge(h1, h2)
+      val e = new Edge(h1, h2)
+      edges = edges + e
+      h1.connectedEdges = h1.connectedEdges + e
+      h2.connectedEdges = h2.connectedEdges + e
       h1 = h2
     }
   }
