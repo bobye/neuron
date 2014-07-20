@@ -1,6 +1,5 @@
 // Created by: Jianbo Ye, Penn State University jxy198@psu.edu
-// Last Updated: April 2014
-// Copyright under MIT License
+// Copyright under MIT License 2014
 package neuron.misc
 import scala.collection.Set
 import scala.collection.SortedSet
@@ -9,7 +8,7 @@ import neuron.math._
 import neuron.core._
 
 
-abstract class GreedyMergeGraph {
+abstract class AgglomerativeGraph {
   type DataType
   def link : (Node, Node) => (Double, Node) // need to be implemented
   
@@ -23,7 +22,7 @@ abstract class GreedyMergeGraph {
   }
 
   object Edge {
-  	implicit val ord = new Ordering[Edge]{
+  	implicit val ord = new Ordering[Edge] {
     	// Required as of Scala 2.11 for reasons unknown - the companion to Ordered
     	// should already be in implicit scope
     	import scala.math.Ordered.orderingToOrdered
@@ -35,9 +34,17 @@ abstract class GreedyMergeGraph {
   var nodes = Set[Node]()
   var edges = SortedSet[Edge]() // 
   
-  def greedyMerge() : Unit = {
-    while (!edges.isEmpty) {
-    val e = edges.min // find the minimum proximity pair of connected nodes
+  /** add a new edge between two nodes */
+  def addNewEdge(n1: Node, n2: Node): Unit = {
+    val e = if (n1.t.id < n2.t.id) new Edge(n1, n2) else new Edge(n2, n1)
+    n1.neighbors = n1.neighbors + n2
+    n2.neighbors = n2.neighbors + n1
+    n1.connectedEdges = n1.connectedEdges + e
+    n2.connectedEdges = n2.connectedEdges + e
+  }
+  
+  /** replace two nodes connected to edge e by a new node */
+  def mergeNodesByEdge(e: Edge): Unit = {
     val n1 = e.v1
     val n2 = e.v2
     val v = e.node // reference a merged node
@@ -56,13 +63,22 @@ abstract class GreedyMergeGraph {
       e
       })
     edges = edges ++ v.connectedEdges
-    edges = edges -- n1.connectedEdges -- n2.connectedEdges //edges = edges.filter(x => (x.v1 != n1 && x.v1 != n2 && x.v2 != n1 && x.v2 != n2 && x.v1 != v))
+    edges = edges -- n1.connectedEdges -- n2.connectedEdges 
+    //edges = edges.filter(x => (x.v1 != n1 && x.v1 != n2 && x.v2 != n1 && x.v2 != n2 && x.v1 != v))    
+  }
+  
+  /** agglomerative clustering */
+  def greedyMerge() : Unit = {
+    while (!edges.isEmpty) {
+      val e = edges.min // find the minimum proximity pair of connected nodes
+      mergeNodesByEdge(e)
     }
-    
   }
 }
 
-class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector)) extends GreedyMergeGraph{
+
+/** Chain data structure as agglomerative graph */
+class AgglomerativeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector)) extends AgglomerativeGraph{
   type DataType = NeuronVector
   def link = (x, y) => {
     val (v, nd) = f(x.data,y.data)
@@ -77,8 +93,9 @@ class GreedyMergeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVector
     
     var h1 = new Node(1, head)
     nodes = nodes + h1
-    for (i <- 1 until x.length/wordLength ) {      
-      var (head, xtmp2) = xtmp.splice(wordLength); xtmp =xtmp2
+    for (i <- 1 until x.length/wordLength) yield {      
+      var (head, xtmp2) = xtmp.splice(wordLength); 
+      xtmp =xtmp2
       var h2 = new Node(i+1, head)
       nodes = nodes + h2
       h1.neighbors = h1.neighbors + h2
