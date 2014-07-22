@@ -5,7 +5,7 @@ class RBFNeuralNetwork (inputDimension: Int, outputDimension: Int /** number of 
 						val rbf: NeuronFunction, val centroids: NeuronMatrix) 
 	extends NeuralNetwork (inputDimension, outputDimension) {
   type InstanceType <: InstanceOfRBFNeuralNetwork
-  override def create(): InstanceOfRBFNeuralNetwork = new InstanceOfRBFNeuralNetwork(this)
+  def create(): InstanceOfRBFNeuralNetwork = new InstanceOfRBFNeuralNetwork(this)
 }
 
 class InstanceOfRBFNeuralNetwork (override val NN: RBFNeuralNetwork)
@@ -38,7 +38,7 @@ class InstanceOfRBFNeuralNetwork (override val NN: RBFNeuralNetwork)
 class GridRBFNeuralNetwork (inputDimension: Int, val bins: Seq[Int])
 	extends NeuralNetwork(inputDimension, bins.foldLeft(1)(_*_)) {
   type InstanceType <: InstanceOfGridRBFNeuralNetwork
-  override def create(): InstanceOfGridRBFNeuralNetwork = new InstanceOfGridRBFNeuralNetwork(this)
+  def create(): InstanceOfGridRBFNeuralNetwork = new InstanceOfGridRBFNeuralNetwork(this)
 }
 
 class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork) 
