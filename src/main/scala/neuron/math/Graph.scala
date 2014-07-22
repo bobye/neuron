@@ -4,7 +4,9 @@ import scala.collection.SortedSet
 
 abstract class AgglomerativeGraph {
   type DataType
-  def link : (Node, Node) => (Double, Node) // need to be implemented
+  
+  /** abstract function to be implemented */
+  def link : (Node, Node) => (Double, Node)
   
   class Node (val t:Tree, val data:DataType) {
     def this(id: Int, data:DataType) = this(new Leaf(id), data)

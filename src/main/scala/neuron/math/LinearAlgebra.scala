@@ -18,6 +18,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
+  def apply(n: Int): Double = data(n) 
+  def update(n:Int, e:Double): Unit = data.update(n,e)
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 
@@ -42,7 +44,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def max(): Double = breeze.linalg.max(data)
   def argmax(): Int = breeze.linalg.argmax(data)
   def asNeuronMatrix(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
-  def last(): Double = data(data.length)
+  def last(): Double = data(data.length-1)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
   override def toString() = data.data.mkString("\t")
@@ -69,10 +71,14 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
+  def apply(row:Int, col:Int) = data(row,col)
+  def update(row:Int, col:Int, e:Double) = data.update(row,col,e)
   def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data + that.data)
   def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data - that.data)  
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) + that.data)
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) + that.data)
+  def Minus(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) - that.data)
+  def MinusTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) - that.data)
   def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :* that.data)
   def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::,breeze.linalg.*) :* that.data)
   def DivElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :/ that.data)
@@ -95,7 +101,9 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new NeuronMatrix(data.t)
   def set(x: Double) : Unit={data:=x; }
-  def euclideanSqrNorm: Double = {val z = norm(data.flatten()); z*z}
+  def euclideanSqrNorm: Double = {sum(data :* data)}
+  def euclideanSqrNormCol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(::,breeze.linalg.*)).toDenseVector)}
+  def euclideanSqrNormRol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(breeze.linalg.*, ::)).toDenseVector)}
   def sumCol() = new NeuronVector(sum(data(::,breeze.linalg.*)).toDenseVector)
   def sumRow() = new NeuronVector(sum(data(breeze.linalg.*,::)).toDenseVector)
   def sumAll():Double = sum(data)
