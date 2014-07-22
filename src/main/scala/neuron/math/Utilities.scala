@@ -130,12 +130,15 @@ abstract trait Optimizable {
     totalCost/size + regCost
   }
   
+  def partitionDataRanges(size: Int, blockSize: Int) = {
+    val numOfBlock: Int = (size - 1)/blockSize + 1
+    (0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)
+  }
+  
   def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-    val blockSize = 512
-    val numOfBlock: Int = (size-1)/blockSize + 1
-    val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
+    val ranges = partitionDataRanges(size, 512).par 
     
     var totalCost:Double = 0.0
     
@@ -169,16 +172,7 @@ abstract trait Optimizable {
   def getObjAndGradM2L (w: WeightVector, distance:DistanceFunction = new KernelDistance(SquareFunction), batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-     var blockSize: Int = 600
-    val numOfBlock: Int = (size-1)/blockSize + 1
-    //val ranges = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par
-    val rangesAll = ((0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)).par    
-    //val ranges = scala.util.Random.shuffle((0 until size-blockSize).toList).slice(0, batchSize).map(i=> i until i+blockSize).par
-    //val ranges = if (batchSize != 0 ) (currentIndex until currentIndex + batchSize).map(i=>rangesAll(i % rangesAll.size) ).par
-    //	         else rangesAll.par
-    //currentIndex = (currentIndex + batchSize) % rangesAll.size
-    //currentIndex = currentIndex + 1
- 
+    val rangesAll = partitionDataRanges(size, 600).par  
     
 
     val dw = new WeightVector(w.length)
@@ -198,8 +192,7 @@ abstract trait Optimizable {
         val z = new NeuronMatrix(x.rows, x.cols)
         
         // Start doing batch wise matrix multiplication
-        val numOfBatch: Int = r.size / batchSize
-        val ranges = (0 until (numOfBatch-1)).map(i =>  batchSize*i until batchSize*(i+1)).par
+        val ranges = partitionDataRanges(size, batchSize).par 
         val miniBatchCost = ranges.map(minir => {
         
           val minix = x.Cols(minir)
