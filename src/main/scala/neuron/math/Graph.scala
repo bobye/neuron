@@ -62,10 +62,13 @@ abstract class AgglomerativeGraph {
     (n1.data, n2.data)
   }
   
-  /** agglomerative clustering */
-  def greedyMerge() : List[(DataType, DataType)] = {
+  /** agglomerative clustering: the initial edge maps could contain multiple 
+   *  disconnected graphs such that 
+   *  when size = 0: each connected component yields a single node after greedyMerge()
+   *  when size > 0: it will terminate until $size data points are collected (testing) */
+  def greedyMerge(size: Int = 0 ) : List[(DataType, DataType)] = {
     var dataList = List[(DataType, DataType)]()
-    while (!edges.isEmpty) {
+    while (!edges.isEmpty && (dataList.length < size || size == 0)) {
       val e = edges.min // find the minimum proximity pair of connected nodes
       val twoNodes = mergeNodesByEdge(e)
       dataList =  (twoNodes._1, twoNodes._2) :: dataList
