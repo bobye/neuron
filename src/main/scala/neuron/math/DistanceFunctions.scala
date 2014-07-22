@@ -14,18 +14,33 @@ abstract class DistanceFunction {
 }
 
 object L1Distance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector) = new NeuronVector(SoftThreshold((x-y).data))
+  def grad(x:NeuronVector, y:NeuronVector)  = new NeuronVector(SoftThreshold((x-y).data))
   def apply(x:NeuronVector, y:NeuronVector) = sum(abs((x-y).data))
-  def grad(x:NeuronMatrix, y:NeuronMatrix) = new NeuronMatrix(SoftThreshold((x-y).data))
+  def grad(x:NeuronMatrix, y:NeuronMatrix)  = new NeuronMatrix(SoftThreshold((x-y).data))
   def apply(x:NeuronMatrix, y:NeuronMatrix) = sum(abs((x-y).data))
 }
 
 object L2Distance extends DistanceFunction {
-  def grad(x:NeuronVector, y:NeuronVector): NeuronVector = (x - y)
+  def grad(x:NeuronVector, y:NeuronVector)  = (x - y)
   def apply(x:NeuronVector, y:NeuronVector) = (x - y).euclideanSqrNorm /2.0
-  def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = (x - y)
+  def grad(x:NeuronMatrix, y:NeuronMatrix)  = (x - y)
   def apply(x:NeuronMatrix, y:NeuronMatrix) = (x - y).euclideanSqrNorm /2.0
 }
+
+class MahDistanceByLinTrans (val l: NeuronMatrix) extends DistanceFunction {
+  def grad(x:NeuronVector, y:NeuronVector)  = l TransMult l * (x - y)
+  def apply(x:NeuronVector, y:NeuronVector) = (l * (x - y)).euclideanSqrNorm / 2.0
+  def grad(x: NeuronMatrix, y:NeuronMatrix) = l TransMult l * (x - y)
+  def apply(x:NeuronMatrix, y:NeuronMatrix) = (l * (x - y)).euclideanSqrNorm / 2.0
+}
+
+class MahDistanceByMetricMat (val m: NeuronMatrix) extends DistanceFunction {
+  def grad(x:NeuronVector, y:NeuronVector)  = m * (x - y)
+  def apply(x:NeuronVector, y:NeuronVector) = ((x - y) dot (m * (x - y))) / 2.0
+  def grad(x: NeuronMatrix, y:NeuronMatrix) = m * (x - y)
+  def apply(x:NeuronMatrix, y:NeuronMatrix) = ((x - y) :* (m * (x - y))).sumAll() / 2.0  
+}
+
 object SoftMaxDistance extends DistanceFunction {
   def grad(x:NeuronVector, y:NeuronVector): NeuronVector ={
     assert(abs(y.sum - 1) < 1E-6) // y must be a probability distribution
