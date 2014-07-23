@@ -64,10 +64,10 @@ abstract class AgglomerativeGraph {
     (n1.data, n2.data)
   }
   
-  /** agglomerative clustering: the initial edge maps could contain multiple 
-   *  disconnected graphs such that 
-   *  when size = 0: each connected component yields a single node after greedyMerge()
-   *  when size > 0: it will terminate until $size data points are collected (testing) */
+  /*  agglomerative clustering: the initial edge maps could contain multiple 
+      disconnected graphs such that 
+      when size = 0: each connected component yields a single node after greedyMerge()
+      when size > 0: it will terminate until $size data points are collected (testing) */
   def greedyMerge(size: Int = 0 ) : List[(DataType, DataType)] = {
     var dataList = List[(DataType, DataType)]()
     while (!edges.isEmpty && (dataList.length < size || size == 0)) {

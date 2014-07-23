@@ -26,7 +26,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
 ### Documentation
-- [Understanding the basic concepts and how neuron works](doc/basics.md)
+- [The Basics of neuron](https://github.com/bobye/neuron/wiki/Basics)
 
 Please also look at test examples under folder `src/main/scala/neuron/tutorials/`
 
