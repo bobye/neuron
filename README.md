@@ -25,10 +25,10 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
-### Get Started
-TBA
+### Documentation
+- [Understanding the basic concepts and how neuron works](doc/basics.md)
 
-Please look at test examples in folder `src/main/scala/neuron/tutorials/`
+Please also look at test examples under folder `src/main/scala/neuron/tutorials/`
 
 ### Examples
 
