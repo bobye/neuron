@@ -1,4 +1,4 @@
-# Basics about neuron
+# Basics
 In this page, we will explain the basic concepts of neuron and how neuron works.
 
 ### Why neuron?
@@ -7,10 +7,16 @@ Neural Network (NN) has received renewed attention in recent years in the area o
 Neuron, as yet another alternative for deep learning, was created for my personal research, but also aimed at more general deep learning practitioners. It does not focus on one or two types of neural network structures, but provides mechanism for designing novel structures. This means, it may not be computational optimized for certain tasks, such as convolutional neural network or so. 
 
 ### Numerical Facilities
-Neuron currently uses [breeze](https://github.com/scalanlp/breeze) for numerical operations of vectors and matrices. It has two classes, NeuronVector and NeuronMatrix, which interfaces to DenseVector[Double] and DenseMatrix[Double] of breeze. For more information, please checkout [LinearAlgebra.scala](../src/main/scala/neuron/math/LinearAlgebra.scala)
+Neuron currently uses [breeze](https://github.com/scalanlp/breeze) for numerical operations of vectors and matrices. It has two classes, `NeuronVector` and `NeuronMatrix`, which interface to `DenseVector[Double]` and `DenseMatrix[Double]` of breeze. For more information, see [LinearAlgebra.scala](../src/main/scala/neuron/math/LinearAlgebra.scala)
 
 ### Composition of Neural Networks
-A user of neuron will be able to compose neural networks on his/her own. The fundamental concept is the distinction between template and module, which are `NeuralNetwork` class and `InstanceOfNeuralNetwork` class respectively. They both are inherited from `Operational` class. 
+A user of neuron will be able to compose neural networks on his/her own. The fundamental concept is the distinction between template and module, which are `NeuralNetwork` class and `InstanceOfNeuralNetwork` class respectively. They both are inherited from `Operational` class. Typically, the composition process of neural networks is umbrella under `Workspace`:
+```scala
+import neuron.core._
+object example extends Workspace{
+	//...
+	}
+``` 
 
 `NeuralNetwork` class is a template class that defines the type and hyper-parameters of a building block. For example, `SingleLayerNeuralNetwork` specifies the activation function (e.g. sigmoid, tanh, ...) for element-wise nonlinear transform. It has a member function `create()` which returns an instance of given template, as type of `InstanceOfNeuralNetwork`, that instantiates the internal parameters. For example, `LinearNeuralNetwork::create()` instantiates the internal weight and bias of a linear NN layer, which are data members of `InstanceOfLinearNeuralNetwork` class.
 
@@ -29,6 +35,8 @@ Here `a` serves as a template building block in `d`, while `b` and `c` are insta
 ```
 val e = ((c TIMES b TIMES a.create()) PLUS (c TIMES b TIMES a.create())).create()
 ``` 
-where `a.create()` are called twice. 
+where `a.create()` are called twice. We will explain the operators `TIMES` and `PLUS` in next section.
+
+### Operators
 
 
