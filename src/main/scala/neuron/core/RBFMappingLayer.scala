@@ -45,17 +45,18 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
 	extends InstanceOfNeuralNetwork(NN) {
   type StructureType <: GridRBFNeuralNetwork
   
-  val L: NeuronMatrix = new NeuronMatrix(NN.bins.length, outputDimension)
-  override def init(seed:String, mem: SetOfMemorables) : InstanceOfNeuralNetwork = {
+  val L: NeuronMatrix = {
+    val buf = new NeuronMatrix(NN.bins.length, outputDimension)
     for (i<- 0 until outputDimension) {
       var idx_d = i
       for (j<- NN.bins.length-1 to 0 by -1) {
-        L(j,i) = (idx_d % NN.bins(j)) * (1.0 / (NN.bins(j)-1))
+        buf(j,i) = (idx_d % NN.bins(j)) * (1.0 / (NN.bins(j)-1))
         idx_d = idx_d / NN.bins(j)
       }
     }
-    this
+    buf
   }
+  val LL: NeuronMatrix = L MultTrans L
   
   private def gridrbf(y:NeuronVector, x:NeuronVector): Unit = {
     val grids = for (i<- 0 until x.length) yield {
@@ -92,13 +93,11 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
     }
     y
   }
-  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
-    // to be implemented 
-    eta
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = { 
+    LL \ (L * eta)
   }
   
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
-    // to be implemented
-    etas
+    LL \ (L * etas)
   }  
 }
