@@ -95,7 +95,8 @@ class InstanceOfEncoderNeuralNetwork [T<: InstanceOfEncoder] // T1 and T2 must b
 /*******************************************************************************************/
 // AutoEncoder
 class AutoEncoder (val regCoeff:Double = 0.0,
-    			   val encoder: Operationable, val decoder: Operationable)
+    			   val encoder: Operationable, val decoder: Operationable,
+    			   val distance: DistanceFunction = L2Distance)
 	extends SelfTransform (encoder.inputDimension) with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
   assert (encoder.outputDimension == decoder.inputDimension)
@@ -133,7 +134,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
       atomic { implicit txn =>
         aeError() = aeError()  + (0 until mem(key).numOfMirrors).map { i=>
-        		  L2Distance(mem(key).outputBuffer(i), mem(key).inputBuffer(i)) * regCoeffNorm
+        		  NN.distance(mem(key).outputBuffer(i), mem(key).inputBuffer(i)) * regCoeffNorm
         }.sum
       }
     }
@@ -157,7 +158,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
       atomic { implicit txn =>
         aeError() = aeError()  + (0 until mem(key).numOfMirrors).map { i=>
-        		  L2Distance(mem(key).outputBufferM(i), mem(key).inputBufferM(i)) * regCoeffNorm
+        		  NN.distance(mem(key).outputBufferM(i), mem(key).inputBufferM(i)) * regCoeffNorm
         }.sum
       }
     }      
@@ -274,11 +275,12 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
 
   
 class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
-	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0) 
+	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0, distance: DistanceFunction = L2Distance) 
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
 								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
-			new RegularizedLinearNN(hiddenDimension, dimension, lambda))
+			new RegularizedLinearNN(hiddenDimension, dimension, lambda),
+			distance)
 
 class SimpleAutoEncoder (lambda: Double = 0.0, 
      					 regCoeff: Double = 0.0, 
