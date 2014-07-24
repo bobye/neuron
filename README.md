@@ -16,10 +16,10 @@ sbt> eclipse
 Start _Scala IDE for Eclipse_ and import the project directory
 
 ### Features
- - template vs. module
- - algebra (PLUS, TIMES, SHARE, ADD, MULT, TENSOR, REPEAT) for network structures
+ - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)
+ - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators) (PLUS, TIMES, SHARE, ADD, MULT, TENSOR, REPEAT) 
  - multilayer perceptron
- - autoencoders (w or w/o tiled weight)
+ - [autoencoders](https://github.com/bobye/neuron/wiki/Auto-Encoder) (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
  - metrics (L1, L2, Mahalanobis, Softmax)
  - parallel training framework: atomic parameters + distributed states
