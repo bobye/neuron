@@ -12,12 +12,12 @@ import breeze.optimize._
 
 object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
     
-    def fullBinaryTree(depth:Int) : Tree = {
+    def fullBinaryTree(depth:Int) : BTree = {
       assert (depth <= 15 && depth >= 1)
       if (depth == 1) 
-        new Leaf()
+        new BLeaf()
       else
-        new Branch(fullBinaryTree(depth - 1), fullBinaryTree(depth -1))
+        new BBranch(fullBinaryTree(depth - 1), fullBinaryTree(depth -1))
     }
 	
 	def main(args: Array[String]): Unit = {

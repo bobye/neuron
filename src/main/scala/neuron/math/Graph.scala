@@ -8,8 +8,8 @@ abstract class AgglomerativeGraph {
   /** abstract function to be implemented */
   def link : (Node, Node) => (Double, Node)
   
-  class Node (val t:Tree, val data:DataType) {
-    def this(id: Int, data:DataType) = this(new Leaf(id), data)
+  class Node (val t:BTree, val data:DataType) {
+    def this(id: Int, data:DataType) = this(new BLeaf(id), data)
     var neighbors: Set [Node] = Set()
     var connectedEdges: Set [Edge] = Set() 
   }
@@ -79,19 +79,34 @@ abstract class AgglomerativeGraph {
   }
 }
 
-
+/** tree data structure */
 abstract class Tree {
   val numOfLeaves: Int
   val id: Int
   def toString() : String
 }
 
-case class Branch (val left:Tree, val right:Tree) extends Tree {
+case class Branch (val children: List[Tree]) extends Tree {
+  val numOfLeaves = children.foldLeft(0)(_ + _.numOfLeaves)
+  val id = children.map(_.id).min
+  override def toString() = "(" + children.foldLeft("")(_ + " " + _.toString) + " )"
+}
+
+case class Leaf(val id: Int = 0) extends Tree {
+  val numOfLeaves: Int = 1
+  override def toString() = id.toString()  
+}
+
+/** binary tree data structure*/
+abstract class BTree extends Tree
+
+case class BBranch (val left:BTree, val right:BTree) extends BTree {
   val numOfLeaves = left.numOfLeaves + right.numOfLeaves
   val id = scala.math.min(left.id, right.id)
   override def toString() = "(" + left.toString() + " " + right.toString() + ")" 
 }
-case class Leaf(val id: Int = 0) extends Tree {
+
+case class BLeaf(val id: Int = 0) extends BTree {
   val numOfLeaves: Int = 1
   override def toString() = id.toString()
 }

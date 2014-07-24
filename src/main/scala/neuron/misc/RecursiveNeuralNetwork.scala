@@ -13,7 +13,7 @@ class AgglomerativeChain (f: (NeuronVector, NeuronVector) => (Double, NeuronVect
   def link = (x, y) => {
     val (v, nd) = f(x.data,y.data)
     assert(x.data.length == nd.length && y.data.length == nd.length)
-    (v, new Node(new Branch(x.t,y.t), nd))
+    (v, new Node(new BBranch(x.t,y.t), nd))
   }
   
   def loadChain(x: NeuronVector, wordLength: Int): Unit = {
@@ -72,7 +72,7 @@ class AgglomerativeAutoEncoderFactory (val ae: InstanceOfAutoEncoder,
     def link = (x, y) => {
       val z = x.data concatenate y.data
       (L2Distance(ae(z, null), z), 
-       new Node(new Branch(x.t,y.t), ae.encode (z, null)))
+       new Node(new BBranch(x.t,y.t), ae.encode (z, null)))
     }
     
 
@@ -122,7 +122,7 @@ class AgglomerativeAutoEncoderFactory (val ae: InstanceOfAutoEncoder,
 }
 
 
-class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
+class RecursiveNeuralNetwork (val tree: BTree, // The root node of tree
 						  	  val enc: Operationable, // val enc: RecursiveClass, 
 						  	  val input: Operationable) 
 	extends Operationable with EncoderWorkspace {
@@ -131,14 +131,14 @@ class RecursiveNeuralNetwork (val tree: Tree, // The root node of tree
 	val outputDimension = enc.outputDimension
 
 	val (leftRNN, rightRNN) = tree match {
-      case Leaf(id) => (null, null)
-      case Branch(left, right) =>  (new RecursiveNeuralNetwork(left, enc, input),
+      case BLeaf(id) => (null, null)
+      case BBranch(left, right) =>  (new RecursiveNeuralNetwork(left, enc, input),
           new RecursiveNeuralNetwork(right, enc, input))
     }
     
 	def create() = tree match{
-	  case Leaf(id) => input.create()
-	  case Branch(left, right) => (enc TIMES (leftRNN PLUS rightRNN)).create()
+	  case BLeaf(id) => input.create()
+	  case BBranch(left, right) => (enc TIMES (leftRNN PLUS rightRNN)).create()
 	}
 	
 	
@@ -168,7 +168,7 @@ class RAEBranch(val enc:InstanceOfAutoEncoder,
 }
 
 // This is unfolding recursive autoencoder
-class RecursiveAutoEncoder (val tree: Tree,
+class RecursiveAutoEncoder (val tree: BTree,
 							val enc: InstanceOfAutoEncoder ,
 							val input: InstanceOfAutoEncoder,
 							val regCoeff:Double = 0.0)
@@ -178,9 +178,9 @@ class RecursiveAutoEncoder (val tree: Tree,
   val encodeDimension = enc.encodeDimension
   val wordLength = encodeDimension
   
-  def ae(tree:Tree): RAE = tree match {
-      case Leaf(id) => new RAELeaf(input)
-      case Branch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
+  def ae(tree:BTree): RAE = tree match {
+      case BLeaf(id) => new RAELeaf(input)
+      case BBranch(left, right) => new RAEBranch(enc, ae(left), ae(right), regCoeff)
   }
   
   private val AE = ae(tree)
