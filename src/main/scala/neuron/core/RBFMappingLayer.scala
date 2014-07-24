@@ -62,7 +62,7 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
       val f = x(i) * (NN.bins(i)-1)
       val j = f.toInt
       val k = f - j
-      (j, k)
+      if (j < NN.bins(i) - 1) (j, k) else (NN.bins(i)-2, 1.0)
     }
     for (i<- 0 until scala.math.pow(2, NN.bins.length).toInt){
       var v = 1.0
