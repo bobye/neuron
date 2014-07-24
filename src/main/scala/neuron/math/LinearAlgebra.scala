@@ -20,6 +20,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
   def apply(n: Int): Double = data(n) 
   def update(n:Int, e:Double): Unit = data.update(n,e)
+  def apply(r: Range): NeuronVector = new NeuronVector(data(r))
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 

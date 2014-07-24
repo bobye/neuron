@@ -194,18 +194,6 @@ class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   override def toString() = "(" + first.toString + " + " + second.toString + ")"
 }
 
-/** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
-class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends Operationable {
-  assert (n>=1)
-  val inputDimension = x.inputDimension * n
-  val outputDimension = x.outputDimension * n
-  def create() = n match {
-    case 1 => x.create()
-    case _ => (x PLUS new RepeatNeuralNetwork(x, n-1)).create()
-  }
-  override def toString() = "(" + x.toString() + "," + " n)"
-}
-
 class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable]
 		(override val NN: JointNeuralNetwork [Type1, Type2]) 
 	extends InstanceOfMergedNeuralNetwork [Type1, Type2](NN) {
@@ -240,6 +228,79 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   
   override def toString() = firstInstance.toString + " + " + secondInstance.toString
 }
+
+/** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
+class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends Operationable {
+  assert (n>=1)
+  val inputDimension = x.inputDimension * n
+  val outputDimension = x.outputDimension * n
+  type InstanceType <: InstanceOfRepeatNeuralNetwork[Type]
+  def create(): InstanceOfRepeatNeuralNetwork[Type] = new InstanceOfRepeatNeuralNetwork (this)
+  override def toString() = "(" + x.toString() + "," + " n)"
+}
+
+class InstanceOfRepeatNeuralNetwork [Type <: Operationable] 
+		(override val NN: RepeatNeuralNetwork[Type]) extends InstanceOfNeuralNetwork(NN) {
+  type StructureType <: RepeatNeuralNetwork[Type]
+  val instance = NN.x.create()
+  override def setWeights(seed:String, w: WeightVector) = instance.setWeights(seed, w)
+  override def getWeights(seed:String) : NeuronVector =  instance.getWeights(seed)
+  override def getRandomWeights(seed:String) : NeuronVector = instance.getRandomWeights(seed)
+  override def getDimensionOfWeights(seed: String): Int = instance.getDimensionOfWeights(seed)
+  override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = instance.getDerativeOfWeights(seed, dw, numOfSamples)
+  override def init(seed:String, mem:SetOfMemorables) = {instance.init(seed, mem); this}
+  override def allocate(seed:String, mem:SetOfMemorables) = {instance.allocate(seed, mem); this}
+  
+
+  def apply (x: NeuronVector, mem:SetOfMemorables): NeuronVector = {
+    assert(x.length == inputDimension)
+    val d = instance.inputDimension
+    val rangesIn = (0 until NN.n).map(i=>i*instance.inputDimension until (i+1)*instance.inputDimension)
+    val rangesOut= (0 until NN.n).map(i=>i*instance.outputDimension until (i+1)*instance.outputDimension)
+    val out = new NeuronVector(outputDimension)
+    (0 until NN.n).foreach(i=>{
+      out(rangesOut(i)) := instance(x(rangesIn(i)), mem)
+    })
+    out
+  }
+  
+  def apply (x: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
+    assert(x.rows == inputDimension)
+    val d = instance.inputDimension
+    val rangesIn = (0 until NN.n).map(i=>i*instance.inputDimension until (i+1)*instance.inputDimension)
+    val rangesOut= (0 until NN.n).map(i=>i*instance.outputDimension until (i+1)*instance.outputDimension)
+    val out = new NeuronMatrix(outputDimension, x.cols)
+    (0 until NN.n).foreach(i=>{
+      out.Rows(rangesOut(i)) := instance(x.Rows(rangesIn(i)), mem)
+    })
+    out
+  }
+  
+  def backpropagate(eta: NeuronVector, mem:SetOfMemorables): NeuronVector = {
+    assert(eta.length == outputDimension)
+    val d = instance.outputDimension
+    val rangesIn = (0 until NN.n).map(i=>i*instance.inputDimension until (i+1)*instance.inputDimension)
+    val rangesOut= (0 until NN.n).map(i=>i*instance.outputDimension until (i+1)*instance.outputDimension)
+    val in = new NeuronVector(inputDimension)
+    (0 until NN.n).foreach(i=>{
+      in(rangesIn(i)) := instance.backpropagate(eta(rangesOut(i)), mem)
+    })
+    in    
+  }
+  def backpropagate(etas: NeuronMatrix, mem:SetOfMemorables): NeuronMatrix = {
+    assert(etas.rows == outputDimension)
+    val d = instance.outputDimension
+    val rangesIn = (0 until NN.n).map(i=>i*instance.inputDimension until (i+1)*instance.inputDimension)
+    val rangesOut= (0 until NN.n).map(i=>i*instance.outputDimension until (i+1)*instance.outputDimension)
+    val in = new NeuronMatrix(inputDimension, etas.cols)
+    (0 until NN.n).foreach(i=>{
+      in.Rows(rangesIn(i)) := instance.backpropagate(etas.Rows(rangesOut(i)), mem)
+    })
+    in        
+  }
+}
+
+
 
 /** {f TIMES g} (x) := f(g(x)) */
 class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
