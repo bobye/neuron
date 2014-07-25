@@ -11,8 +11,7 @@ object LoadData {
 	  val numOfSamples = dataSource.length
 	  val xData = new Array[NeuronVector](numOfSamples)
 	  for (i<- 0 until numOfSamples) {
-	    xData(i) = new NeuronVector(
-	        new DenseVector(dataSource(i).split("\\s+").map(_.toDouble), 0, 1, numOfPixels))
+	    xData(i) = new NeuronVector(dataSource(i).split("\\s+").map(_.toDouble))
 	  }
       source.close()
       xData
@@ -37,7 +36,7 @@ object LoadData {
 	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
 	  val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
 	  source.close()
-	  new NeuronMatrix(new DenseMatrix(numOfPixels, dataBlock.length/numOfPixels, dataBlock))
+	  new NeuronMatrix(numOfPixels, dataBlock.length/numOfPixels, dataBlock)
   }
   
   def mnistImages(): Array[NeuronVector] = {
@@ -54,7 +53,7 @@ object LoadData {
     for (i<- 0 until numOfSamples) {
       val buf = new Array[Byte](numOfPixels)
       source.read(buf)
-      xData(i) = new NeuronVector(new DenseVector(buf.map(b => (0xff & b).toDouble/255.00), 0, 1, numOfPixels))
+      xData(i) = new NeuronVector(buf.map(b => (0xff & b).toDouble/255.00))
     }
     source.close()
     xData
@@ -120,7 +119,7 @@ object LoadData {
       labelMat.data(dataBlock2(i), i) = 1
     })    
     println("Finish Loading!")
-    (new NeuronMatrix(new DenseMatrix(numOfPixels, numOfSamples, dataBlock)), labelMat)
+    (new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
   }
   
   
