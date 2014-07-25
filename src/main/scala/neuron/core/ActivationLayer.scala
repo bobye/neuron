@@ -65,6 +65,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   }
 }
 
+/** DropoutSingleLayerNN performs dropout regularization over activations, dropout rate by default is set to 0.0 */
 class DropoutSingleLayerNN(dimension: Int, var rate: Double = 0.0,
 						   func: NeuronFunction = SigmoidFunction)
 	extends SingleLayerNeuralNetwork (dimension, func) {
