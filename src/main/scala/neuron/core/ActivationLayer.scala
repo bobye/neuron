@@ -5,7 +5,7 @@ import neuron.math._
 
 /** SingleLayerNeuralNetwork is sigmoid functional layer 
  *  that takes in signals and transform them to activations [0,1] */
-class SingleLayerNeuralNetwork (override val dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function */ ) 
+class SingleLayerNeuralNetwork (dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function */ ) 
 	extends SelfTransform (dimension) {
   type InstanceType <: InstanceOfSingleLayerNeuralNetwork
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
@@ -21,7 +21,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
         mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output)    
     }
-    output // outputBuffer(cIndex)
+    output
   }
   def apply (xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert(xs.rows == inputDimension)
@@ -65,10 +65,45 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
   }
 }
 
+class DropoutSingleLayerNN(dimension: Int, var rate: Double = 0.0,
+						   func: NeuronFunction = SigmoidFunction)
+	extends SingleLayerNeuralNetwork (dimension, func) {
+  type InstanceType = InstanceOfDropoutSingleLayerNN
+  override def create(): InstanceOfDropoutSingleLayerNN = new InstanceOfDropoutSingleLayerNN(this)
+}
+
+class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
+	extends InstanceOfSingleLayerNeuralNetwork(NN) {
+  override def apply(x: NeuronVector, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert (x.length == inputDimension)
+    val output = NN.func(x)
+    val dropout = new NeuronVector(outputDimension, new Bernoulli(NN.rate))
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+    }
+    output :* dropout
+  }
+  
+  override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert(xs.rows == inputDimension)
+    val output = NN.func(xs)
+    val dropout = new NeuronMatrix(outputDimension, xs.cols, new Bernoulli(NN.rate))
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    }
+    output :* dropout    
+  }
+}
+
+
 /** SparseSingleLayer computes average activation and enforce sparsity penalty */
-class SparseSingleLayerNN (override val dimension: Int, 
+class SparseSingleLayerNN (dimension: Int, 
 						   var beta: Double = 0.0,
-                           override val func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function */,
+                           func: NeuronFunction = SigmoidFunction /** Pointwise Activation Function */,
 						   val penalty: NeuronFunction = new KL_divergenceFunction(0.04) /** Sparsity Penalty Function */)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType = InstanceOfSparseSingleLayerNN

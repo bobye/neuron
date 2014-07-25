@@ -22,6 +22,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - [autoencoders](https://github.com/bobye/neuron/wiki/Auto-Encoder) (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
  - metrics (L1, L2, Mahalanobis, Softmax)
+ - regularization: weight decay, activation sparsity, dropout
  - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  

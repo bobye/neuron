@@ -1,6 +1,5 @@
 // Copyright: MIT License 2014 Jianbo Ye (jxy198@psu.edu)
 package neuron.core
-import breeze.stats.distributions._
 import scala.concurrent.stm._
 import neuron.math._
 
@@ -34,6 +33,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     }
   }
   override def getRandomWeights(seed:String) : NeuronVector = {
+    import breeze.stats.distributions._
     if (status != seed) {
       status = seed
       // initialize W: it behaves quite different for Gaussian and Uniform Sampling
