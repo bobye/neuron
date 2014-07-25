@@ -18,6 +18,11 @@ class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
+  def this(n:Int, rand: => Rand[Boolean]) = this({
+    val data = DenseVector.zeros[Double] (n)
+    data(DenseVector.rand(n, rand).findAll(_ == true)) := 1.0
+    data
+  })
   def this(arr: Array[Double], offset: Int) = this(new DenseVector(arr, offset))
   def this(arr: Array[Double]) = this(new DenseVector(arr))
   def this(arr: Array[Double], offset: Int, stride: Int, length: Int) = this(new DenseVector(arr, offset, stride, length))
@@ -75,6 +80,11 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
+  def this(rows:Int, cols:Int, rand: => Rand[Boolean]) = this({
+    val data = DenseMatrix.zeros[Double] (rows, cols)
+    data(DenseMatrix.rand(rows, cols, rand).findAll(_ == true)) := 1.0
+    data
+  })
   def this(rows:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, arr, offset))
   def this(rows:Int, cols:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, cols, arr, offset))
   def this(rows:Int, cols:Int, arr: Array[Double], offset: Int, majorStride: Int) = 
