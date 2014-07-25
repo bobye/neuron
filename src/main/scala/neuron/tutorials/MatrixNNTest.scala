@@ -10,7 +10,7 @@ object MatrixNNTest extends Optimizable with Workspace {
     val outputTensorDimension= 10
     //nn = new BiLinearSymmetricNN(inputTensorDimension,outputTensorDimension).create()
     val a = new RegularizedBiLinearSymNN(inputTensorDimension,outputTensorDimension, 0.1).create()
-    nn = (a TIMES a).create()
+    nn = (a ** a).create()
     val numOfSamples = 1
     xData = new Array(numOfSamples); yData = new Array(numOfSamples)
 	for (i<- 0 until numOfSamples) {

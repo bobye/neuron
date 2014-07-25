@@ -15,9 +15,9 @@ object FeedForward extends Optimizable with Workspace{
 	val a3 = new SingleLayerNeuralNetwork(5)
 	val b = new RegularizedLinearNN(10,10, 0.001)
  
-	val c = (a TIMES b).create()
-	val d = (b PLUS c) TIMES a2
-	val e = (d MULT d) 
+	val c = (a ** b).create()
+	val d = (b ++ c) ** a2
+	val e = (d * d) 
 	
 	// setup Optimizable members
 	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 

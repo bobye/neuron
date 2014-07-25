@@ -138,7 +138,7 @@ class RecursiveNeuralNetwork (val tree: BTree, // The root node of tree
     
 	def create() = tree match{
 	  case BLeaf(id) => input.create()
-	  case BBranch(left, right) => (enc TIMES (leftRNN PLUS rightRNN)).create()
+	  case BBranch(left, right) => (enc ** (leftRNN ++ rightRNN)).create()
 	}
 	
 	

@@ -116,7 +116,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   val encodeDimension = NN.encodeDimension
   val encoderInstance = NN.encoder.create()
   val decoderInstance = NN.decoder.create()
-  private val main = (decoderInstance TIMES encoderInstance).create()
+  private val main = (decoderInstance ** encoderInstance).create()
   
   private val aeError = Ref(0.0);
   def apply (x:NeuronVector, mem:SetOfMemorables) = { 

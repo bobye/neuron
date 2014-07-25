@@ -7,7 +7,7 @@ object SoftMaxUnitTest extends Optimizable with Workspace {
   def main(args: Array[String]): Unit = {
     val a = new SingleLayerNeuralNetwork(10)
     val b = new RegularizedLinearNN(10,10, 0.001)
-    nn = (b TIMES a TIMES b).create()
+    nn = (b ** a ** b).create()
     
     val numOfSamples = 100
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)

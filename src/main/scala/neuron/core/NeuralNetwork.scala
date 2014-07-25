@@ -10,16 +10,16 @@ import neuron.math._
 abstract trait Workspace{// 
   implicit class Helper[T1<:Operationable](x:T1) { 
     // Two basic operations to support combination 
-    def PLUS [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
-    def TIMES [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
-    def SHARE [T2<:Operationable](y:T2) = new ShareNeuralNetwork(x,y)
-    def ADD [T2<:Operationable](y:T2) = new AddedNeuralNetwork(x,y)
-    def MULT[T2<:Operationable](y:T2) = new MultipliedNeuralNetwork(x,y)
-    def REPEAT (n:Int) = new RepeatNeuralNetwork(x, n)
-    def TENSOR [T2<:Operationable](y:T2) = // second order tensor only
-      new TensorNeuralNetwork(x.outputDimension, y.outputDimension) TIMES (x PLUS y)
-    def mTENSOR [T2<:Operationable](y:T2) = // mix first order and second order tensor
-      (x TENSOR y) SHARE (x PLUS y)
+    def ++ [T2<:Operationable](y:T2) = new JointNeuralNetwork(x,y)
+    def ** [T2<:Operationable](y:T2) = new ChainNeuralNetwork(x,y)
+    def & [T2<:Operationable](y:T2) = new ShareNeuralNetwork(x,y)
+    def + [T2<:Operationable](y:T2) = new AddedNeuralNetwork(x,y)
+    def * [T2<:Operationable](y:T2) = new MultipliedNeuralNetwork(x,y)
+    def :+ (n:Int) = new RepeatNeuralNetwork(x, n)
+    def \* [T2<:Operationable](y:T2) = // second order tensor only
+      new TensorNeuralNetwork(x.outputDimension, y.outputDimension) ** (x ++ y)
+    def \\* [T2<:Operationable](y:T2) = // mix first order and second order tensor
+      (x \* y) & (x ++ y)
   } 
 }
 /** Operationable is a generic trait that supports operations in Workspace */
@@ -191,7 +191,7 @@ class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = first.inputDimension + second.inputDimension
   def outputDimension= first.outputDimension+ second.outputDimension 
   def create(): InstanceOfJointNeuralNetwork[Type1, Type2] = new InstanceOfJointNeuralNetwork(this)
-  override def toString() = "(" + first.toString + " + " + second.toString + ")"
+  override def toString() = "(" + first.toString + " ++ " + second.toString + ")"
 }
 
 class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable]
@@ -226,7 +226,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
     firstInstance.backpropagate(firstEta, mem) padRow secondInstance.backpropagate(secondEta, mem)
   }
   
-  override def toString() = firstInstance.toString + " + " + secondInstance.toString
+  override def toString() = firstInstance.toString + " ++ " + secondInstance.toString
 }
 
 /** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
@@ -236,7 +236,7 @@ class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends
   val outputDimension = x.outputDimension * n
   type InstanceType <: InstanceOfRepeatNeuralNetwork[Type]
   def create(): InstanceOfRepeatNeuralNetwork[Type] = new InstanceOfRepeatNeuralNetwork (this)
-  override def toString() = "(" + x.toString() + "," + " n)"
+  override def toString() = "(" + x.toString() + " :+ " + " n)"
 }
 
 class InstanceOfRepeatNeuralNetwork [Type <: Operationable] 
@@ -298,6 +298,7 @@ class InstanceOfRepeatNeuralNetwork [Type <: Operationable]
     })
     in        
   }
+  override def toString() = "(" + instance.toString() + " :+ " + " n)"
 }
 
 
@@ -311,7 +312,7 @@ class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = second.inputDimension
   def outputDimension= first.outputDimension 
   def create(): InstanceOfChainNeuralNetwork[Type1, Type2] = new InstanceOfChainNeuralNetwork(this)
-  override def toString() = "(" + first.toString + ") * (" + second.toString + ")" 
+  override def toString() = "(" + first.toString + ") ** (" + second.toString + ")" 
 }
 
 class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
@@ -334,7 +335,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     secondInstance.backpropagate(firstInstance.backpropagate(etas, mem), mem)
   }
-  override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"
+  override def toString() = "(" + firstInstance.toString + ") ** (" + secondInstance.toString + ")"
 }
 
 /** {f SHARE g} (x) := [f(x), g(x)] */
@@ -346,7 +347,7 @@ class ShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = first.inputDimension
   def outputDimension = first.outputDimension + second.outputDimension
   def create():InstanceOfShareNeuralNetwork[Type1,Type2] = new InstanceOfShareNeuralNetwork(this)
-  override def toString() = "(" + first.toString + ") _ (" + second.toString() + ")"
+  override def toString() = "(" + first.toString + ") & (" + second.toString() + ")"
 }
 
 class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
@@ -371,7 +372,7 @@ class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
 	val (firstEta, secondEta) = etas.spliceRow(NN.first.outputDimension)
 	firstInstance.backpropagate(firstEta, mem) + secondInstance.backpropagate(secondEta, mem)
   }
-  override def toString() = "(" + firstInstance.toString + ") _ (" + secondInstance.toString + ")"
+  override def toString() = "(" + firstInstance.toString + ") & (" + secondInstance.toString + ")"
 }
 
 /** {f ADD g} (x) := f(x) + g(x) */
@@ -383,7 +384,7 @@ class AddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = first.inputDimension
   def outputDimension = first.outputDimension
   def create(): InstanceOfAddedNeuralNetwork[Type1, Type2] = new InstanceOfAddedNeuralNetwork(this)
-  override def toString() = "(" + first.toString +") Join(+) (" + second.toString() + ")"
+  override def toString() = "(" + first.toString +") + (" + second.toString() + ")"
 }
 
 class InstanceOfAddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
@@ -406,7 +407,7 @@ class InstanceOfAddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
 	firstInstance.backpropagate(etas, mem) + secondInstance.backpropagate(etas, mem)
   }  
-  override def toString() = "(" + firstInstance.toString + ") Join(+) (" + secondInstance.toString + ")"  
+  override def toString() = "(" + firstInstance.toString + ") + (" + secondInstance.toString + ")"  
 }
 
 /** {f Mult g} (x) := f(x) * g(x) */
@@ -418,7 +419,7 @@ class MultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
   def inputDimension = first.inputDimension
   def outputDimension = first.outputDimension
   def create(): InstanceOfMultipliedNeuralNetwork[Type1, Type2] = new InstanceOfMultipliedNeuralNetwork(this)
-  override def toString() = "(" + first.toString +") Join(+) (" + second.toString() + ")"
+  override def toString() = "(" + first.toString +") * (" + second.toString() + ")"
 }
 
 class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
@@ -478,7 +479,7 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors    
 	firstInstance.backpropagate(etas :* o2, mem) + secondInstance.backpropagate(etas :* o1, mem)
   }  
-  override def toString() = "(" + firstInstance.toString + ") Join(+) (" + secondInstance.toString + ")"  
+  override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"  
 }
 
 
