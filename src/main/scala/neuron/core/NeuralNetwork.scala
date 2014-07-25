@@ -183,7 +183,7 @@ abstract class InstanceOfMergedNeuralNetwork [Type1 <:Operationable, Type2 <:Ope
   
 }
 
-/** {f PLUS g} ([x,y]) := [f(x), g(y)] */
+/** {f ++ g} ([x,y]) := [f(x), g(y)] */
 class JointNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable]
 		( override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1,Type2](first,second) {
@@ -229,7 +229,7 @@ class InstanceOfJointNeuralNetwork[Type1 <: Operationable, Type2 <:Operationable
   override def toString() = firstInstance.toString + " ++ " + secondInstance.toString
 }
 
-/** f REPEAT n (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
+/** {f :+ n} (x) := [f(x), f(x), ... ,f(x)] (repeat n times) */
 class RepeatNeuralNetwork [Type <:Operationable] (val x:Type, val n:Int) extends Operationable {
   assert (n>=1)
   val inputDimension = x.inputDimension * n
@@ -303,7 +303,7 @@ class InstanceOfRepeatNeuralNetwork [Type <: Operationable]
 
 
 
-/** {f TIMES g} (x) := f(g(x)) */
+/** {f ** g} (x) := f(g(x)) */
 class ChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationable] 
 		(override val first:Type1, override val second:Type2) 
 	extends MergedNeuralNetwork[Type1, Type2] (first, second) {
@@ -338,7 +338,7 @@ class InstanceOfChainNeuralNetwork [Type1 <: Operationable, Type2 <: Operationab
   override def toString() = "(" + firstInstance.toString + ") ** (" + secondInstance.toString + ")"
 }
 
-/** {f SHARE g} (x) := [f(x), g(x)] */
+/** {f & g} (x) := [f(x), g(x)] */
 class ShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
 		(override val first:Type1, override val second: Type2)
 		extends MergedNeuralNetwork[Type1, Type2] (first, second) {
@@ -375,7 +375,7 @@ class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
   override def toString() = "(" + firstInstance.toString + ") & (" + secondInstance.toString + ")"
 }
 
-/** {f ADD g} (x) := f(x) + g(x) */
+/** {f + g} (x) := f(x) .+ g(x) */
 class AddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
 		(override val first: Type1, override val second: Type2)
 		extends MergedNeuralNetwork[Type1, Type2](first, second) {
@@ -410,7 +410,7 @@ class InstanceOfAddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
   override def toString() = "(" + firstInstance.toString + ") + (" + secondInstance.toString + ")"  
 }
 
-/** {f Mult g} (x) := f(x) * g(x) */
+/** {f * g} (x) := f(x) .* g(x) */
 class MultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
 		(override val first: Type1, override val second: Type2)
 		extends MergedNeuralNetwork[Type1, Type2](first, second) {
