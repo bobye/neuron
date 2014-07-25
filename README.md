@@ -29,18 +29,10 @@ Start _Scala IDE for Eclipse_ and import the project directory
 ### Documentation
 - [Basics](https://github.com/bobye/neuron/wiki/Basics)
 - [Auto-Encoder](https://github.com/bobye/neuron/wiki/Auto-Encoder)
+- [Examples](https://github.com/bobye/neuron/wiki/Examples)
+- [Scaladoc](https://colourbrain.com/api/neuron): TBA
 
-Please also look at test examples under folder `src/main/scala/neuron/tutorials/`
-
-### Examples
-
-run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php/Exercise:Sparse_Autoencoder) in parallel. It should take about 12 seconds on my PC:) 
-
-	sbt 'run-main neuron.tutorials.ImageAutoEncoderTest'
-	cd data/UFLDL/sparseae/
-	matlab -r "display_sparseae.m"
-
- ![UFLDL SAE](https://raw.githubusercontent.com/bobye/neuron/master/data/UFLDL/sparseae/results25.png)
+Please see more examples under folder `src/main/scala/neuron/tutorials/`
 
 ### FAQ
 
