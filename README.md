@@ -34,9 +34,9 @@ TODO List
 
   We argue that not only the number of parameters contributes to the representation ability of neural network, but also its infrastructure (network topology, train strategy, etc.) Neuron focuses on fast prototyping novel network architecture. Using Scala, we attempt to make the implementation of neural network in a mixed functional and imperative way ... neuron is not at the mature shape to be industrial proven.
 
-- _How is the performance of neruon?_
+- _How is the speed of neruon?_
 
-  Neuron is currently backed by [breeze](https://github.com/dlwh/breeze/) for numerical computation, which should be fast. And the extra cost for data control flow is minimized. 
+  Neuron is currently backed by [breeze](https://github.com/dlwh/breeze/) for numerical computation, which should be fast. And the extra cost for data control flow is minimized. Neuron provides data parallelization, but does not support model parallelization.
 
 ### Reference
 * [Breeze](https://github.com/scalanlp/breeze/) and [Nak](https://github.com/scalanlp/nak): a set of libraries for machine learning and numerical computing
