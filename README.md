@@ -22,7 +22,7 @@ Start _Scala IDE for Eclipse_ and import the project directory
  - [autoencoders](https://github.com/bobye/neuron/wiki/Auto-Encoder) (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
  - metrics (L1, L2, Mahalanobis, Softmax)
- - regularization: weight decay, activation sparsity, dropout
+ - regularization: weight decay, activation sparsity, dropout, maxout
  - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  
@@ -56,6 +56,7 @@ run [UFLDL Sparse AutoEncoder exercise](http://ufldl.stanford.edu/wiki/index.php
 * [Breeze](https://github.com/scalanlp/breeze/) and [Nak](https://github.com/scalanlp/nak): a set of libraries for machine learning and numerical computing
 * [UFLDL Tutorial](http://ufldl.stanford.edu/wiki/index.php/UFLDL_Tutorial): a Stanford course, find solutions at [Github](https://github.com/search?q=UFLDL+Tutorial)
 * [DeepLearnToolbox](https://github.com/rasmusbergpalm/DeepLearnToolbox): Matlab toolbox for deep learning
+* [Torch/nn](https://github.com/torch/nn): neural network modules backed by Torch
 * [ScalaSTM](http://nbronson.github.io/scala-stm/):  a lightweight software transactional memory for Scala 
 
 ----

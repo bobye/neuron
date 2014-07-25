@@ -66,7 +66,7 @@ class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetw
 }
 
 /** DropoutSingleLayerNN performs dropout regularization over activations, dropout rate by default is set to 0.0 */
-class DropoutSingleLayerNN(dimension: Int, var rate: Double = 0.0,
+class DropoutSingleLayerNN(dimension: Int, var rate: Double,
 						   func: NeuronFunction = SigmoidFunction)
 	extends SingleLayerNeuralNetwork (dimension, func) {
   type InstanceType = InstanceOfDropoutSingleLayerNN
@@ -75,6 +75,7 @@ class DropoutSingleLayerNN(dimension: Int, var rate: Double = 0.0,
 
 class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
 	extends InstanceOfSingleLayerNeuralNetwork(NN) {
+  type StructureType = DropoutSingleLayerNN
   override def apply(x: NeuronVector, mem: SetOfMemorables) = {
     import breeze.stats.distributions._
     assert (x.length == inputDimension)
@@ -92,6 +93,41 @@ class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
     assert(xs.rows == inputDimension)
     val output = NN.func(xs)
     val dropout = new NeuronMatrix(outputDimension, xs.cols, new Bernoulli(NN.rate))
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    }
+    output :* dropout    
+  }
+}
+
+class MaxoutSingleLayerNN(dimension: Int, var maxout_k: Int,
+						   func: NeuronFunction = SigmoidFunction)
+	extends SingleLayerNeuralNetwork (dimension, func) {
+  type InstanceType = InstanceOfMaxoutSingleLayerNN
+  override def create(): InstanceOfMaxoutSingleLayerNN = new InstanceOfMaxoutSingleLayerNN(this)
+}
+
+class InstanceOfMaxoutSingleLayerNN(override val NN: MaxoutSingleLayerNN)
+	extends InstanceOfSingleLayerNeuralNetwork(NN) {
+  type StructureType = MaxoutSingleLayerNN
+  override def apply(x: NeuronVector, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert (x.length == inputDimension)
+    val output = NN.func(x)
+    val dropout = output.argtopk(NN.maxout_k)
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+    }
+    output :* dropout
+  }
+  
+  override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert(xs.rows == inputDimension)
+    val output = NN.func(xs)
+    val dropout = output.argtopk(NN.maxout_k)
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout

@@ -10,7 +10,7 @@ object FeedForward extends Optimizable with Workspace{
   def main(args: Array[String]): Unit = {
 	
     // create topology of neural network
-	val a = new SingleLayerNeuralNetwork(10)
+	val a = new MaxoutSingleLayerNN(10, 5)
 	val a2= new SingleLayerNeuralNetwork(20)
 	val a3 = new SingleLayerNeuralNetwork(5)
 	val b = new RegularizedLinearNN(10,10, 0.001)
