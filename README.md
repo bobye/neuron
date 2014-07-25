@@ -16,14 +16,17 @@ Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
  - regularization: weight decay, activation sparsity, dropout, maxout
  - parallel training framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
+ - recursive neural network
+
+TODO List
+ - recurrent neural network
+ - convolution and pooling
  
 ### Documentation
 - [Basics](https://github.com/bobye/neuron/wiki/Basics)
 - [Auto-Encoder](https://github.com/bobye/neuron/wiki/Auto-Encoder)
-- [Examples](https://github.com/bobye/neuron/wiki/Examples)
+- [Examples](https://github.com/bobye/neuron/wiki/Examples): Please see more examples under folder `src/main/scala/neuron/tutorials/`
 - [Scaladoc](https://colourbrain.com/api/neuron): TBA
-
-Please see more examples under folder `src/main/scala/neuron/tutorials/`
 
 ### FAQ
 
