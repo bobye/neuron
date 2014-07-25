@@ -8,7 +8,7 @@ Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
 
 ### Features
  - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)
- - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators) (PLUS, TIMES, SHARE, ADD, MULT, TENSOR, REPEAT) 
+ - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators)
  - multilayer perceptron
  - [autoencoders](https://github.com/bobye/neuron/wiki/Auto-Encoder) (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
