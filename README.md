@@ -6,15 +6,6 @@ This project is a _work-in-progress_, which aims at a generic framework to exper
 
 Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
 
-### How to build
-
-```
-$ sbt
-sbt> compile
-sbt> eclipse
-```
-Start _Scala IDE for Eclipse_ and import the project directory
-
 ### Features
  - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)
  - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators) (PLUS, TIMES, SHARE, ADD, MULT, TENSOR, REPEAT) 
