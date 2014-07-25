@@ -18,6 +18,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
+  def this(arr: Array[Double], offset: Int) = this(new DenseVector(arr, offset))
+  def this(arr: Array[Double]) = this(new DenseVector(arr))
   def apply(n: Int): Double = data(n) 
   def update(n:Int, e:Double): Unit = data.update(n,e)
   def apply(r: Range): NeuronVector = new NeuronVector(data(r))
@@ -72,6 +74,8 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
+  def this(rows:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, arr, offset))
+  def this(rows:Int, cols:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, cols, arr, offset))
   def apply(row:Int, col:Int) = data(row,col)
   def update(row:Int, col:Int, e:Double) = data.update(row,col,e)
   def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data + that.data)
