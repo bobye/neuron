@@ -7,7 +7,7 @@ import breeze.linalg._
 import breeze.numerics._
 import breeze.optimize._
 import breeze.stats.distributions._
-//import breeze.math._
+import breeze.util._
 
 class LabelVector(val data:DenseVector[Int]) {
   def length = data.length
@@ -18,11 +18,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length
   def this(n:Int) = this(DenseVector.zeros[Double] (n))
   def this(n:Int, rand: Rand[Double]) = this(DenseVector.rand(n, rand)) // uniform sampling, might not be a good default choice
-  def this(n:Int, rand: => Rand[Boolean]) = this({
-    val data = DenseVector.zeros[Double] (n)
-    data(DenseVector.rand(n, rand).findAll(_ == true)) := 1.0
-    data
-  })
+  def this(n:Int, rand: => Rand[Boolean]) = this(I(DenseVector.rand(n, rand)))
   def this(arr: Array[Double], offset: Int) = this(new DenseVector(arr, offset))
   def this(arr: Array[Double]) = this(new DenseVector(arr))
   def this(arr: Array[Double], offset: Int, stride: Int, length: Int) = this(new DenseVector(arr, offset, stride, length))
@@ -74,17 +70,19 @@ class NeuronVector (val data: DenseVector[Double]) {
 	}
     buf
   }   
+  def argtopk(k: Int): NeuronVector = new NeuronVector({
+    val topk = this.data.argtopk(k) 
+    val indicator = DenseVector.zeros[Double] (length)
+    indicator(topk) := 1.0
+    indicator
+  })
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
   def cols = data.cols
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
-  def this(rows:Int, cols:Int, rand: => Rand[Boolean]) = this({
-    val data = DenseMatrix.zeros[Double] (rows, cols)
-    data(DenseMatrix.rand(rows, cols, rand).findAll(_ == true)) := 1.0
-    data
-  })
+  def this(rows:Int, cols:Int, rand: => Rand[Boolean]) = this(I(DenseMatrix.rand(rows, cols, rand)))
   def this(rows:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, arr, offset))
   def this(rows:Int, cols:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, cols, arr, offset))
   def this(rows:Int, cols:Int, arr: Array[Double], offset: Int, majorStride: Int) = 
@@ -170,6 +168,14 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
 	}
     buf
   }  
+  def argtopk(k: Int): NeuronMatrix = {
+    val indicator = new NeuronMatrix(rows, cols)
+    for (i<- 0 until cols) {
+      val topk = this.data(::, i).argtopk(k) //TopK[Int, Double](k, 0 until rows, j=>this.data(j, i)).toSeq
+      indicator.data(topk.map((_, i))) := 1.0
+    }
+    indicator
+  }
 }
 
 // solution to 3-order tensor
