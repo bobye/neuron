@@ -17,7 +17,7 @@ object FeedForward extends Optimizable with Workspace{
  
 	val c = (a ** b).create()
 	val d = (b ++ c) ** a2
-	val e = (d * d) 
+	val e = (d * d).create() :+ 3
 	
 	// setup Optimizable members
 	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
