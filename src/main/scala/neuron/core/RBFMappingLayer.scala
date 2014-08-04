@@ -61,9 +61,7 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
   private def gridrbf(y:NeuronVector, x:NeuronVector): Unit = {
     val grids = for (i<- 0 until x.length) yield {
       val f = x(i) * (NN.bins(i)-1)
-      val j = f.toInt
-      val k = f - j
-      if (j < NN.bins(i) - 1) (j, k) else (NN.bins(i)-2, 1.0)
+      (f.toInt, f - f.toInt)
     }
     for (i<- 0 until scala.math.pow(2, NN.bins.length).toInt){
       var v = 1.0
@@ -81,17 +79,19 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
   def apply(x:NeuronVector, mem:SetOfMemorables) = {
     // assuming the elements in x are in [0,1]
     assert(x.length == inputDimension)
+    x.boundTo(0.0, 1.0)
     val y = new NeuronVector(outputDimension)
     gridrbf(y, x)
     y
   }
-  def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
-    assert(x.rows == inputDimension) 
-    val y = new NeuronMatrix(outputDimension, x.cols)
-    for (n<-0 until x.cols) {
-    	gridrbf(y.colVec(n), x.colVec(n))
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    assert(xs.rows == inputDimension) 
+    xs.boundTo(0.0, 1.0)
+    val ys = new NeuronMatrix(outputDimension, xs.cols)
+    for (n<-0 until xs.cols) {
+    	gridrbf(ys.colVec(n), xs.colVec(n))
     }
-    y
+    ys
   }
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = { 
     LL \ (L * eta)
@@ -100,4 +100,65 @@ class InstanceOfGridRBFNeuralNetwork (override val NN: GridRBFNeuralNetwork)
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
     LL \ (L * etas)
   }  
+}
+
+class GridMDNeuralNetwork (inputDimension: Int, val bins: Seq[Int])
+	extends NeuralNetwork(inputDimension, bins.foldLeft(1)(_+_)) {
+  assert(bins.length == inputDimension)
+  type InstanceType <: InstanceOfGridMDNeuralNetwork
+  def create(): InstanceOfGridMDNeuralNetwork = new InstanceOfGridMDNeuralNetwork(this)
+}
+
+class InstanceOfGridMDNeuralNetwork (override val NN: GridMDNeuralNetwork) 
+	extends InstanceOfNeuralNetwork(NN) {
+  type StructureType <: GridMDNeuralNetwork
+  def apply(x:NeuronVector, mem:SetOfMemorables) = {
+    assert(x.length == inputDimension)
+    x.boundTo(0.0, 1.0)
+    val y = new NeuronVector(outputDimension)
+    val z = x :* new NeuronVector(NN.bins.toArray.map(_.toDouble - 1))
+    val zInt = z.flr
+    val zFlt = z - z.flr
+    
+    val idx = {
+      var mIdx = 0
+      for (i<-0 until inputDimension) yield {
+        val mp = mIdx; mIdx = mIdx + NN.bins(i); 
+        mp + zInt(i).toInt
+       }
+    }
+    
+    y(idx) = zFlt *(-1) +1
+    y(idx.map(_+1)) = zFlt 
+    
+    y
+  }
+  
+  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    assert(xs.rows == inputDimension)
+    xs.boundTo(0.0, 1.0)
+    val ys = new NeuronMatrix(outputDimension, xs.cols)
+    val zs = xs MultElem new NeuronVector(NN.bins.toArray.map(_.toDouble - 1))
+    val zInt = zs.flr
+    val zFlt = zs - zs.flr
+    
+    var mIdx = 0
+    for (i<-0 until inputDimension) {
+      for (m<-0 until xs.cols) {
+      val j = zInt(i,m).toInt
+      val k = zFlt(i,m)
+      ys(mIdx + j, m) = 1 - k
+      ys(mIdx + j + 1, m) = k
+      }
+      mIdx = mIdx + NN.bins(i)
+    }
+    ys
+  }
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = { 
+    null // to be implemented
+  }
+  
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    null // to be implemented
+  }    
 }

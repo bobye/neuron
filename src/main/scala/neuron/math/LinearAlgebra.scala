@@ -80,6 +80,10 @@ class NeuronVector (val data: DenseVector[Double]) {
   def flr() = new NeuronVector(floor(data))
   def upperBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :>= b) := b - roundoff}
   def lowerBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :<= b) := b + roundoff}
+  def boundTo(l:Double, u:Double, roundoff:Double = 1E-10): Unit = {
+    lowerBoundTo(l, roundoff)
+    upperBoundTo(u, roundoff)
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -183,7 +187,10 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def flr() = new NeuronMatrix(floor(data))
   def upperBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :>= b) := b - roundoff}
   def lowerBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :<= b) := b + roundoff}
-  
+  def boundTo(l:Double, u:Double, roundoff:Double = 1E-10): Unit = {
+    lowerBoundTo(l, roundoff)
+    upperBoundTo(u, roundoff)
+  }  
 }
 
 // solution to 3-order tensor
