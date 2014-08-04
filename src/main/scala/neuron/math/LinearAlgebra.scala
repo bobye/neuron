@@ -25,6 +25,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def apply(n: Int): Double = data(n) 
   def update(n:Int, e:Double): Unit = data.update(n,e)
   def apply(r: Range): NeuronVector = new NeuronVector(data(r))
+  def update(r: IndexedSeq[Int], v:NeuronVector): Unit = {data(r):=v.data}
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
 
@@ -76,6 +77,9 @@ class NeuronVector (val data: DenseVector[Double]) {
     indicator(topk) := 1.0
     indicator
   })
+  def flr() = new NeuronVector(floor(data))
+  def upperBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :>= b) := b - roundoff}
+  def lowerBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :<= b) := b + roundoff}
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -95,10 +99,10 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) + that.data)
   def Minus(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) - that.data)
   def MinusTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) - that.data)
-  def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :* that.data)
-  def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::,breeze.linalg.*) :* that.data)
-  def DivElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*,::) :/ that.data)
-  def DivElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :/ that.data)
+  def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :* that.data)
+  def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) :* that.data)
+  def DivElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :/ that.data)
+  def DivElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) :/ that.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
   def *(x:NeuronVector) = Mult(x)
   def TransMult(x:NeuronVector): NeuronVector = new NeuronVector(this.data.t * x.data)
@@ -176,6 +180,10 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     }
     indicator
   }
+  def flr() = new NeuronMatrix(floor(data))
+  def upperBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :>= b) := b - roundoff}
+  def lowerBoundTo(b:Double, roundoff:Double = 1E-10): Unit = {data(data :<= b) := b + roundoff}
+  
 }
 
 // solution to 3-order tensor

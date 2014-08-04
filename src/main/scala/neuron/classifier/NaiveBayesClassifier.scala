@@ -21,7 +21,7 @@ class InstanceOfNaiveBayesClassifier (NN: NaiveBayesClassifier)
   val logN = new NeuronMatrix(NN.numOfLabels, NN.dimension)
   def trainOnce() = {
     atomic { implicit txn =>
-    	W := ((dW() - NN.lambda) DivElemTrans (db() - NN.lambda * 2.0))
+    	W := ((dW() - NN.lambda) DivElem (db() - NN.lambda * 2.0))
     }
     
     logP := new NeuronMatrix( log(W.data) )
