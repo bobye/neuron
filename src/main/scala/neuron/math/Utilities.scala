@@ -251,14 +251,14 @@ abstract trait Optimizable {
   }  
   
   object SGD {
-    import breeze.math.MutableCoordinateSpace
-    def apply[T](initialStepSize: Double=4, maxIter: Int=100)(implicit vs: MutableCoordinateSpace[T, Double]) :StochasticGradientDescent[T]  = {
+	import breeze.math.NormedModule
+    def apply[T](initialStepSize: Double=4, maxIter: Int=100)(implicit vs: NormedModule[T, Double]) :StochasticGradientDescent[T]  = {
       new SimpleSGD(initialStepSize,maxIter)
     }
 
     class SimpleSGD[T](eta: Double=4,
                      maxIter: Int=100)
-                    (implicit vs: MutableCoordinateSpace[T, Double]) extends StochasticGradientDescent[T](eta,maxIter) {
+                    (implicit vs: NormedModule[T, Double]) extends StochasticGradientDescent[T](eta,maxIter) {
       type History = Unit
       def initialHistory(f: StochasticDiffFunction[T],init: T)= ()
       def updateHistory(newX: T, newGrad: T, newValue: Double, f: StochasticDiffFunction[T], oldState: State) = ()
