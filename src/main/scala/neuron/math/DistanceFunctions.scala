@@ -72,20 +72,19 @@ class KernelDistance(kernel: NeuronFunction) extends DistanceFunction {
 	  (kernel(x dot x) - 2 * kernel(x dot y) + kernel(y dot y))/2.0
 	
 	def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = {
-	  (x * kernel.grad(x TransMult x) - y * kernel.grad(y TransMult x)) / (x.cols * x.cols)
+	  (x * kernel.grad(x TransMult x) - y * kernel.grad(y TransMult x)) / (x.cols )
 	}
 	
 	def apply(x: NeuronMatrix, y:NeuronMatrix) = {
-	  (kernel(x TransMult x).sumAll - 2 * kernel(y TransMult x).sumAll + kernel(y TransMult y).sumAll)/ (2.0 * x.cols * x.cols)
+	  (kernel(x TransMult x).sumAll - 2 * kernel(y TransMult x).sumAll + kernel(y TransMult y).sumAll)/ (2.0 * x.cols)
 	}
 	
 	override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
 	  val xxtensor = x TransMult x
 	  val yxtensor = y TransMult x
 	  val yytensor = y TransMult y
-	  val sqrOfCols = x.cols * x.cols
-	  ((kernel(xxtensor).sumAll - 2.0 * kernel(yxtensor).sumAll + kernel(yytensor).sumAll)/(2.0 * sqrOfCols),
-	      (x * kernel.grad(xxtensor) - y * kernel.grad(yxtensor))/sqrOfCols )
+	  ((kernel(xxtensor).sumAll - 2.0 * kernel(yxtensor).sumAll + kernel(yytensor).sumAll)/(2.0 * x.cols),
+	      (x * kernel.grad(xxtensor) - y * kernel.grad(yxtensor))/x.cols )
 	}
 	  
 }

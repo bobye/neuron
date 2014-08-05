@@ -138,7 +138,10 @@ abstract trait Optimizable {
   def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-    val ranges = partitionDataRanges(size, 512).par 
+    val ranges = {
+      if (batchSize == 0) partitionDataRanges(size, 512).par
+      else partitionDataRanges(size, batchSize).par 
+    }
     
     var totalCost:Double = 0.0
     
@@ -211,12 +214,9 @@ abstract trait Optimizable {
         miniBatchCost
       }).reduce(_+_)
  
-    
-    val sampleSize = size/batchSize
-    
-    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, sampleSize)
+    val regCost = nn.getDerativeOfWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, dw, size)
 
-    (totalCost/sampleSize + regCost, dw/sampleSize)
+    (totalCost/size + regCost, dw/size)
   }
   
   def getApproximateObjAndGrad (w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
