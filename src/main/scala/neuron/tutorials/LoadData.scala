@@ -38,7 +38,31 @@ object LoadData {
 	  source.close()
 	  new NeuronMatrix(numOfPixels, dataBlock.length/numOfPixels, dataBlock)
   }
-  
+  def colorPalette(): (Array[NeuronVector], Array[NeuronVector]) = {
+    val dataSource = scala.io.Source.fromFile("data/colorpalette/mturkData.txt").getLines.toArray
+    val labelSource= scala.io.Source.fromFile("data/colorpalette/mturkData-s.txt").getLines.toArray
+    val numOfSamples = dataSource.length
+    val xData = new Array[NeuronVector](numOfSamples)
+    val yData = new Array[NeuronVector](numOfSamples)
+
+    for (i<- 0 until numOfSamples) {
+      xData(i) = new NeuronVector(dataSource(i).split("\\s+").map(_.toDouble))
+      yData(i) = new NeuronVector(labelSource(i).split("\\s+").map(_.toDouble))
+    }       
+    (xData, yData)
+  }
+  def colorPaletteM(): (NeuronMatrix, NeuronMatrix) = {
+    val dataSource = scala.io.Source.fromFile("data/colorpalette/mturkData.txt")
+    val labelSource= scala.io.Source.fromFile("data/colorpalette/mturkData-s.txt")
+    val numOfSamples = dataSource.length  
+    val dataBlock = dataSource.mkString.split("\\s+").map(_.toDouble)
+    val labelBlock = labelSource.mkString.split("\\s+").map(_.toDouble)
+    dataSource.close()
+    labelSource.close()
+    val rows = 15
+    val cols = dataBlock.length / rows
+    (new NeuronMatrix(rows, cols, dataBlock), new NeuronMatrix(1, cols, labelBlock))
+  }
   def mnistImages(): Array[NeuronVector] = {
         // Load MNIST data
     import java.io._
