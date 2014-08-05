@@ -54,11 +54,12 @@ object LoadData {
   def colorPaletteM(): (NeuronMatrix, NeuronMatrix) = {
     val dataSource = scala.io.Source.fromFile("data/colorpalette/mturkData.txt")
     val labelSource= scala.io.Source.fromFile("data/colorpalette/mturkData-s.txt")
-    val numOfSamples = dataSource.length  
+     
     val dataBlock = dataSource.mkString.split("\\s+").map(_.toDouble)
     val labelBlock = labelSource.mkString.split("\\s+").map(_.toDouble)
     dataSource.close()
     labelSource.close()
+
     val rows = 15
     val cols = dataBlock.length / rows
     (new NeuronMatrix(rows, cols, dataBlock), new NeuronMatrix(1, cols, labelBlock))
