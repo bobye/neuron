@@ -295,7 +295,7 @@ abstract trait Optimizable {
     }
     (f(w2.data), w2)    
   }
-  def trainx(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 0, opt: String = "lbfgs"): (Double, WeightVector) = {
+  def trainx(w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 512, opt: String = "lbfgs"): (Double, WeightVector) = {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
