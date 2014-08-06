@@ -21,7 +21,7 @@ class SoftMaxUnitTest extends FunSuite with Optimizable with Workspace {
 	  yData(i) :/= yData(i).sum
 	}
 	
-	val w = gradCheck(1E-9)
+	val w = gradCheck(1E-6)
 	
 	// train
 	val time = System.currentTimeMillis()

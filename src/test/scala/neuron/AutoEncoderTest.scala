@@ -22,7 +22,7 @@ class AutoEncoderTest extends FunSuite with Optimizable {
 	  }
 	  yData = xData
 	  
-	  val w = gradCheck(1E-9)
+	  val w = gradCheck(1E-6)
 	  
 	  val time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)

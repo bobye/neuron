@@ -47,7 +47,7 @@ class RNNTest extends FunSuite with Optimizable with Workspace with EncoderWorks
 	  }
 	  
 	  
-	  gradCheck(1E-9)
+	  gradCheck(1E-6)
 	  
 	  
 	  val time = System.currentTimeMillis();
