@@ -1,4 +1,4 @@
-package neuron.tutorials
+package neuron.examples
 import neuron.math._
 import breeze.linalg._
 

@@ -1,4 +1,4 @@
-package neuron.tutorials
+package neuron.examples
 
 //import breeze.plot._
 import breeze.stats.distributions._
