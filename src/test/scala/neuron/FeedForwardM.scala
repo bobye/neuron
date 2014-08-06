@@ -1,55 +1,54 @@
-package neuron.tutorials
+package neuron
 import breeze.stats.distributions._
 import neuron.core._
 import neuron.math._
+import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
 // This is an example about creating a mixed type feedforward neural network
 // and how to get objective and gradient in terms of internal weights
-object FeedForward extends Optimizable with Workspace{
+@RunWith(classOf[JUnitRunner])
+class FeedForwardM extends FunSuite with Optimizable with Workspace{
 
-  def main(args: Array[String]): Unit = {
+  test("Test feed-forward multi-perceptron using NeuronMatrix") {
 	
     // create topology of neural network
 	val a = new MaxoutSingleLayerNN(10, 5)
 	val a2= new SingleLayerNeuralNetwork(20)
-	val a3 = new SingleLayerNeuralNetwork(5)
 	val b = new RegularizedLinearNN(10,10, 0.001)
  
 	val c = (a ** b).create()
 	val d = (b ++ c) ** a2
-	val e = (d * d).create() :+ 3
+	val e = (d * d)
 	
 	// setup Optimizable members
-	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
     nn = e.create(); println(nn); // print structure
 	
 	val numOfSamples = 1000
-	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
-	for (i<- 0 until numOfSamples) {
-	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
-	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
-	}
+	xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
+	yDataM = new NeuronMatrix(nn.outputDimension, numOfSamples, new Uniform(-1,1))
 	
     val w = getRandomWeightVector()		
     
     // compute objective and gradient
     var time = System.currentTimeMillis();
-	val (obj, grad) = getObjAndGrad(w)
+	val (obj, grad) = getObjAndGradM(w)
 	println(System.currentTimeMillis() - time, obj, grad.data)
 	
 
 	// gradient checking
 	time = System.currentTimeMillis()
-    val (obj2, grad2) = getApproximateObjAndGrad(w)
+    val (obj2, grad2) = getApproximateObjAndGradM(w)
 	println(System.currentTimeMillis() - time, obj2, grad2.data)
+	
 	
 	// train
 	time = System.currentTimeMillis()
-	val (obj3, w2) = train(w)
+	val (obj3, w2) = trainx(w)
 	println(System.currentTimeMillis() - time, obj3)
 	println(w.data)
 	println(w2.data)
-
 
   }
 

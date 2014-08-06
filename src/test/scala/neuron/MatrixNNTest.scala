@@ -1,11 +1,15 @@
-package neuron.tutorials
+package neuron
 import breeze.stats.distributions._
 import neuron.core._
 import neuron.math._
 import neuron.unstable._
+import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
-object MatrixNNTest extends Optimizable with Workspace {
-  def main(args: Array[String]): Unit = {
+@RunWith(classOf[JUnitRunner])
+class MatrixNNTest extends FunSuite with Optimizable with Workspace {
+  test("test matrix network") {
     val inputTensorDimension = 10
     val outputTensorDimension= 10
     //nn = new BiLinearSymmetricNN(inputTensorDimension,outputTensorDimension).create()

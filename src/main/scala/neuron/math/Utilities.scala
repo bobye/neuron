@@ -135,13 +135,10 @@ abstract trait Optimizable {
     (0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)
   }
   
-  def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+  def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 512): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-    val ranges = {
-      if (batchSize == 0) partitionDataRanges(size, 512).par
-      else partitionDataRanges(size, batchSize).par 
-    }
+    val ranges = partitionDataRanges(size, batchSize).par 
     
     var totalCost:Double = 0.0
     
@@ -172,10 +169,10 @@ abstract trait Optimizable {
   
   
     //var currentIndex: Int = 0 
-  def getObjAndGradM2L (w: WeightVector, distance:DistanceFunction = new KernelDistance(SquareFunction), batchSize: Int = 0): (Double, NeuronVector) = {
+  def getObjAndGradM2L (w: WeightVector, distance:DistanceFunction = new KernelDistance(SquareFunction), batchSize: Int = 0, bufferSize: Int = 600): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
-    val rangesAll = partitionDataRanges(size, 600).par  
+    val rangesAll = partitionDataRanges(size, bufferSize).par  
     
 
     val dw = new WeightVector(w.length)

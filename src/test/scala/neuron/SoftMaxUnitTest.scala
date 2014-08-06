@@ -1,10 +1,14 @@
-package neuron.tutorials
+package neuron
 import neuron.core._
 import neuron.math._
 import breeze.stats.distributions._
+import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
-object SoftMaxUnitTest extends Optimizable with Workspace {
-  def main(args: Array[String]): Unit = {
+@RunWith(classOf[JUnitRunner])
+class SoftMaxUnitTest extends FunSuite with Optimizable with Workspace {
+  test("test softmax") {
     val a = new SingleLayerNeuralNetwork(10)
     val b = new RegularizedLinearNN(10,10, 0.001)
     nn = (b ** a ** b).create()

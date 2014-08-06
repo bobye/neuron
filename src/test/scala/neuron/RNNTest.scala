@@ -1,4 +1,4 @@
-package neuron.tutorials
+package neuron
 
 import neuron.core._
 import neuron.autoencoder._
@@ -7,10 +7,12 @@ import neuron.misc._
 import breeze.stats.distributions._
 import breeze.linalg._
 import breeze.optimize._
+import org.scalatest.FunSuite
+import org.junit.runner.RunWith
+import org.scalatest.junit.JUnitRunner
 
-
-
-object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
+@RunWith(classOf[JUnitRunner])
+class RNNTest extends FunSuite with Optimizable with Workspace with EncoderWorkspace {
     
     def fullBinaryTree(depth:Int) : BTree = {
       assert (depth <= 15 && depth >= 1)
@@ -20,7 +22,7 @@ object RNNTest extends Optimizable with Workspace with EncoderWorkspace {
         new BBranch(fullBinaryTree(depth - 1), fullBinaryTree(depth -1))
     }
 	
-	def main(args: Array[String]): Unit = {
+	test("test RNN") {
 	  val wordLength = 10
 	  val tree = fullBinaryTree(5)
 	  val enc  = (new RecursiveSimpleAE(0.001, 0.1)(wordLength)).create()
