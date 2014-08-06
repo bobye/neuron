@@ -11,14 +11,16 @@ libraryDependencies  ++= Seq(
 	    // Logging
             "org.slf4j" % "slf4j-simple" % "1.7.6",
             // STM
-            "org.scala-stm" %% "scala-stm" % "0.7"
+            "org.scala-stm" %% "scala-stm" % "0.7",
             // Nak machine learning
             // "org.scalanlp" % "nak" % "1.2.1"
+	     "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
+	     "org.scalatest" %% "scalatest" % "2.1.3" % "test"
 )
 
 resolvers ++= Seq(
             // other resolvers here
-            // if you want to use snapshot builds (currently 0.8), use this.
+            // if you want to use snapshot builds (currently 0.8.1), use this.
             "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
             "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/"
 )
