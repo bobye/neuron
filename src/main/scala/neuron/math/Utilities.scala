@@ -324,7 +324,7 @@ abstract trait Optimizable {
     }
     (f(w2.data), w2)    
   }
-    
+
   def test(w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
     val size = xDataTest.length
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
@@ -333,4 +333,27 @@ abstract trait Optimizable {
       	}).reduce(_+_)
     totalCost / size
   }
+  
+  def gradCheck(tolerant: Double): WeightVector ={
+    assert(tolerant > 0)
+	  val w = getRandomWeightVector()
+	  
+	  val (obj, grad) = getObjAndGrad(w)
+	  val (obj2, grad2) = getApproximateObjAndGrad(w)
+	  
+	  assert(scala.math.abs(obj - obj2) < tolerant && 
+	      AbsFunction(grad - grad2).max < tolerant)    
+	  w
+  }
+  def gradCheckM(tolerant: Double): WeightVector ={
+    assert(tolerant > 0)
+	  val w = getRandomWeightVector()
+	  
+	  val (obj, grad) = getObjAndGradM(w)
+	  val (obj2, grad2) = getApproximateObjAndGradM(w)
+	  
+	  assert(scala.math.abs(obj - obj2) < tolerant && 
+	      AbsFunction(grad - grad2).max < tolerant)    
+	  w
+  }  
 }

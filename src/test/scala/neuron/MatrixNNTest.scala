@@ -23,16 +23,6 @@ class MatrixNNTest extends FunSuite with Optimizable with Workspace {
 	  xData(i) =  (xIn CROSS xIn).vec()
 	  yData(i) =  (yOut CROSS yOut).vec()
 	}
-    val w = getRandomWeightVector()		
-    
-    // compute objective and gradient
-    var time = System.currentTimeMillis();
-	val (obj, grad) = getObjAndGrad(w)
-	println(System.currentTimeMillis() - time, obj, grad.data)
-	
-	// gradient checking
-	time = System.currentTimeMillis()
-    val (obj2, grad2) = getApproximateObjAndGrad(w)
-	println(System.currentTimeMillis() - time, obj2, grad2.data)
+    gradCheck(1E-6)
   }
 }

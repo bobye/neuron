@@ -22,23 +22,13 @@ class AutoEncoderTest extends FunSuite with Optimizable {
 	  }
 	  yData = xData
 	  
-	  val w = getRandomWeightVector()
+	  val w = gradCheck(1E-9)
 	  
-	  var time = System.currentTimeMillis();
-	  val (obj, grad) = getObjAndGrad(w)
-	  println(System.currentTimeMillis() - time, obj, grad.data)
-	  
-	  // gradient checking
-	  time = System.currentTimeMillis();
-	  val (obj2, grad2) = getApproximateObjAndGrad(w)
-	  println(System.currentTimeMillis() - time, obj2, grad2.data)
-	  
-	  
-	  time = System.currentTimeMillis();
+	  val time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3)
-	  println(w.data)
-	  println(w2.data)
+	  //println(w.data)
+	  //println(w2.data)
 	  
 
 	}

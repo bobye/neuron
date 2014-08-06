@@ -13,8 +13,8 @@ class RBFMappingLayerTest extends FunSuite {
     val nn = new GridRBFNeuralNetwork(3, Seq(16,16,16)).create()
     val y = nn(x,null)
     val z = nn.L * y
-    println(z.data)
-    println(x.data)
-    println(y.sumCol)
+    
+    assert((z-x).euclideanSqrNorm < 1E-9)
+    assert((y.sumCol - 1).euclideanSqrNorm < 1E-9)
   }
 }

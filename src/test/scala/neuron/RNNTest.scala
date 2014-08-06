@@ -47,19 +47,10 @@ class RNNTest extends FunSuite with Optimizable with Workspace with EncoderWorks
 	  }
 	  
 	  
-	  var time: Long = 0
-	  
-	  time = System.currentTimeMillis();
-	  val (obj, grad) = getObjAndGrad(w)
-	  println(System.currentTimeMillis() - time, obj, grad.data)
-	  
-	  // Gradient checking
-	  time = System.currentTimeMillis();
-	  val (obj2, grad2) = getApproximateObjAndGrad(w)
-	  println(System.currentTimeMillis() - time, obj2, grad2.data)
+	  gradCheck(1E-9)
 	  
 	  
-	  time = System.currentTimeMillis();
+	  val time = System.currentTimeMillis();
 	  val (obj3, w2) = train(w)
 	  println(System.currentTimeMillis() - time, obj3, w2.data)
 	  

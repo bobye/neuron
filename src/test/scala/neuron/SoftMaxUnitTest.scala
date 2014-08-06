@@ -21,24 +21,14 @@ class SoftMaxUnitTest extends FunSuite with Optimizable with Workspace {
 	  yData(i) :/= yData(i).sum
 	}
 	
-	val w = getRandomWeightVector()	
-	// compute objective and gradient
-    var time = System.currentTimeMillis();
-	val (obj, grad) = getObjAndGrad(w, SoftMaxDistance)
-	println(System.currentTimeMillis() - time, obj, grad.data)
-	
-
-	// gradient checking
-	time = System.currentTimeMillis()
-    val (obj2, grad2) = getApproximateObjAndGrad(w, SoftMaxDistance)
-	println(System.currentTimeMillis() - time, obj2, grad2.data)
+	val w = gradCheck(1E-9)
 	
 	// train
-	time = System.currentTimeMillis()
+	val time = System.currentTimeMillis()
 	val (obj3, w2) = train(w)
 	println(System.currentTimeMillis() - time, obj3)
-	println(w.data)
-	println(w2.data)
+	//println(w.data)
+	//println(w2.data)
   }
 
 }

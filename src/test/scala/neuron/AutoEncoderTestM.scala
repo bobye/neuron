@@ -19,23 +19,13 @@ class AutoEncoderTestM extends FunSuite with Optimizable {
 	  xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
 	  yDataM = xDataM
 	  
-	  val w = getRandomWeightVector()
-	  
-	  var time = System.currentTimeMillis();
-	  val (obj, grad) = getObjAndGradM(w)
-	  println(System.currentTimeMillis() - time, obj, grad.data)
-	  
-	  // gradient checking
-	  time = System.currentTimeMillis();
-	  val (obj2, grad2) = getApproximateObjAndGradM(w)
-	  println(System.currentTimeMillis() - time, obj2, grad2.data)
-	  
-	  
-	  time = System.currentTimeMillis();
+	  val w = gradCheckM(1E-6)
+	      
+	  val time = System.currentTimeMillis();
 	  val (obj3, w2) = trainx(w)
 	  println(System.currentTimeMillis() - time, obj3)
-	  println(w.data)
-	  println(w2.data)
+	  //println(w.data)
+	  //println(w2.data)
 	  
 
 	}

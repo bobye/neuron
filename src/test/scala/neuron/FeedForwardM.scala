@@ -29,26 +29,14 @@ class FeedForwardM extends FunSuite with Optimizable with Workspace{
 	xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
 	yDataM = new NeuronMatrix(nn.outputDimension, numOfSamples, new Uniform(-1,1))
 	
-    val w = getRandomWeightVector()		
-    
-    // compute objective and gradient
-    var time = System.currentTimeMillis();
-	val (obj, grad) = getObjAndGradM(w)
-	println(System.currentTimeMillis() - time, obj, grad.data)
-	
-
-	// gradient checking
-	time = System.currentTimeMillis()
-    val (obj2, grad2) = getApproximateObjAndGradM(w)
-	println(System.currentTimeMillis() - time, obj2, grad2.data)
-	
+    val w = gradCheckM(1E-6)   
 	
 	// train
-	time = System.currentTimeMillis()
+	val time = System.currentTimeMillis()
 	val (obj3, w2) = trainx(w)
 	println(System.currentTimeMillis() - time, obj3)
-	println(w.data)
-	println(w2.data)
+	//println(w.data)
+	//println(w2.data)
 
   }
 
