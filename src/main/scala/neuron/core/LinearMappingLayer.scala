@@ -132,7 +132,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
 }
 
 /** Equipped LinearNeuralNetwork with weight decay by sigma */
-class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, val lambda: Double = 0.0)
+class RegularizedLinearNN (inputDimension: Int, outputDimension: Int, var lambda: Double = 0.0)
 	extends LinearNeuralNetwork (inputDimension, outputDimension) {
   type InstanceType <: InstanceOfRegularizedLinearNN
   override def create(): InstanceOfRegularizedLinearNN = new InstanceOfRegularizedLinearNN(this) 
@@ -154,6 +154,8 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
       0.0
     }    
   }
+  
+  def setLambda(lbd: Double) : Unit = {NN.lambda = lbd}
 }
 
 
