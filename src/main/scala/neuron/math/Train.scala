@@ -18,7 +18,7 @@ class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 500){
 	    u *= momentum
 	    u -= (grad * lr)
 	    x += u
-	    println(i + " fval: " + fval)
+	    if (i % 100 == 0) println(i + " fval: " + fval)
 	  }
 	  x
 	}
