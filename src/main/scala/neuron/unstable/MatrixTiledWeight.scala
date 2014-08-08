@@ -21,7 +21,7 @@ class InstanceOfTiledWeightBiLinearSymNN (override val NN: TiledWeightBiLinearSy
       w(b, null)
       //dw(dW, db) // dW and db are distributed states 
       atomic { implicit txn =>
-      db().set(0.0)
+      db():=0.0
       }
     }
   }
@@ -36,7 +36,7 @@ class InstanceOfTiledWeightBiLinearSymNN (override val NN: TiledWeightBiLinearSy
   override def getRandomWeights(seed:String) : NeuronVector = {
     if (status != seed) {
       status = seed
-      b.set(0.0)
+      b := 0.0
       b.vec() 
     }else {
       NullVector

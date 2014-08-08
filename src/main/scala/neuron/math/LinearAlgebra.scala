@@ -43,8 +43,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def :*(that: NeuronVector): NeuronVector = new NeuronVector(this.data :* that.data)
   def CROSS (that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data.asDenseMatrix.t * that.data.asDenseMatrix)
   def dot(that: NeuronVector): Double = this.data dot that.data
-  
-  def set(x:Double) : Unit = {data:=x; }
+  def := (x:Double) : Unit = {data:=x;}
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = breeze.linalg.sum(data)
   def max(): Double = breeze.linalg.max(data)
@@ -97,6 +96,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     this(new DenseMatrix(rows, cols, arr, offset, majorStride))
   def apply(row:Int, col:Int) = data(row,col)
   def update(row:Int, col:Int, e:Double) = data.update(row,col,e)
+  def diagonal(): NeuronVector = {new NeuronVector(diag(data))}
   def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data + that.data)
   def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data - that.data)  
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) + that.data)
@@ -120,13 +120,13 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def +(x:Double): NeuronMatrix = new NeuronMatrix(this.data + x)
   def -(x:Double): NeuronMatrix = new NeuronMatrix(this.data - x)
   def /(x:Double) : NeuronMatrix = new NeuronMatrix(this.data / x)
+  def :=(x: Double) : Unit={data:=x; }
   def :=(that:NeuronMatrix): Unit = {this.data := that.data}
   def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
   def :*=(x:Double): Unit = {this.data :*= x}
   def reshape(r: Int, c: Int, isView: Boolean = true) = new NeuronMatrix(data.reshape(r,c, isView))
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new NeuronMatrix(data.t)
-  def set(x: Double) : Unit={data:=x; }
   def euclideanSqrNorm: Double = {sum(data :* data)}
   def euclideanSqrNormCol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(::,breeze.linalg.*)).toDenseVector)}
   def euclideanSqrNormRol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(breeze.linalg.*, ::)).toDenseVector)}

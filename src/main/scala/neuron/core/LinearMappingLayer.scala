@@ -19,8 +19,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       w(W, b) // get optimized weights
       //dw(dW, db) // dW and db are distributed states 
       atomic { implicit txn =>
-      dW().set(0.0) // reset derivative of weights
-      db().set(0.0)
+      dW() := 0.0 // reset derivative of weights
+      db() := 0.0
       }
     }
   }
@@ -40,7 +40,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
       W := new NeuronMatrix(outputDimension, inputDimension, new Gaussian(0, 1)) 
       W:*= amplitude// randomly set W 
-      b.set(0.0)
+      b := 0.0
       W.vec() concatenate b 
     }else {
       NullVector

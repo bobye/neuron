@@ -158,7 +158,7 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
       totalUsage = totalUsageOnUpdate()
       totalUsageOnUpdate() = 0
       rho := rhoOnUpdate()
-      rhoOnUpdate().set(0.0)
+      rhoOnUpdate():=0.0
     } else {
     }
     }

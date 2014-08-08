@@ -24,7 +24,7 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
       w(null, b) // get optimized weights
       //dw(dW, db) // dW and db are distributed states 
       atomic { implicit txn =>
-      db().set(0.0)
+      db():=0.0
       }
     }
   }
@@ -41,7 +41,7 @@ class InstanceOfTiledWeightLinearNN (override val NN: TiledWeightLinearNN,
     if (status != seed) {
       status = seed
       // W is tiled
-      b.set(0.0)
+      b := 0.0
       b 
     }else {
       NullVector
