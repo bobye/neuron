@@ -73,7 +73,7 @@ class NeuronVector (val data: DenseVector[Double]) {
     buf
   }   
   def argtopk(k: Int): NeuronVector = new NeuronVector({
-    val topk = this.data.argtopk(k) 
+    val topk = breeze.linalg.argtopk(this.data, k) 
     val indicator = DenseVector.zeros[Double] (length)
     indicator(topk) := 1.0
     indicator
@@ -197,7 +197,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def argtopk(k: Int): NeuronMatrix = {
     val indicator = new NeuronMatrix(rows, cols)
     for (i<- 0 until cols) {
-      val topk = this.data(::, i).argtopk(k) //TopK[Int, Double](k, 0 until rows, j=>this.data(j, i)).toSeq
+      val topk = breeze.linalg.argtopk(this.data(::, i), k) //TopK[Int, Double](k, 0 until rows, j=>this.data(j, i)).toSeq
       indicator.data(topk.map((_, i))) := 1.0
     }
     indicator
