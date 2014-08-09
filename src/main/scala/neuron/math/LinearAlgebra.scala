@@ -95,6 +95,10 @@ class NeuronVector (val data: DenseVector[Double]) {
   def sample(n: Int): IndexedSeq[Int] = {
     new Multinomial(data).sample(n)
   }
+  def checkDiff(that: NeuronVector, tolerant: Double = 1E-6): Boolean = {
+    all(((data - that.data) :< tolerant) :| 
+    ((data - that.data) :< (abs(data) * tolerant)))
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows

@@ -14,7 +14,7 @@ class RBFMappingLayerTest extends FunSuite {
     val y = nn(x,null)
     val z = nn.L * y
     
-    assert(AbsFunction(z-x).maxAll < 1E-9)
-    assert(AbsFunction(y.sumCol - 1).max < 1E-9)
+    assert(AbsFunction(z-x).maxAll < 1E-6)
+    assert(AbsFunction(y.sumCol - 1).max < 1E-6)
   }
 }
