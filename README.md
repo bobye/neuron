@@ -9,12 +9,11 @@ Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
 ### Features
  - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)
  - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators)
- - multilayer perceptron
  - [autoencoders](https://github.com/bobye/neuron/wiki/Auto-Encoder) (w or w/o tiled weight)
  - activation functions: logistic, tanh, ReLU, softplus
  - metrics (L1, L2, Mahalanobis, Softmax)
  - regularization: weight decay, activation sparsity, dropout, maxout
- - parallel training framework: atomic parameters + distributed states
+ - data parallel framework: atomic parameters + distributed states
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  - recursive neural network
 

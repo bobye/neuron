@@ -21,12 +21,6 @@ libraryDependencies  ++= Seq(
 resolvers ++= Seq(
             // other resolvers here
             // if you want to use snapshot builds, use this.
-            "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
+            // "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
             "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/"
-)
-
-
-//snapshots:
-libraryDependencies  ++= Seq(
-            "org.scalanlp" %% "breeze" % "0.9"
 )
