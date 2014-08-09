@@ -25,6 +25,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def apply(n: Int): Double = data(n) 
   def update(n:Int, e:Double): Unit = data.update(n,e)
   def apply(r: Range): NeuronVector = new NeuronVector(data(r))
+  def update(r: Range, v:NeuronVector): Unit = {data(r):=v.data}
+  def apply(idx: IndexedSeq[Int]): NeuronVector = new NeuronVector(data(idx).toDenseVector)
   def update(r: IndexedSeq[Int], v:NeuronVector): Unit = {data(r):=v.data}
   def concatenate (that: NeuronVector) : NeuronVector = new NeuronVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (NeuronVector, NeuronVector) = (new NeuronVector(this.data(0 until num)), new NeuronVector(this.data(num to -1)))
@@ -143,6 +145,8 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
   def Cols(range: Range) = new NeuronMatrix(data(::,range))
   def Rows(range: Range) = new NeuronMatrix(data(range, ::))
+  def Cols(idx: IndexedSeq[Int]) = new NeuronMatrix(data(::, idx).toDenseMatrix)
+  def Rows(idx: IndexedSeq[Int]) = new NeuronMatrix(data(idx, ::).toDenseMatrix)
   def CROSS (that: NeuronMatrix): NeuronTensor = {
     assert(this.cols == that.cols)
     val m = new NeuronMatrix(this.rows * that.rows, this.cols)
