@@ -341,8 +341,7 @@ abstract trait Optimizable {
 	  val (obj, grad) = getObjAndGrad(w)
 	  val (obj2, grad2) = getApproximateObjAndGrad(w)
 	  
-	  assert(scala.math.abs(obj - obj2) < tolerant && 
-	      AbsFunction(grad - grad2).max < tolerant)    
+	  assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
 	  w
   }
   def gradCheckM(tolerant: Double): WeightVector ={
