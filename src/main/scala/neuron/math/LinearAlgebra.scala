@@ -85,6 +85,13 @@ class NeuronVector (val data: DenseVector[Double]) {
     lowerBoundTo(l, roundoff)
     upperBoundTo(u, roundoff)
   }
+  
+  def draw(): Int = {
+    new Multinomial(data).draw()
+  }
+  def sample(n: Int): IndexedSeq[Int] = {
+    new Multinomial(data).sample(n)
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -194,6 +201,12 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def boundTo(l:Double, u:Double, roundoff:Double = 1E-10): Unit = {
     lowerBoundTo(l, roundoff)
     upperBoundTo(u, roundoff)
+  }  
+  def drawByCols(idx: IndexedSeq[Int] = 0 until cols): IndexedSeq[Int] = {
+    idx.map(i => new Multinomial(data(::, i)).draw())
+  }
+  def drawByRows(idx: IndexedSeq[Int] = 0 until rows): IndexedSeq[Int] = {
+    idx.map(i => new Multinomial(data(i, ::).t).draw())
   }  
 }
 
