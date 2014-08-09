@@ -87,7 +87,10 @@ class NeuronVector (val data: DenseVector[Double]) {
   }
   
   def draw(): Int = {
-    new Multinomial(data).draw()
+    if (max() < 1E-9) // when no mass
+       -1
+    else
+       new Multinomial(data).draw()
   }
   def sample(n: Int): IndexedSeq[Int] = {
     new Multinomial(data).sample(n)
@@ -203,10 +206,10 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     upperBoundTo(u, roundoff)
   }  
   def drawByCols(idx: IndexedSeq[Int] = 0 until cols): IndexedSeq[Int] = {
-    idx.map(i => new Multinomial(data(::, i)).draw())
+    idx.map(colVec(_).draw())
   }
   def drawByRows(idx: IndexedSeq[Int] = 0 until rows): IndexedSeq[Int] = {
-    idx.map(i => new Multinomial(data(i, ::).t).draw())
+    idx.map(rowVec(_).draw())
   }  
 }
 
