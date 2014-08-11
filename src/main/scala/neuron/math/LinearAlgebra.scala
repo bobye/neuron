@@ -99,6 +99,11 @@ class NeuronVector (val data: DenseVector[Double]) {
     all(((data - that.data) :< tolerant) :| 
     ((data - that.data) :< (abs(data) * tolerant)))
   }
+  def binarized() = {
+    val b = new NeuronVector(length)
+    for(i<-0 until length) b.data(i) = I(new Bernoulli(data(i)).draw())
+    b
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -212,8 +217,19 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def drawByCols(idx: IndexedSeq[Int] = 0 until cols): IndexedSeq[Int] = {
     idx.map(colVec(_).draw())
   }
+  def sampleByCols(idx: IndexedSeq[Int] = 0 until cols, n:Int = 1): IndexedSeq[Int] = {
+    idx.flatMap(colVec(_).sample(n))
+  }
   def drawByRows(idx: IndexedSeq[Int] = 0 until rows): IndexedSeq[Int] = {
     idx.map(rowVec(_).draw())
+  }
+  def sampleByRows(idx: IndexedSeq[Int] = 0 until cols, n:Int = 1): IndexedSeq[Int] = {
+    idx.flatMap(rowVec(_).sample(n))
+  }
+  def binarized() = {
+    val b = new NeuronMatrix(rows, cols)
+    for(i<-0 until rows; j<-0 until cols) b.data(i,j) = I(new Bernoulli(data(i,j)).draw())
+    b
   }  
 }
 
