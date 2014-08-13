@@ -95,6 +95,7 @@ class KernelDistance(kernel: NeuronFunction) extends DistanceFunction {
 }
 
 /** (experimental) U statistics */
+/*
 class KernelDistanceU(kernel: NeuronFunction) extends DistanceFunction {
 	def grad(x:NeuronVector, y:NeuronVector) = 
 	  x * kernel.grad(x dot x) - y * kernel.grad(y dot x)
@@ -124,3 +125,4 @@ class KernelDistanceU(kernel: NeuronFunction) extends DistanceFunction {
 	}
 	  
 }
+*/
