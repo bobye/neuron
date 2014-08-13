@@ -101,6 +101,41 @@ class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
   }
 }
 
+
+class StochasticSingleLayerNN(dimension: Int) 
+	extends SingleLayerNeuralNetwork(dimension, SigmoidFunction) {
+  type InstanceType = InstanceOfStochasticSingleLayerNN
+  override def create(): InstanceOfStochasticSingleLayerNN = new InstanceOfStochasticSingleLayerNN(this)
+}
+
+class InstanceOfStochasticSingleLayerNN(override val NN: StochasticSingleLayerNN)
+	extends InstanceOfSingleLayerNeuralNetwork(NN) {
+  type StructureType = StochasticSingleLayerNN
+  override def apply(x: NeuronVector, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert (x.length == inputDimension)
+    val output = NN.func(x)
+    val dropout = output.binarized()
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+    }
+    output :* dropout
+  }
+  
+  override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert(xs.rows == inputDimension)
+    val output = NN.func(xs)
+    val dropout = output.binarized()
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    }
+    output :* dropout    
+  }  
+}
+
 class MaxoutSingleLayerNN(dimension: Int, var maxout_k: Int,
 						   func: NeuronFunction = SigmoidFunction)
 	extends SingleLayerNeuralNetwork (dimension, func) {
