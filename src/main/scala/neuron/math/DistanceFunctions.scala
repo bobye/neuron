@@ -105,7 +105,7 @@ object HistogramIntersectionKernelDistance extends DistanceFunction {
        g.colVec(i) := (new NeuronMatrix(SoftThreshold(x.data(::,*) - x.data(::,i))).sumRow()) - 
        new NeuronMatrix(SoftThreshold(y.data(::,*) - x.data(::,i))).sumRow()          
     }
-    g
+    g / (x.cols)
   }
   def apply(x: NeuronMatrix, y: NeuronMatrix): Double = {
     (for (i<-0 until x.cols) yield {      
