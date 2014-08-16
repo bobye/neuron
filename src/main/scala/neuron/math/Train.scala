@@ -16,6 +16,7 @@ class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 500){
 	  val statCount = 100
 	  var lowest = 1E10
 	  x := init
+	  var time = System.currentTimeMillis()
 	  for (i<- 0 until maxIter) {
 	    val (fval, grad) = f.calculate(x)
 	    stat = stat + fval
@@ -24,8 +25,9 @@ class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 500){
 	    x += u
 	    if ((i+1) % statCount == 0) {
 	      if ((stat/statCount) < lowest) lowest = (stat/statCount)
-	      println((i+1) + " fsum: " + stat/statCount + " fmin " + lowest)
+	      println((i+1) + " fsum: " + stat/statCount + " fmin " + lowest, System.currentTimeMillis() - time)
 	      stat = 0.0
+	      time = System.currentTimeMillis()
 	    }
 	  }
 	  x

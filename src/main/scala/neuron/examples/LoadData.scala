@@ -148,13 +148,13 @@ object LoadData {
   }
   
   
-  /*
+  
   def mnistDataM_rotate(dataName:String = "train", numOfSamples: Int = 12000): (NeuronMatrix, NeuronMatrix) = {
       import java.io._
     import java.util.Scanner
       val numOfPixels: Int = 28*28	 
       val numOfLabels = 10
-	  val source = new Scanner(new FileInputStream("data/UFLDL/sparseae/mnist_rotation_back_image_new/mnist_all_background_images_rotation_normalized_" + dataName + ".amat"))
+	  val source = new Scanner(new FileInputStream("data/UFLDL/sparseae/mnist_background_random/mnist_background_random_" + dataName + ".amat"))
 	  val dataBlock: Array[Double] = new Array[Double](numOfSamples* (numOfPixels+1))
 	  for (i<- 0 until dataBlock.length) {dataBlock(i) = source.nextDouble()}
       source.close()
@@ -167,7 +167,7 @@ object LoadData {
     	  labelMat.data(dataLabel(i), i) = 1
       })     
       
-      val os = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rotate_rbimg-images.idx3-ubyte"))
+      val os = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rand-images.idx3-ubyte"))
       os.writeInt(1111) // magic number
       os.writeInt(numOfSamples)
       os.writeInt(28)
@@ -177,7 +177,7 @@ object LoadData {
       })
       os.close()
       
-      val os2 = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rotate_rbimg-labels.idx1-ubyte"))
+      val os2 = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rand-labels.idx1-ubyte"))
       os2.writeInt(1111) // magic number
       os2.writeInt(numOfSamples)
       (0 until dataMat.cols).map(i=> {
@@ -188,5 +188,5 @@ object LoadData {
       
       (dataMat, labelMat)
   }  
-  */
+  
 }

@@ -11,7 +11,7 @@ class AutoEncoderTest extends FunSuite with Optimizable {
 	test("Test auto-encoder using Array[NeuronVector]") {
 	  val inputDimension = 20
 	  val hiddenDimension = 10
-	  nn = new SimpleAutoEncoder(0.1, 0.1)(inputDimension,hiddenDimension)().create()
+	  nn = new LinearAutoEncoder(0.1, 0.1)(inputDimension,hiddenDimension)().create()
 	  //nn = new SparseLinearAE(0.0,1.0,1.0)(inputDimension,hiddenDimension)().create()
 	  //nn = new SparseLinearAE(1.0,1.0,1.0)(inputDimension,hiddenDimension)().create() // Gradient check succeed
 	  

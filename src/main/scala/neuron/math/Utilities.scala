@@ -334,23 +334,23 @@ abstract trait Optimizable {
     totalCost / size
   }
   
-  def gradCheck(tolerant: Double): WeightVector ={
+  def gradCheck(tolerant: Double, distance: DistanceFunction = L2Distance): WeightVector ={
     assert(tolerant > 0)
 	  val w = getRandomWeightVector()
 	  
-	  val (obj, grad) = getObjAndGrad(w)
-	  val (obj2, grad2) = getApproximateObjAndGrad(w)
-	  
+	  val (obj, grad) = getObjAndGrad(w, distance)
+	  val (obj2, grad2) = getApproximateObjAndGrad(w, distance)
+
 	  assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
 	  w
   }
-  def gradCheckM(tolerant: Double): WeightVector ={
+  def gradCheckM(tolerant: Double, distance: DistanceFunction = L2Distance): WeightVector ={
     assert(tolerant > 0)
 	  val w = getRandomWeightVector()
 	  
-	  val (obj, grad) = getObjAndGradM(w)
-	  val (obj2, grad2) = getApproximateObjAndGradM(w)
-	  
+	  val (obj, grad) = getObjAndGradM(w, distance)
+	  val (obj2, grad2) = getApproximateObjAndGradM(w, distance)
+
 	  assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
 	  w
   }  

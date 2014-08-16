@@ -94,6 +94,27 @@ class KernelDistance(kernel: NeuronFunction) extends DistanceFunction {
 	  
 }
 
+object HistogramIntersectionKernelDistance extends DistanceFunction {
+  def grad (x: NeuronVector, y:NeuronVector) =
+    new NeuronVector(SoftThreshold(x.data-y.data)/2.0)
+  def apply(x: NeuronVector, y:NeuronVector) = 
+    sum(abs(x.data - y.data)) / 2.0
+  def grad (x: NeuronMatrix , y: NeuronMatrix) = {
+    val g = new NeuronMatrix (x.rows, x.cols)
+    for (i<- 0 until x.cols) {       
+       g.colVec(i) := (new NeuronMatrix(SoftThreshold(x.data(::,*) - x.data(::,i))).sumRow()) - 
+       new NeuronMatrix(SoftThreshold(y.data(::,*) - x.data(::,i))).sumRow()          
+    }
+    g
+  }
+  def apply(x: NeuronMatrix, y: NeuronMatrix): Double = {
+    (for (i<-0 until x.cols) yield {      
+       sum(min(x.data(::, *), x.data(::,i))) + sum(min(y.data(::,*), y.data(::,i))) - 
+       2.0*sum(min(y.data(::,*), x.data(::,i)))       
+    }).sum / (x.cols)
+  }
+}
+
 /** (experimental) U statistics */
 /*
 class KernelDistanceU(kernel: NeuronFunction) extends DistanceFunction {

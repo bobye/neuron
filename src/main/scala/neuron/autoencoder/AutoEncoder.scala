@@ -274,13 +274,17 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
 }
 
   
-class LinearAutoEncoder (val func:NeuronFunction = SigmoidFunction) 
-	(dimension:Int, val hiddenDimension:Int, lambda: Double = 0.0, regCoeff: Double = 0.0, distance: DistanceFunction = L2Distance) 
+class LinearAutoEncoder (lambda: Double = 0.0, 
+     					 regCoeff: Double = 0.0, 
+    					 val func:NeuronFunction = SigmoidFunction,
+    					 override val distance: DistanceFunction = L2Distance) 
+	(dimension:Int, val hiddenDimension:Int)
+	(val inputLayer: InstanceOfRegularizedLinearNN = 
+	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create(),
+	 val outputLayer: InstanceOfRegularizedLinearNN = 
+	  new RegularizedLinearNN(hiddenDimension, dimension, lambda).create())
 	extends AutoEncoder(regCoeff, 
-			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func),
-								   new RegularizedLinearNN(dimension, hiddenDimension, lambda)),
-			new RegularizedLinearNN(hiddenDimension, dimension, lambda),
-			distance)
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer), outputLayer, distance)	
 
 class SimpleAutoEncoder (lambda: Double = 0.0, 
      					 regCoeff: Double = 0.0, 
@@ -322,7 +326,7 @@ class SparseAutoEncoder (val beta:Double = 0.0,
 	
 class RecursiveLinearAE (func:NeuronFunction = SigmoidFunction) 
 	(val wordLength: Int, lambda: Double = 0.0, regCoeff:Double = 0.0) 
-	extends LinearAutoEncoder(func)(wordLength*2, wordLength, lambda, regCoeff) 
+	extends LinearAutoEncoder(lambda, regCoeff, func)(wordLength*2, wordLength)() 
 
 class RecursiveSimpleAE (lambda: Double = 0.0, regCoeff:Double = 0.0, func:NeuronFunction =SigmoidFunction) 
 	(val wordLength: Int)

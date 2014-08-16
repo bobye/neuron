@@ -35,7 +35,7 @@ object SoftThreshold extends UFunc with MappingUFunc {
       def apply(a:Double) = {
         if (a > thres) 1.0
         else if (a < -thres) -1.0
-        else 0
+        else 0.0
       }
     }   
 }

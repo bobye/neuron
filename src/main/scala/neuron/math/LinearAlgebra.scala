@@ -54,7 +54,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def last(): Double = data(data.length-1)
   def append(last: Double): NeuronVector = new NeuronVector(DenseVector.vertcat(data, DenseVector(last)) )
   def normalized(): NeuronVector = new NeuronVector(data/norm(data))
-  override def toString() = data.data.mkString("\t")
+  override def toString() = data.data.mkString("\t") // has bug with colVec
   def toWeightVector(): WeightVector = new WeightVector(data)
   def importFromFile(filename: String): Unit = {
     val source = scala.io.Source.fromFile(filename)
@@ -159,6 +159,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def argmaxCol() = new LabelVector(argmax(data(::,breeze.linalg.*)).toDenseVector)
   def colVec(i: Int) = new NeuronVector(data(::,i))
   def rowVec(i: Int) = new NeuronVector(data(i,::).t)
+  def copy() = new NeuronMatrix(data.copy)
   def :*(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data :* that.data)
   def spliceRow(num: Int): (NeuronMatrix, NeuronMatrix) = (new NeuronMatrix(this.data(0 until num, ::)), new NeuronMatrix(this.data(num to -1, ::)))
   def padRow(that: NeuronMatrix) = new NeuronMatrix(DenseMatrix.vertcat(this.data, that.data))
