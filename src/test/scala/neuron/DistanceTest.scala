@@ -18,10 +18,10 @@ class DistanceTest extends FunSuite with Optimizable with Workspace {
 	for (i<- 0 until numOfSamples) {
 	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
 	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(0,1))
-	  //yData(i) :/= yData(i).sum
+	  yData(i) :/= yData(i).sum
 	}
 	
-	val w = gradCheck(1E-3, HistogramIntersectionKernelDistance)
+	val w = gradCheck(1E-3, SoftMaxDistance)
 	
 	// train
 	/*
