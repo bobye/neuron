@@ -192,7 +192,7 @@ abstract trait Optimizable {
         val z = new NeuronMatrix(x.rows, x.cols)
         
         // Start doing batch wise matrix multiplication
-        val ranges = partitionDataRanges(size, batchSize).par 
+        val ranges = partitionDataRanges(bufferSize, batchSize).par 
         val miniBatchCost = ranges.map(minir => {
         
           val minix = x.Cols(minir)
