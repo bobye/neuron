@@ -159,3 +159,42 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
 }
 
 
+/** Equipped LinearNeuralNetwork with weight decay by sigma */
+class RobustLinearNN (inputDimension: Int, outputDimension: Int, var noise: Double = 0.0)
+	extends LinearNeuralNetwork (inputDimension, outputDimension) {
+  type InstanceType <: InstanceOfRobustLinearNN
+  override def create(): InstanceOfRobustLinearNN = new InstanceOfRobustLinearNN(this) 
+}
+
+class InstanceOfRobustLinearNN (override val NN: RobustLinearNN) 
+	extends InstanceOfLinearNeuralNetwork(NN) {
+  type StructureType <: RobustLinearNN
+
+  override def apply (x: NeuronVector, mem:SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert (x.length == inputDimension)
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).inputBuffer(mem(key).mirrorIndex) = x
+    	W * x + b + new NeuronVector(outputDimension, new Gaussian(0, NN.noise))
+    }
+    else {
+      W * x + b
+    }    
+  }
+  override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+    import breeze.stats.distributions._
+    assert (xs.rows == inputDimension)
+    if (mem != null) {
+    	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
+    	mem(key).inputBufferM(mem(key).mirrorIndex) = xs
+    	((W * xs) Add b) + new NeuronMatrix(outputDimension, xs.cols, new Gaussian(0, NN.noise))
+    }
+    else {
+      (W * xs) Add b
+    }
+         
+  }
+  
+  def setNoise(ns: Double) : Unit = {NN.noise = ns}
+}

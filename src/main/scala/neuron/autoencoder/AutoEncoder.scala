@@ -298,6 +298,16 @@ class SimpleAutoEncoder (lambda: Double = 0.0,
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))			
 
+class RobustAutoEncoder (regCoeff: Double = 0.0, 
+    					 val func:NeuronFunction = SigmoidFunction) 
+	(dimension:Int, val hiddenDimension:Int)
+	(val inputLayer: InstanceOfRobustLinearNN = 
+	  new RobustLinearNN(dimension, hiddenDimension, 0.3).create(),
+	 val outputLayer: InstanceOfLinearNeuralNetwork = 
+	  new LinearNeuralNetwork(hiddenDimension, dimension).create())
+	extends AutoEncoder(regCoeff, 
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))	
 	  
 class SparseLinearAE (val beta:Double = 0.0, // sparse penalty 
     					   lambda: Double = 0.0, // L2 regularization
