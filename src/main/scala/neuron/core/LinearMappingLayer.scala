@@ -160,14 +160,14 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
 
 
 /** Equipped LinearNeuralNetwork with weight decay by sigma */
-class RobustLinearNN (inputDimension: Int, outputDimension: Int, var noise: Double = 0.0)
-	extends LinearNeuralNetwork (inputDimension, outputDimension) {
+class RobustLinearNN (inputDimension: Int, outputDimension: Int, var noise: Double = 0.0, lambda: Double = 0.0)
+	extends RegularizedLinearNN (inputDimension, outputDimension, lambda) {
   type InstanceType <: InstanceOfRobustLinearNN
   override def create(): InstanceOfRobustLinearNN = new InstanceOfRobustLinearNN(this) 
 }
 
 class InstanceOfRobustLinearNN (override val NN: RobustLinearNN) 
-	extends InstanceOfLinearNeuralNetwork(NN) {
+	extends InstanceOfRegularizedLinearNN(NN) {
   type StructureType <: RobustLinearNN
 
   override def apply (x: NeuronVector, mem:SetOfMemorables) = {
