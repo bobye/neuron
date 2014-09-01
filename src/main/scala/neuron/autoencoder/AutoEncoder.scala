@@ -8,10 +8,10 @@ import neuron.math._
 class AutoEncoder (val regCoeff:Double = 0.0,
     			   val encoder: Operationable, val decoder: Operationable,
     			   val distance: DistanceFunction = L2Distance)
-	extends SelfTransform (encoder.inputDimension) with Encoder {
+	extends NeuralNetwork (encoder.inputDimension, decoder.outputDimension) with SelfTransform with Encoder {
   type InstanceType <: InstanceOfAutoEncoder
   assert (encoder.outputDimension == decoder.inputDimension)
-  assert (decoder.outputDimension == dimension)
+  assert (decoder.outputDimension == encoder.inputDimension)
   val encodeDimension = encoder.outputDimension
   val copy = (decoder.create() ** encoder.create()).create().copy()
   def create (): InstanceOfAutoEncoder = new InstanceOfAutoEncoder(this)

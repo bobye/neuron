@@ -6,12 +6,12 @@ import neuron.math._
 /** SingleLayerNeuralNetwork is sigmoid functional layer 
  *  that takes in signals and transform them to activations [0,1] */
 class SingleLayerNeuralNetwork (dimension: Int, val func: NeuronFunction = SigmoidFunction /** Pointwise Function */ ) 
-	extends SelfTransform (dimension) {
+	extends NeuralNetwork(dimension, dimension) with SelfTransform {
   type InstanceType <: InstanceOfSingleLayerNeuralNetwork
   def create (): InstanceOfSingleLayerNeuralNetwork = new InstanceOfSingleLayerNeuralNetwork(this)
 }
 class InstanceOfSingleLayerNeuralNetwork (override val NN: SingleLayerNeuralNetwork) 
-	extends InstanceOfSelfTransform (NN) { 
+	extends InstanceOfNeuralNetwork (NN) { 
   type StructureType <: SingleLayerNeuralNetwork
   
   def apply (x: NeuronVector, mem:SetOfMemorables) = {

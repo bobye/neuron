@@ -20,6 +20,8 @@ abstract trait Workspace{//
       new TensorNeuralNetwork(x.outputDimension, y.outputDimension) ** (x ++ y)
     def \\* [T2<:Operationable](y:T2) = // mix first order and second order tensor
       (x \* y) & (x ++ y)
+  }
+  implicit class Helper2[T <: InstanceOfNeuralNetwork](x:T) {
     def copy() = new CopyNeuralNetwork(x)
   }
   
@@ -59,6 +61,7 @@ class Memorable {
 /** Class for (template) neural network, where parameters are not instantiated */
 abstract class NeuralNetwork (val inputDimension:Int, val outputDimension:Int) extends Operationable{
   type InstanceType <: InstanceOfNeuralNetwork
+  def this(dimension: Int) = this(dimension, dimension)
   def create() : InstanceOfNeuralNetwork 
   override def toString() = "?" + toStringGeneric
 }
@@ -103,22 +106,23 @@ abstract class InstanceOfNeuralNetwork (val NN: Operationable) extends Operation
   override def toString() = "#" + toStringGeneric
 }
 
-abstract class SelfTransform (val dimension: Int) extends NeuralNetwork(dimension, dimension) 
-abstract class InstanceOfSelfTransform (override val NN: SelfTransform) extends InstanceOfNeuralNetwork (NN)
+abstract trait SelfTransform extends NeuralNetwork {
+  assert(inputDimension == outputDimension)
+} 
 
-class IdentityTransform(dimension: Int) extends SelfTransform(dimension) {
+class IdentityTransform(dimension: Int) extends NeuralNetwork (dimension, dimension) with SelfTransform {
   type InstanceType = InstanceOfIdentityTransform
   def create(): InstanceOfIdentityTransform = new InstanceOfIdentityTransform(this)
   override def toString() = "" // print nothing
 }
-class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends InstanceOfSelfTransform(NN) {
+class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends InstanceOfNeuralNetwork(NN) {
   def apply(x:NeuronVector, mem:SetOfMemorables) = x
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = xs
   def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = eta
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = etas
 }
 
-class CopyNeuralNetwork[T <: Operationable] (val origin: T) extends Operationable {
+class CopyNeuralNetwork[T <: InstanceOfNeuralNetwork] (val origin: T) extends Operationable {
   type InstanceType <: InstanceOfCopyNeuralNetwork[T]
   val inputDimension = origin.inputDimension
   val outputDimension = origin.outputDimension
@@ -126,9 +130,9 @@ class CopyNeuralNetwork[T <: Operationable] (val origin: T) extends Operationabl
   override def toString() = origin.toString()
 }
 
-class InstanceOfCopyNeuralNetwork[T <: Operationable] (NN: CopyNeuralNetwork[T]) 
+class InstanceOfCopyNeuralNetwork[T <: InstanceOfNeuralNetwork] (NN: CopyNeuralNetwork[T]) 
 	extends InstanceOfNeuralNetwork(NN) {
-  val copy = NN.origin.create()
+  val copy: T = NN.origin 
   def apply (x: NeuronVector, mem:SetOfMemorables) : NeuronVector = copy.apply(x, mem)
   def apply (x: NeuronMatrix, mem:SetOfMemorables) : NeuronMatrix = copy.apply(x, mem)
   def backpropagate(eta: NeuronVector, mem: SetOfMemorables): NeuronVector = copy.backpropagate(eta, mem)

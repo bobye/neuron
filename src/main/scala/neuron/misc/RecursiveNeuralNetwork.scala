@@ -172,7 +172,7 @@ class RecursiveAutoEncoder (val tree: BTree,
 							val enc: InstanceOfAutoEncoder ,
 							val input: InstanceOfAutoEncoder,
 							val regCoeff:Double = 0.0)
-		extends SelfTransform(tree.numOfLeaves*input.inputDimension) with EncoderWorkspace  {
+		extends NeuralNetwork(tree.numOfLeaves*input.inputDimension) with SelfTransform with EncoderWorkspace  {
   assert(input.encodeDimension == enc.encodeDimension)
   assert(enc.inputDimension == 2*enc.encodeDimension)
   val encodeDimension = enc.encodeDimension
