@@ -20,7 +20,9 @@ abstract trait Workspace{//
       new TensorNeuralNetwork(x.outputDimension, y.outputDimension) ** (x ++ y)
     def \\* [T2<:Operationable](y:T2) = // mix first order and second order tensor
       (x \* y) & (x ++ y)
-  } 
+    def copy() = new CopyNeuralNetwork(x)
+  }
+  
 }
 /** Operationable is a generic trait that supports operations in Workspace */
 abstract trait Operationable extends Workspace {
@@ -124,9 +126,8 @@ class CopyNeuralNetwork[T <: Operationable] (val origin: T) extends Operationabl
   override def toString() = origin.toString()
 }
 
-class InstanceOfCopyNeuralNetwork[T <: Operationable] (override val NN: CopyNeuralNetwork[T]) 
+class InstanceOfCopyNeuralNetwork[T <: Operationable] (NN: CopyNeuralNetwork[T]) 
 	extends InstanceOfNeuralNetwork(NN) {
-  type StructureType = CopyNeuralNetwork[T]
   val copy = NN.origin.create()
   def apply (x: NeuronVector, mem:SetOfMemorables) : NeuronVector = copy.apply(x, mem)
   def apply (x: NeuronMatrix, mem:SetOfMemorables) : NeuronMatrix = copy.apply(x, mem)
