@@ -4,8 +4,7 @@ import neuron.core._
 import neuron.math._
 
 class MLP_AE (val struct: IndexedSeq[Int], 
-			  val encodeIndicator: IndexedSeq[Boolean], 
-			  lambda:Double = 0.0) (val createLayer: (Int, Int) => Operationable)
+			  val encodeIndicator: IndexedSeq[Boolean]) (val createLayer: (Int, Int) => Operationable)
 			  extends NeuralNetwork (struct(0), struct.last) with SelfTransform with Encoder {
   type InstanceType <: InstanceOfMLP_AE
   assert (struct.size == encodeIndicator.size + 1)
@@ -47,7 +46,8 @@ class InstanceOfMLP_AE (override val NN: MLP_AE)
   
   def encode(x:NeuronVector, mem:SetOfMemorables): NeuronVector = {
     if (mem != null) {
-      apply(x, mem); mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
+      apply(x, mem); 
+      mem(key).asInstanceOf[EncoderMemorable].encodeCurrent
     } else {
       val (_, m) = copy.applyLayers(x, null, NN.encodeIndicator)
       m
