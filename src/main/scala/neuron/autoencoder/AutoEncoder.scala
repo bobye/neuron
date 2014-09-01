@@ -24,8 +24,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder)
 	extends InstanceOfCopyNeuralNetwork (NN.copy) with InstanceOfEncoder {
   type Structure <: AutoEncoder
   
-  val encoderInstance = NN.copy.origin.secondInstance
-  val decoderInstance = NN.copy.origin.firstInstance
+  val encoderInstance = copy.secondInstance
+  val decoderInstance = copy.firstInstance
   val encodeDimension = encoderInstance.outputDimension
   
   private val aeError = Ref(0.0);
