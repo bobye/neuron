@@ -13,24 +13,23 @@ class AutoEncoder (val regCoeff:Double = 0.0,
   assert (encoder.outputDimension == decoder.inputDimension)
   assert (decoder.outputDimension == dimension)
   val encodeDimension = encoder.outputDimension
+  val copy = (decoder.create() ** encoder.create()).create().copy()
   def create (): InstanceOfAutoEncoder = new InstanceOfAutoEncoder(this)
 }
 
 class IdentityAutoEncoder (dimension:Int) 
 	extends AutoEncoder(0.0, new IdentityTransform(dimension), new IdentityTransform(dimension)) 
 
-class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSelfTransform (NN) with InstanceOfEncoder {
+class InstanceOfAutoEncoder (override val NN: AutoEncoder) 
+	extends InstanceOfCopyNeuralNetwork (NN.copy) with InstanceOfEncoder {
   type Structure <: AutoEncoder
-  //protected val inputLayer = new RegularizedLinearNN(NN.dimension, NN.hidden.inputDimension, NN.lambda).create() // can be referenced from ImageAutoEncoder
-  //protected val outputLayerLinear = (new RegularizedLinearNN(NN.hidden.outputDimension, NN.dimension, NN.lambda)).create()
-  //val outputLayer = (NN.post TIMES outputLayerLinear).create()
-  val encodeDimension = NN.encodeDimension
-  val encoderInstance = NN.encoder.create()
-  val decoderInstance = NN.decoder.create()
-  private val main = (decoderInstance ** encoderInstance).create()
+  
+  val encoderInstance = NN.copy.origin.secondInstance
+  val decoderInstance = NN.copy.origin.firstInstance
+  val encodeDimension = encoderInstance.outputDimension
   
   private val aeError = Ref(0.0);
-  def apply (x:NeuronVector, mem:SetOfMemorables) = { 
+  override def apply (x:NeuronVector, mem:SetOfMemorables) = { 
     if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBuffer(mem(key).mirrorIndex) = x
@@ -40,7 +39,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     
     //mem(key).asInstanceOf[EncoderMemorable].encodingError = 
     //  L2Distance(mem(key).outputBuffer(mem(key).mirrorIndex), x) * NN.regCoeff / mem(key).numOfMirrors    
-    if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {
+    if (NN.regCoeff >= 1E-9 && mem(key).mirrorIndex == 0) {
       // traverse all exists buffers, and compute gradients accordingly
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
       atomic { implicit txn =>
@@ -56,7 +55,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       decoderInstance(encoderInstance(x, null), null)
     }
   }
-  def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
+  override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
     if (mem != null) {
     mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     mem(key).inputBufferM(mem(key).mirrorIndex) = xs
@@ -64,7 +63,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     mem(key).outputBufferM(mem(key).mirrorIndex) = 
       decoderInstance(mem(key).asInstanceOf[EncoderMemorable].encodeCurrentM, mem)
       
-    if (NN.regCoeff >= 1E-5 && mem(key).mirrorIndex == 0) {
+    if (NN.regCoeff >= 1E-9 && mem(key).mirrorIndex == 0) {
       // traverse all exists buffers, and compute gradients accordingly
       val regCoeffNorm = NN.regCoeff / mem(key).numOfMirrors
       atomic { implicit txn =>
@@ -96,7 +95,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   }
   
   override def init(seed:String, mem:SetOfMemorables) = {
-    main.init(seed, mem)
+    copy.init(seed, mem)
     if (!mem.isDefinedAt(key) || mem(key).status != seed) {
       mem += (key -> new EncoderMemorable)
       mem(key).status = seed
@@ -109,7 +108,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
   }
   
   override def allocate(seed:String, mem:SetOfMemorables) : InstanceOfNeuralNetwork = {
-    main.allocate(seed, mem)
+    copy.allocate(seed, mem)
     if (mem(key).status == seed) {
       mem(key).inputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
       mem(key).outputBuffer = new Array[NeuronVector] (mem(key).numOfMirrors)
@@ -121,19 +120,29 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     this
   }
   
-  def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
-    val z= L2Distance.grad(mem(key).outputBuffer(mem(key).mirrorIndex), 
+  override def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
+    if (NN.regCoeff > 1E-9) {
+      val z= L2Distance.grad(mem(key).outputBuffer(mem(key).mirrorIndex), 
     					   mem(key).inputBuffer(mem(key).mirrorIndex)) * 
     			(NN.regCoeff/ mem(key).numOfMirrors)
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    main.backpropagate(eta + z, mem) - z 
+      mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+      copy.backpropagate(eta + z, mem) - z 
+    } else {
+      mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+      copy.backpropagate(eta, mem)
+    }
   }
-  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
-    val z= L2Distance.grad(mem(key).outputBufferM(mem(key).mirrorIndex), 
+  override def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
+    if (NN.regCoeff > 1E-9) {
+      val z= L2Distance.grad(mem(key).outputBufferM(mem(key).mirrorIndex), 
     					   mem(key).inputBufferM(mem(key).mirrorIndex)) * 
     			(NN.regCoeff/ mem(key).numOfMirrors)
-    mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    main.backpropagate(etas + z, mem) - z 
+      mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+      copy.backpropagate(etas + z, mem) - z 
+    } else {
+      mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
+      copy.backpropagate(etas, mem)
+    }
   }
   
   def encodingBP(eta:NeuronVector, mem:SetOfMemorables): NeuronVector = {
@@ -163,11 +172,8 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
     atomic { implicit txn =>
     	aeError() = 0.0
     }
-    main.setWeights(seed, w) 
+    copy.setWeights(seed, w) 
   }
-  override def getWeights(seed:String): NeuronVector = main.getWeights(seed)
-  override def getRandomWeights(seed:String) : NeuronVector = main.getRandomWeights(seed)
-  override def getDimensionOfWeights(seed: String): Int = main.getDimensionOfWeights(seed)
   
   // For Auto-Encoder, the encoding error can be used a regularization term in addition
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
@@ -175,7 +181,7 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
       status = seed
       atomic { implicit txn =>
        // There is a minor bug here: if hidden layer has sparsity penalty, because we use backpropagation in apply()
-       main.getDerativeOfWeights(seed, dw, numOfSamples) + aeError() / numOfSamples
+       copy.getDerativeOfWeights(seed, dw, numOfSamples) + aeError() / numOfSamples
       }
     } else {
       0.0
@@ -184,4 +190,4 @@ class InstanceOfAutoEncoder (override val NN: AutoEncoder) extends InstanceOfSel
    
 }
 
-  
+
