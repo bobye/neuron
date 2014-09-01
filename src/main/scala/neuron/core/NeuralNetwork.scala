@@ -116,6 +116,31 @@ class InstanceOfIdentityTransform(override val NN:IdentityTransform) extends Ins
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = etas
 }
 
+class CopyNeuralNetwork[T <: Operationable] (val origin: T) extends Operationable {
+  type InstanceType <: InstanceOfCopyNeuralNetwork[T]
+  val inputDimension = origin.inputDimension
+  val outputDimension = origin.outputDimension
+  def create(): InstanceOfCopyNeuralNetwork[T] = new InstanceOfCopyNeuralNetwork[T](this)
+  override def toString() = origin.toString()
+}
+
+class InstanceOfCopyNeuralNetwork[T <: Operationable] (override val NN: CopyNeuralNetwork[T]) 
+	extends InstanceOfNeuralNetwork(NN) {
+  type StructureType = CopyNeuralNetwork[T]
+  val copy = NN.origin.create()
+  def apply (x: NeuronVector, mem:SetOfMemorables) : NeuronVector = copy.apply(x, mem)
+  def apply (x: NeuronMatrix, mem:SetOfMemorables) : NeuronMatrix = copy.apply(x, mem)
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables): NeuronVector = copy.backpropagate(eta, mem)
+  def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables): NeuronMatrix = copy.backpropagate(etas, mem)
+  override def init(seed: String, mem: SetOfMemorables) = copy.init(seed, mem)
+  override def allocate(seed: String, mem: SetOfMemorables) = copy.allocate(seed, mem)
+  override def setWeights(seed: String, w: WeightVector) = copy.setWeights(seed, w)
+  override def getWeights(seed: String) = copy.getWeights(seed)
+  override def getRandomWeights(seed: String) = copy.getRandomWeights(seed)
+  override def getDimensionOfWeights(seed: String) = copy.getDimensionOfWeights(seed)
+  override def getDerativeOfWeights(seed: String, dw: WeightVector, numOfSamples: Int) = copy.getDerativeOfWeights(seed, dw, numOfSamples)  
+  override def toString() = copy.toString()
+}
 
 /** basic operation to derive hierarchy structures of two operational neural network */
 abstract class MergedNeuralNetwork [Type1 <:Operationable, Type2 <:Operationable] 
