@@ -6,7 +6,7 @@ object LoadData {
   
   def rawImages64(): Array[NeuronVector] = {
       val numOfPixels = 8*8	  
-	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
+	  val source = scala.io.Source.fromFile("data/UFLDL/patches64x10000.txt")
 	  val dataSource = source.getLines.toArray
 	  val numOfSamples = dataSource.length
 	  val xData = new Array[NeuronVector](numOfSamples)
@@ -19,7 +19,7 @@ object LoadData {
   
   def rawImages64V(): Array[DenseVector[Double]] = {
       val numOfPixels = 8*8	  
-	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
+	  val source = scala.io.Source.fromFile("data/UFLDL/patches64x10000.txt")
 	  val dataSource = source.getLines.toArray
 	  val numOfSamples = dataSource.length
 	  val xData = new Array[DenseVector[Double]](numOfSamples)
@@ -33,7 +33,7 @@ object LoadData {
 
   def rawImages64M(): NeuronMatrix = {
       val numOfPixels = 8*8	  
-	  val source = scala.io.Source.fromFile("data/UFLDL/sparseae/patches64x10000.txt")
+	  val source = scala.io.Source.fromFile("data/UFLDL/patches64x10000.txt")
 	  val dataBlock = source.mkString.split("\\s+").map(_.toDouble)
 	  source.close()
 	  new NeuronMatrix(numOfPixels, dataBlock.length/numOfPixels, dataBlock)
@@ -67,7 +67,7 @@ object LoadData {
   def mnistImages(): Array[NeuronVector] = {
         // Load MNIST data
     import java.io._
-    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/train-images.idx3-ubyte"))
+    val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/std/train-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
     val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
@@ -87,7 +87,7 @@ object LoadData {
   def mnistImagesV(): Array[DenseVector[Double]] = {
         // Load MNIST data
     import java.io._
-    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/train-images.idx3-ubyte"))
+    val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/std/train-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
     val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
@@ -114,9 +114,9 @@ object LoadData {
   loop(Set(), ls)
   }
   
-  def mnistDataM(dataName:String = "train"): (NeuronMatrix, NeuronMatrix) = {
+  def mnistDataM(dataName:String = "std", part:String = "train"): (NeuronMatrix, NeuronMatrix) = {
     import java.io._
-    val source = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-images.idx3-ubyte"))
+    val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
     val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
@@ -130,7 +130,7 @@ object LoadData {
     source.close()
     
     
-    val source2 = new DataInputStream(new FileInputStream("data/UFLDL/sparseae/mnist/" + dataName + "-labels.idx1-ubyte"))
+    val source2 = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-labels.idx1-ubyte"))
     println("magic: " + source2.readInt())
     val numOfSamples2 = source2.readInt(); println("numOfImages: " + numOfSamples2)
     val buf2 = new Array[Byte](numOfSamples2)
@@ -146,47 +146,4 @@ object LoadData {
     println("Finish Loading!")
     (new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
   }
-  
-  
-  
-  def mnistDataM_rotate(dataName:String = "train", numOfSamples: Int = 12000): (NeuronMatrix, NeuronMatrix) = {
-      import java.io._
-    import java.util.Scanner
-      val numOfPixels: Int = 28*28	 
-      val numOfLabels = 10
-	  val source = new Scanner(new FileInputStream("data/UFLDL/sparseae/mnist_background_random/mnist_background_random_" + dataName + ".amat"))
-	  val dataBlock: Array[Double] = new Array[Double](numOfSamples* (numOfPixels+1))
-	  for (i<- 0 until dataBlock.length) {dataBlock(i) = source.nextDouble()}
-      source.close()
-	  val data = new NeuronMatrix(new DenseMatrix(numOfPixels+1, numOfSamples, dataBlock))
-      val dataLabel = data.rowVec(numOfPixels).data.toArray.map(_.toInt)
-      
-      val dataMat = data.Rows(0 until numOfPixels)
-      val labelMat = new NeuronMatrix(numOfLabels, numOfSamples)
-      (0 until numOfSamples).map(i=> {
-    	  labelMat.data(dataLabel(i), i) = 1
-      })     
-      
-      val os = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rand-images.idx3-ubyte"))
-      os.writeInt(1111) // magic number
-      os.writeInt(numOfSamples)
-      os.writeInt(28)
-      os.writeInt(28)
-      (0 until dataMat.cols).map(i=> {
-          os.write((data.colVec(i).data*255.0).data.map(_.toInt.toByte), 0, dataMat.rows)
-      })
-      os.close()
-      
-      val os2 = new DataOutputStream (new FileOutputStream("data/UFLDL/sparseae/mnist/" + dataName + "_rand-labels.idx1-ubyte"))
-      os2.writeInt(1111) // magic number
-      os2.writeInt(numOfSamples)
-      (0 until dataMat.cols).map(i=> {
-          os2.writeByte(dataLabel(i).toByte)
-      })
-      os2.close()      
-
-      
-      (dataMat, labelMat)
-  }  
-  
 }
