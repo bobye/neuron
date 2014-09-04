@@ -129,6 +129,17 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W TransMult etas
   }
+  
+  def writeMatWb(filename:String) = {
+    import com.jmatio.io._
+    import com.jmatio.types._
+    import java.util.ArrayList
+    
+    val list = new ArrayList[MLArray]()
+    list.add(new MLDouble("W", W.transpose.vec(false).data.data, inputDimension))
+    list.add(new MLDouble("b", b.data.data, 1))
+    new MatFileWriter(filename, list)
+  }
 }
 
 /** Equipped LinearNeuralNetwork with weight decay by sigma */
