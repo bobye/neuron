@@ -23,8 +23,7 @@ class FeedForward extends FunSuite with Optimizable with Workspace{
 	val e = (d * d).create() :+ 3
 	
 	// setup Optimizable members
-	//nn = (new RegularizedLinearNN(65,10, 0.001) TIMES (c TENSOR a3)).create() 
-    nn = e.create(); println(nn); // print structure
+    nn = e.create(); println(nn); // print structure 
 	
 	val numOfSamples = 1000
 	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
@@ -33,7 +32,7 @@ class FeedForward extends FunSuite with Optimizable with Workspace{
 	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
 	}
 	
-    val w = gradCheck(1E-6)
+    val w = gradCheck(1E-3)
 	
 	// train
 	val time = System.currentTimeMillis()
