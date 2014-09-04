@@ -136,7 +136,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     import java.util.ArrayList
     
     val list = new ArrayList[MLArray]()
-    list.add(new MLDouble("W", W.transpose.vec(false).data.data, inputDimension))
+    list.add(new MLDouble("W", W.transpose.flatten.data.data, inputDimension))
     list.add(new MLDouble("b", b.data.data, 1))
     new MatFileWriter(filename, list)
   }
