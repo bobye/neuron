@@ -147,6 +147,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def :*=(x:Double): Unit = {this.data :*= x}
   def reshape(r: Int, c: Int, isView: Boolean = true) = new NeuronMatrix(data.reshape(r,c, isView))
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
+  def flatten() = new NeuronVector(data.flatten())
   def transpose = new NeuronMatrix(data.t)
   def euclideanSqrNorm: Double = {sum(data :* data)}
   def euclideanSqrNormCol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(::,breeze.linalg.*)).toDenseVector)}
@@ -234,7 +235,16 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     else
       b.data := I(data :> 0.5)
     b
-  }  
+  }
+  def writeMat(filename: String, dataname: String): Unit = {
+    import com.jmatio.io._
+    import com.jmatio.types._
+    import java.util.ArrayList
+    
+    val list = new ArrayList[MLArray]()
+    list.add(new MLDouble(dataname, data.flatten().data, data.rows))
+    new MatFileWriter(filename, list)    
+  }
 }
 
 // solution to 3-order tensor
