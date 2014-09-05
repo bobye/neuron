@@ -64,7 +64,7 @@ object SoftMaxDistance extends DistanceFunction {
   }
 }
 
-object SquaredKernelDistance extends DistanceFunction {
+class SquaredKernelDistance (mu:Double = 0.0) extends DistanceFunction {
 	def grad(x:NeuronVector, y:NeuronVector) = null // not useful
 	
 	def apply(x:NeuronVector, y:NeuronVector) = 0 // not useful
@@ -83,17 +83,23 @@ object SquaredKernelDistance extends DistanceFunction {
 	  (yxtensor :* yxtensor).sumAll / (x.cols)
 	}
 	
+	// mu makes differences
 	override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
 	  val xxtensor = x TransMult x; 
 	  val yxtensor = y TransMult x;
 	  val yytensor = y TransMult y; 
+	  if (mu != 0.) 
+	  (((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols) - (yxtensor:*yxtensor).sumAll/x.cols +
+			 ((xxtensor.diagonal().sum() + yytensor.diagonal().sum()) / (2.0) - yxtensor.diagonal().sum()) * mu,
+	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0) + (x - y) * mu)
+	  else 
 	  (((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols) - (yxtensor:*yxtensor).sumAll/x.cols,
-	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0))
+	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0) )  
 	}
 	    
 }
 
-class KernelDistance(kernel: NeuronFunction) extends DistanceFunction {
+class KernelDistance(kernel: NeuronFunction, mu: Double = 0.0) extends DistanceFunction {
 	def grad(x:NeuronVector, y:NeuronVector) = 
 	  x * kernel.grad(x dot x) - y * kernel.grad(y dot x)
 	
