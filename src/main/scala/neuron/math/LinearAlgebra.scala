@@ -147,7 +147,6 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def :*=(x:Double): Unit = {this.data :*= x}
   def reshape(r: Int, c: Int, isView: Boolean = true) = new NeuronMatrix(data.reshape(r,c, isView))
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
-  def flatten() = new NeuronVector(data.flatten())
   def transpose = new NeuronMatrix(data.t)
   def euclideanSqrNorm: Double = {sum(data :* data)}
   def euclideanSqrNormCol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(::,breeze.linalg.*)).toDenseVector)}
@@ -242,7 +241,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     import java.util.ArrayList
     
     val list = new ArrayList[MLArray]()
-    list.add(new MLDouble(dataname, data.flatten().data, data.rows))
+    list.add(new MLDouble(dataname, data.flatten(false).data, data.rows))
     new MatFileWriter(filename, list)    
   }
 }

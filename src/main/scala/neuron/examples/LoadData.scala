@@ -114,7 +114,7 @@ object LoadData {
   loop(Set(), ls)
   }
   
-  def mnistDataM(dataName:String = "std", part:String = "train"): (NeuronMatrix, NeuronMatrix) = {
+  def mnistDataM(dataName:String = "std", part:String = "train", isLabelBinary: Boolean = true): (NeuronMatrix, NeuronMatrix) = {
     import java.io._
     val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-images.idx3-ubyte"))
     println("magic: " + source.readInt())
@@ -139,11 +139,19 @@ object LoadData {
     val numOfLabels = unique(dataBlock2.toList).length
     source2.close()
     
-    val labelMat = new NeuronMatrix(numOfLabels, numOfSamples2)
-    (0 until numOfSamples).map(i=> {
-      labelMat.data(dataBlock2(i), i) = 1
-    })    
-    println("Finish Loading!")
-    (new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
+    if (isLabelBinary) {
+    	val labelMat = new NeuronMatrix(numOfLabels, numOfSamples2)
+    	(0 until numOfSamples).map(i=> {
+    		labelMat.data(dataBlock2(i), i) = 1
+    	})    
+    	println("Finish Loading!")
+    	(new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
+    } else {
+      val labelMat = new NeuronMatrix(1, numOfSamples2)
+      (0 until numOfSamples).map(i=> {
+    		labelMat.data(0, i) = dataBlock2(i).toDouble
+    	})
+    	(new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
+    }
   }
 }
