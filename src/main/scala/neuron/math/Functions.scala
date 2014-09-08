@@ -192,14 +192,14 @@ object SquareFunction extends NeuronFunction {
 }
 
 class Square2Function(coeff:Double = 1.0) extends NeuronFunction {
-  def grad(x:Double) = 2*(coeff*x+1)
+  def grad(x:Double) = 2*coeff*(coeff*x+1)
   def apply(x:Double) = (coeff*x+1)*(coeff*x +1) 
-  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x * (2 * coeff) +2
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = x * (2 * coeff*coeff) +2*coeff
   def apply(x:NeuronVector): NeuronVector= {
     val y = x * coeff + 1
     (y :* y)
   }
-  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x * (2 * coeff) +2
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = x * (2 * coeff*coeff) +2*coeff
   def apply(x:NeuronMatrix): NeuronMatrix = {
     val y = x * coeff + 1
     (y :* y)   
