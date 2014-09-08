@@ -24,7 +24,19 @@ class SimpleAutoEncoder (lambda: Double = 0.0,
 	  new RegularizedLinearNN(hiddenDimension, dimension, lambda).create())
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
-			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))			
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))		
+
+class Simple2AutoEncoder (lambda: Double = 0.0, 
+     					 regCoeff: Double = 0.0, 
+    					 val func:NeuronFunction = SigmoidFunction) 
+	(dimension:Int, val hiddenDimension:Int)
+	(val inputLayer: InstanceOfSquareRegularizedLinearNN = 
+	  new SquareRegularizedLinearNN(dimension, hiddenDimension, lambda).create(),
+	 val outputLayer: InstanceOfSquareRegularizedLinearNN = 
+	  new SquareRegularizedLinearNN(hiddenDimension, dimension, lambda).create())
+	extends AutoEncoder(regCoeff, 
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))	
 
 class RobustAutoEncoder (lambda: Double = 0.0, regCoeff: Double = 0.0, 
     					 val func:NeuronFunction = SigmoidFunction) 

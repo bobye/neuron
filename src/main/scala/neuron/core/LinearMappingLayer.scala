@@ -169,6 +169,34 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
   def setLambda(lbd: Double) : Unit = {NN.lambda = lbd}
 }
 
+/** Equipped LinearNeuralNetwork with square weight decay by sigma */
+class SquareRegularizedLinearNN (inputDimension: Int, outputDimension: Int, var lambda: Double = 0.0)
+	extends LinearNeuralNetwork (inputDimension, outputDimension) {
+  type InstanceType <: InstanceOfSquareRegularizedLinearNN
+  override def create(): InstanceOfSquareRegularizedLinearNN = new InstanceOfSquareRegularizedLinearNN(this) 
+}
+
+class InstanceOfSquareRegularizedLinearNN (override val NN: SquareRegularizedLinearNN) 
+	extends InstanceOfLinearNeuralNetwork(NN) {
+  type StructureType <: RegularizedLinearNN
+
+  override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
+    val Wcs = (W :* W).sumCol()
+    if (status != seed) {
+      status = seed
+      atomic { implicit txn =>
+      dW() = dW() + (W MultElemTrans Wcs) * (NN.lambda * numOfSamples)
+      dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
+      }      
+      (Wcs :* Wcs).sum() * (NN.lambda / 4)
+    } else {
+      0.0
+    }    
+  }
+  
+  def setLambda(lbd: Double) : Unit = {NN.lambda = lbd}
+}
+
 
 /** Equipped LinearNeuralNetwork with weight decay by sigma */
 class RobustLinearNN (inputDimension: Int, outputDimension: Int, var noise: Double = 0.0, lambda: Double = 0.0)

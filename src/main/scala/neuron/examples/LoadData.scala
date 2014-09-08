@@ -114,20 +114,27 @@ object LoadData {
   loop(Set(), ls)
   }
   
-  def mnistDataM(dataName:String = "std", part:String = "train", isLabelBinary: Boolean = true): (NeuronMatrix, NeuronMatrix) = {
+  def mnistDataM(dataName:String = "std", part:String = "train", 
+      isLabelBinary: Boolean = true, outlierRatio: Double = 0.0): (NeuronMatrix, NeuronMatrix) = {
     import java.io._
+    assert(outlierRatio <= 0.9)
     val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-images.idx3-ubyte"))
+    val sourceOutliers = new DataInputStream(new FileInputStream("data/background/images/train-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
+    val numOfOutliers = (numOfSamples * outlierRatio / (1-outlierRatio)).toInt; println("numOfOutliers: " + numOfOutliers)
     val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
     val numOfCols = source.readInt(); println("numOfCols: " + numOfCols)
     val numOfPixels = numOfRows * numOfCols
+    sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();
     
-    val buf = new Array[Byte](numOfPixels * numOfSamples)
+    val buf = new Array[Byte](numOfPixels * (numOfSamples + numOfOutliers))
+    sourceOutliers.read(buf)
     source.read(buf)
+
     val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00)) 
-    //val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00) *0.8 + 0.1) // normalized to [0.1, 0.9]: improve convergence and prevent dead unit
     source.close()
+    sourceOutliers.close()
     
     
     val source2 = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-labels.idx1-ubyte"))
@@ -151,7 +158,7 @@ object LoadData {
       (0 until numOfSamples).map(i=> {
     		labelMat.data(0, i) = dataBlock2(i).toDouble
     	})
-    	(new NeuronMatrix(numOfPixels, numOfSamples, dataBlock), labelMat)
+    	(new NeuronMatrix(numOfPixels, numOfSamples + numOfOutliers, dataBlock), labelMat)
     }
   }
 }
