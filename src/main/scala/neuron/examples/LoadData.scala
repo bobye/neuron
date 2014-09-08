@@ -119,22 +119,25 @@ object LoadData {
     import java.io._
     assert(outlierRatio <= 0.9)
     val source = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-images.idx3-ubyte"))
-    val sourceOutliers = new DataInputStream(new FileInputStream("data/background/images/train-images.idx3-ubyte"))
     println("magic: " + source.readInt())
     val numOfSamples = source.readInt(); println("numOfImages: " + numOfSamples)
     val numOfOutliers = (numOfSamples * outlierRatio / (1-outlierRatio)).toInt; println("numOfOutliers: " + numOfOutliers)
     val numOfRows = source.readInt(); println("numOfRows: " + numOfRows)
     val numOfCols = source.readInt(); println("numOfCols: " + numOfCols)
     val numOfPixels = numOfRows * numOfCols
-    sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();
-    
     val buf = new Array[Byte](numOfPixels * (numOfSamples + numOfOutliers))
+    
+    if (numOfOutliers != 0) {
+    val sourceOutliers = new DataInputStream(new FileInputStream("data/background/images/train-images.idx3-ubyte"))
+    sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();sourceOutliers.readInt();        
     sourceOutliers.read(buf)
+    sourceOutliers.close()
+    }
     source.read(buf)
 
     val dataBlock = buf.map(b => ((0xff & b).toDouble / 255.00)) 
     source.close()
-    sourceOutliers.close()
+    
     
     
     val source2 = new DataInputStream(new FileInputStream("data/mnist/ubyte/" + dataName + "/" + part + "-labels.idx1-ubyte"))
