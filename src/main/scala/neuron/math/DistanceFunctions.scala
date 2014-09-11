@@ -123,8 +123,9 @@ class KernelDistance(kernel: NeuronFunction, mu: Double = 0.0) extends DistanceF
 	  val xxtensor = x TransMult x; 
 	  val yxtensor = y TransMult x;
 	  val yytensor = y TransMult y; 
-	  ((kernel(xxtensor).sumAll + kernel(yytensor).sumAll) / (2*x.cols) - kernel(yxtensor).sumAll/x.cols,
-	      (x * kernel.grad(xxtensor)- y * kernel.grad(yxtensor)) / x.cols)
+	  ((kernel(xxtensor).sumAll + kernel(yytensor).sumAll) / (2*x.cols) - kernel(yxtensor).sumAll/x.cols +
+	      ((xxtensor.diagonal().sum() + yytensor.diagonal().sum()) / (2.0) - yxtensor.diagonal().sum()) * mu,
+	      (x * kernel.grad(xxtensor)- y * kernel.grad(yxtensor)) / x.cols + (x - y) * mu)
 	}
 	  
 }

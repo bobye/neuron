@@ -30,10 +30,10 @@ class Simple2AutoEncoder (lambda: Double = 0.0,
      					 regCoeff: Double = 0.0, 
     					 val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int)
-	(val inputLayer: InstanceOfSquareRegularizedLinearNN = 
-	  new SquareRegularizedLinearNN(dimension, hiddenDimension, lambda).create(),
-	 val outputLayer: InstanceOfSquareRegularizedLinearNN = 
-	  new SquareRegularizedLinearNN(hiddenDimension, dimension, lambda).create())
+	(val inputLayer: InstanceOfLassoRegularizedLinearNN = 
+	  new LassoRegularizedLinearNN(dimension, hiddenDimension, lambda).create(),
+	 val outputLayer: InstanceOfLassoRegularizedLinearNN = 
+	  new LassoRegularizedLinearNN(hiddenDimension, dimension, lambda).create())
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))	

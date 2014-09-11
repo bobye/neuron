@@ -79,25 +79,31 @@ class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
   override def apply(x: NeuronVector, mem: SetOfMemorables) = {
     import breeze.stats.distributions._
     assert (x.length == inputDimension)
-    val output = NN.func(x)
-    val dropout = new NeuronVector(outputDimension, new Bernoulli(NN.rate))
+    val output = NN.func(x)    
     if (mem != null) {
+        val dropout = new NeuronVector(outputDimension, new Bernoulli(NN.rate))
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
         mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+        output :* dropout
+    }else {
+      output
     }
-    output :* dropout
+   
   }
   
   override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
     import breeze.stats.distributions._
     assert(xs.rows == inputDimension)
-    val output = NN.func(xs)
-    val dropout = new NeuronMatrix(outputDimension, xs.cols, new Bernoulli(NN.rate))
+    val output = NN.func(xs)    
     if (mem != null) {
+        val dropout = new NeuronMatrix(outputDimension, xs.cols, new Bernoulli(NN.rate))
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    	output :* dropout
+    } else {
+      output
     }
-    output :* dropout    
+        
   }
 }
 

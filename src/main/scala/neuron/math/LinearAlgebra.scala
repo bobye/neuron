@@ -227,12 +227,12 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def sampleByRows(idx: IndexedSeq[Int] = 0 until cols, n:Int = 1): IndexedSeq[Int] = {
     idx.flatMap(rowVec(_).sample(n))
   }
-  def binarized(isRandom: Boolean = true) = {
+  def binarized(isRandom: Boolean = true, threshold: Double = 0.5) = {
     val b = new NeuronMatrix(rows, cols)
     if (isRandom) 
       for(i<-0 until rows; j<-0 until cols) b.data(i,j) = I(new Bernoulli(data(i,j)).draw())
     else
-      b.data := I(data :> 0.5)
+      b.data := I(data :> threshold)
     b
   }
   def writeMat(filename: String, dataname: String): Unit = {
