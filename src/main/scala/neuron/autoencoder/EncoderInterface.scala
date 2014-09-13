@@ -16,6 +16,15 @@ abstract trait EncoderWorkspace {
 class EncoderMemorable extends Memorable {
   var encodeCurrent: NeuronVector = NullVector
   var encodeCurrentM:NeuronMatrix = NullMatrix
+
+  var buffer0: Array[NeuronVector] = null
+  var buffer0M: Array[NeuronMatrix] = null
+  
+  var buffer1: NeuronVector = NullVector
+  var buffer1M: NeuronMatrix = NullMatrix
+  
+  var buffer2: NeuronVector = NullVector
+  var buffer2M: NeuronMatrix = NullMatrix
 }
 
 abstract trait EncodeClass extends Operationable {

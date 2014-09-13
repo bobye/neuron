@@ -156,11 +156,18 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
   override def getDerativeOfWeights(seed:String, dw:WeightVector, numOfSamples:Int) : Double = {
     if (status != seed) {
       status = seed
-      atomic { implicit txn =>
-      dW() = dW() + (W * (NN.lambda * numOfSamples))
-      dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
+      if (NN.lambda > 1E-9) {
+    	  atomic { implicit txn =>
+    	    dW() = dW() + (W * (NN.lambda * numOfSamples))
+    	    dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
+    	  }
+    	  W.euclideanSqrNorm * (NN.lambda /2)
+      } else { 
+        atomic { implicit txn =>
+          dw.get(dW(), db())
+        }
+        0.0 
       }
-      W.euclideanSqrNorm * (NN.lambda /2)
     } else {
       0.0
     }    
