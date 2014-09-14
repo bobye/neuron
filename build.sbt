@@ -14,8 +14,8 @@ libraryDependencies  ++= Seq(
             "org.scala-stm" %% "scala-stm" % "0.7",
             // Nak machine learning
             // "org.scalanlp" % "nak" % "1.2.1"
-	     "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
-	     "org.scalatest" %% "scalatest" % "2.1.3" % "test"
+	    "org.scalacheck" %% "scalacheck" % "1.11.3" % "test",
+	    "org.scalatest" %% "scalatest" % "2.1.3" % "test"
 )
 
 resolvers ++= Seq(
