@@ -88,7 +88,7 @@ class SquaredKernelDistance (mu:Double = 0.0) extends DistanceFunction {
 	  val xxtensor = x TransMult x; 
 	  val yxtensor = y TransMult x;
 	  val yytensor = y TransMult y; 
-	  if (mu != 0.) 
+	  if (mu != 0.0) 
 	  (((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols) - (yxtensor:*yxtensor).sumAll/x.cols +
 			 ((xxtensor.diagonal().sum() + yytensor.diagonal().sum()) / (2.0) - yxtensor.diagonal().sum()) * mu,
 	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0) + (x - y) * mu)

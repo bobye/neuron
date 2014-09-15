@@ -26,17 +26,12 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
   }
   
   def displayHiddenNetwork (filename: String) : Unit = { 
-    val weightsVector = new WeightVector((NN.rowsMultCols)*NN.hiddenDimension)
-    val raw = NN.inputLayer.W.vec() // getRandomWeights((System.currentTimeMillis()%100000).toString) // load in optimized weights
-    weightsVector := raw.asNeuronMatrix(NN.hiddenDimension, NN.rowsMultCols).transpose.vec(false)
-    
-    import java.io._
-    printToFile(new File(filename))(p =>    
-    for (i<- 0 until NN.hiddenDimension) { // display by hidden nodes
-      val img = new NeuronVector(NN.rowsMultCols)//
-      weightsVector(null, img)
-      p.println(img)
-    })
+    import neuron.misc.IO
+    IO.writeImage(filename)(
+        IO.tile_raster_images(NN.inputLayer.W.transpose.copy(), 
+                              (scala.math.sqrt(NN.inputDimension).toInt, scala.math.sqrt(NN.inputDimension).toInt),
+                              (scala.math.sqrt(NN.encodeDimension).toInt, scala.math.sqrt(NN.encodeDimension).toInt),
+                              (2, 2), true)) 
   }
 }
 
@@ -84,13 +79,13 @@ object ImageAutoEncoderTest extends Optimizable {
       
       val hidden = 25
 	  xDataM = LoadData.rawImages64M()
-      val hiddenUnitsFile = "data/UFLDL/sparseae/results25.txt"
+      val hiddenUnitsFile = "data/UFLDL/sparseae/results25.png"
       val regularizedParam = 0.0002
       val sparsityParam = 0.01  
       /*
 	  val hidden = 200
 	  xDataM = LoadData.mnistTrainM()
-	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.txt"
+	  val hiddenUnitsFile = "data/UFLDL/sparseae/results500.png"
       val regularizedParam = 0.005
       val sparsityParam = 0.1 
 	  */  

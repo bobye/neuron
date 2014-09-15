@@ -39,6 +39,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def /(x:Double) : NeuronVector = new NeuronVector(this.data / x)
   def :=(that: NeuronVector): Unit = {this.data := that.data; }
   def +=(that: NeuronVector): Unit = {this.data :+= that.data; }
+  def :+=(x:Double): Unit = {this.data :+= x}
+  def :-=(x:Double): Unit = {this.data :-= x}
   def :*=(x:Double): Unit = {this.data :*= x}
   def :/=(x:Double): Unit = {this.data :/= x}
   def euclideanSqrNorm = {val z = norm(data); z*z}
@@ -48,6 +50,7 @@ class NeuronVector (val data: DenseVector[Double]) {
   def := (x:Double) : Unit = {data:=x;}
   def copy(): NeuronVector = new NeuronVector(data.copy)
   def sum(): Double = breeze.linalg.sum(data)
+  def min(): Double = breeze.linalg.min(data)
   def max(): Double = breeze.linalg.max(data)
   def argmax(): Int = breeze.linalg.argmax(data)
   def asNeuronMatrix(rows:Int, cols:Int): NeuronMatrix = new NeuronMatrix (data.asDenseMatrix.reshape(rows, cols)) 
@@ -117,6 +120,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     this(new DenseMatrix(rows, cols, arr, offset, majorStride))
   def apply(row:Int, col:Int) = data(row,col)
   def update(row:Int, col:Int, e:Double) = data.update(row,col,e)
+  def update(rows: Range, cols: Range, e: NeuronMatrix) = {data(rows, cols) := e.data}
   def diagonal(): NeuronVector = {new NeuronVector(diag(data))}
   def +(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data + that.data)
   def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data - that.data)  
@@ -144,7 +148,10 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def :=(x: Double) : Unit={data:=x; }
   def :=(that:NeuronMatrix): Unit = {this.data := that.data}
   def +=(that:NeuronMatrix): Unit = {this.data :+= that.data}
+  def :+=(x:Double): Unit = {this.data :+= x}
+  def :-=(x:Double): Unit = {this.data :-= x}  
   def :*=(x:Double): Unit = {this.data :*= x}
+  def :/=(x:Double): Unit = {this.data :/= x}
   def reshape(r: Int, c: Int, isView: Boolean = true) = new NeuronMatrix(data.reshape(r,c, isView))
   def vec(isView: Boolean = true) = new NeuronVector(data.flatten(isView))  // important!
   def transpose = new NeuronMatrix(data.t)
