@@ -14,7 +14,7 @@ class LinearAutoEncoder (lambda: Double = 0.0,
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer), outputLayer, distance)	
 
-class SimpleAutoEncoder (lambda: Double = 0.0, 
+class SimpleAutoEncoder (var lambda: Double = 0.0, 
      					 regCoeff: Double = 0.0, 
     					 val func:NeuronFunction = SigmoidFunction) 
 	(dimension:Int, val hiddenDimension:Int)
@@ -24,7 +24,17 @@ class SimpleAutoEncoder (lambda: Double = 0.0,
 	  new RegularizedLinearNN(hiddenDimension, dimension, lambda).create())
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer),
-			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))		
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, func), outputLayer))	{
+  override def create(): InstanceOfSimpleAutoEncoder = new InstanceOfSimpleAutoEncoder(this)
+}
+
+class InstanceOfSimpleAutoEncoder (override val NN: SimpleAutoEncoder)
+	extends InstanceOfAutoEncoder(NN) {
+  def setLambda(lbd: Double): Unit = {
+    NN.inputLayer.setLambda(lbd)
+    NN.outputLayer.setLambda(lbd)
+  }
+}
 
 class ContractiveAutoEncoder (lambda: Double = 0.0, override val regCoeff: Double = 0.0) 
 	(dimension:Int, val hiddenDimension:Int)
