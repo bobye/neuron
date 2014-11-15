@@ -17,16 +17,16 @@ class AutoEncoderTest extends FunSuite with Optimizable with Workspace with Enco
 	  //nn = new SparseLinearAE(1.0,1.0,1.0)(inputDimension,hiddenDimension)().create() // Gradient check succeed
 	  
 	  val numOfSamples = 100
-	  xData = new Array(numOfSamples);
+	  val xData = new Array[NeuronVector](numOfSamples);
 	  for (i<- 0 until numOfSamples) {
 	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1))  
 	  }
-	  yData = xData
+	  val yData = xData
 	  
-	  val w = gradCheck(1E-6)
+	  val w = gradCheck(xData, yData, 1E-6)
 	  
 	  val time = System.currentTimeMillis();
-	  val (obj3, w2) = train(w)
+	  val (obj3, w2) = train(xData, yData, w)
 	  println(System.currentTimeMillis() - time, obj3)
 	  //println(w.data)
 	  //println(w2.data)
@@ -39,17 +39,17 @@ class AutoEncoderTest extends FunSuite with Optimizable with Workspace with Enco
 	      (i,j) => (new SingleLayerNeuralNetwork(j) ** new LinearNeuralNetwork(i,j))).extract().create()
 	      
 	  val numOfSamples = 100
-	  xData = new Array(numOfSamples);
-	  yData = new Array(numOfSamples);
+	  val xData = new Array[NeuronVector](numOfSamples);
+	  val yData = new Array[NeuronVector](numOfSamples);
 	  for (i<- 0 until numOfSamples) {
 	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
 	    yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1)) 
 	  }
 	  
-	  val w = gradCheck(1E-6)
+	  val w = gradCheck(xData, yData, 1E-6)
 	  
 	  val time = System.currentTimeMillis();
-	  val (obj3, w2) = train(w)
+	  val (obj3, w2) = train(xData, yData, w)
 	  println(System.currentTimeMillis() - time, obj3)	      
 	}
 }

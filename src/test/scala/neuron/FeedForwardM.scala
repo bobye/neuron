@@ -26,14 +26,14 @@ class FeedForwardM extends FunSuite with Optimizable with Workspace{
     nn = e.create(); println(nn); // print structure
 	
 	val numOfSamples = 1000
-	xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
-	yDataM = new NeuronMatrix(nn.outputDimension, numOfSamples, new Uniform(-1,1))
+	val xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
+	val yDataM = new NeuronMatrix(nn.outputDimension, numOfSamples, new Uniform(-1,1))
 	
-    val w = gradCheckM(1E-6)   
+    val w = gradCheckM(xDataM, yDataM, 1E-6)   
 	
 	// train
 	val time = System.currentTimeMillis()
-	val (obj3, w2) = trainx(w)
+	val (obj3, w2) = trainx(xDataM, yDataM, w)
 	println(System.currentTimeMillis() - time, obj3)
 	//println(w.data)
 	//println(w2.data)

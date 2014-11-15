@@ -39,19 +39,19 @@ class RNNTest extends FunSuite with Optimizable with Workspace with EncoderWorks
 	  val numOfSamples = 100
 	  nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
 	  
-	  xData = new Array(numOfSamples)
-	  yData = new Array(numOfSamples)
+	  val xData = new Array[NeuronVector](numOfSamples)
+	  val yData = new Array[NeuronVector](numOfSamples)
 	  for (i<- 0 until numOfSamples) {
 	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(0,1))  
 	    yData(i) = nn(xData(i), initMemory()) //new NeuronVector(1, new Uniform(-1,1))
 	  }
 	  
 	  
-	  gradCheck(1E-6)
+	  gradCheck(xData, yData, 1E-6)
 	  
 	  
 	  val time = System.currentTimeMillis();
-	  val (obj3, w2) = train(w)
+	  val (obj3, w2) = train(xData, yData, w)
 	  println(System.currentTimeMillis() - time, obj3, w2.data)
 	  
 	}

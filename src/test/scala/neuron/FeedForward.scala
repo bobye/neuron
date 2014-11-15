@@ -26,17 +26,18 @@ class FeedForward extends FunSuite with Optimizable with Workspace{
     nn = e.create(); println(nn); // print structure 
 	
 	val numOfSamples = 1000
-	xData = new Array(numOfSamples); yData = new Array(numOfSamples)
+	val xData = new Array[NeuronVector](numOfSamples); 
+	val yData = new Array[NeuronVector](numOfSamples)
 	for (i<- 0 until numOfSamples) {
 	  xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
 	  yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
 	}
 	
-    val w = gradCheck(1E-3)
+    val w = gradCheck(xData, yData, 1E-3)
 	
 	// train
 	val time = System.currentTimeMillis()
-	val (obj3, w2) = train(w)
+	val (obj3, w2) = train(xData, yData, w)
 	println(System.currentTimeMillis() - time, obj3)
 	//println(w.data)
 	//println(w2.data)

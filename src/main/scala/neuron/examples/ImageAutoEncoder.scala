@@ -37,7 +37,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
   
-  override def getObjAndGradM (w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+  override def getObjAndGradM (xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
     val blockSize = 512
@@ -78,7 +78,7 @@ object ImageAutoEncoderTest extends Optimizable {
     object ioParam {
       
       val hidden = 25
-	  xDataM = LoadData.rawImages64M()
+      val xDataM = LoadData.rawImages64M()	  
       val hiddenUnitsFile = "data/UFLDL/sparseae/results25.png"
       val regularizedParam = 0.0002
       val sparsityParam = 0.01  
@@ -90,18 +90,19 @@ object ImageAutoEncoderTest extends Optimizable {
       val sparsityParam = 0.1 
 	  */  
 	  val numOfPixels = xDataM.rows
-	  yDataM = xDataM
+	  val yDataM = xDataM
     }
     
 	def main(args: Array[String]): Unit = {
 	  nn = new ImageAutoEncoder(ioParam.numOfPixels, ioParam.hidden, 
 	      ioParam.regularizedParam, ioParam.sparsityParam).create() // the same
 
+
 	  val w = getRandomWeightVector()
 	  var time:Long = 0
 	  
 	  time = System.currentTimeMillis();
-	  val (obj, w2) = trainx(w)
+	  val (obj, w2) = trainx(ioParam.xDataM, ioParam.yDataM, w)
 	  println(System.currentTimeMillis() - time, obj)
 	  
 	  nn.asInstanceOf[InstanceOfImageAutoEncoder]

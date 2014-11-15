@@ -16,13 +16,13 @@ class AutoEncoderTestM extends FunSuite with Optimizable {
 	  //nn = new SparseLinearAE(1.0,1.0,1.0)(inputDimension,hiddenDimension)().create() // Gradient check succeed
 	  
 	  val numOfSamples = 100
-	  xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
-	  yDataM = xDataM
+	  val xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
+	  val yDataM = xDataM
 	  
-	  val w = gradCheckM(1E-6)
+	  val w = gradCheckM(xDataM, yDataM, 1E-6)
 	      
 	  val time = System.currentTimeMillis();
-	  val (obj3, w2) = trainx(w)
+	  val (obj3, w2) = trainx(xDataM, yDataM, w)
 	  println(System.currentTimeMillis() - time, obj3)
 	  //println(w.data)
 	  //println(w2.data)
