@@ -72,8 +72,8 @@ object MLP_MNIST extends Workspace with Optimizable{
   
   def main(args: Array[String]): Unit = {
     // Create NN structure
-    val L1 = new SingleLayerNeuralNetwork(200) ** new LinearNeuralNetwork(784,1000)
-    val L2 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(200,10)
+    val L1 = new SingleLayerNeuralNetwork(800) ** new LinearNeuralNetwork(784,800)
+    val L2 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(800,10)
     nn = (L2 ** L1).create()
     
     process(10, args(0), args(1))

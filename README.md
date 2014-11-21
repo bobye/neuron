@@ -17,10 +17,6 @@ Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
  - optimization: LBFGS, SGD, SAGD, SGD with momentum
  - recursive neural network
 
-TODO List
- - recurrent neural network
- - convolution and pooling
- 
 ### Documentation
 - [Basics](https://github.com/bobye/neuron/wiki/Basics)
 - [Auto-Encoder](https://github.com/bobye/neuron/wiki/Auto-Encoder)
