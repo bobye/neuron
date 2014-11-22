@@ -37,7 +37,7 @@ class InstanceOfImageAutoEncoder (override val NN: ImageAutoEncoder)
 
 object ImageAutoEncoderTest extends Optimizable {
   
-  override def getObjAndGradM (xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+  override def getObjAndGradM (xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, dw0: WeightVector, distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
     val blockSize = 512

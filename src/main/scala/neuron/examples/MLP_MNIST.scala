@@ -19,10 +19,10 @@ object MLP_MNIST extends Workspace with Optimizable{
   }
   
   var batchCount: Int = 0
-  def getObjAndGradStoM (w: WeightVector, 
+  def getObjAndGradStoM (w: WeightVector, dw: WeightVector,
 		  				 distance:DistanceFunction = L2Distance, 
 		  				 batchSize: Int = 0): (Double, NeuronVector) = {
-    val (cost, grad) = getObjAndGradM(xDataMList(batchCount), yDataMList(batchCount), w, distance, batchSize)
+    val (cost, grad) = getObjAndGradM(xDataMList(batchCount), yDataMList(batchCount), w, dw, distance, batchSize)
     batchCount = (batchCount + 1) % listOfRanges.size;
     (cost, grad)
   }  
@@ -33,9 +33,12 @@ object MLP_MNIST extends Workspace with Optimizable{
 		  		maxIter: Int = 40, 
 		  		distance: DistanceFunction = L2Distance,
 		  		batchSize: Int = 0): (Double, WeightVector) = {
+    val dw = new WeightVector(w.length) // pre-allocate memory
+    val mem = initMemory(nn)
+    
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
-	    val (obj, grad) = getObjAndGradStoM(new WeightVector(x), distance, batchSize)
+	    val (obj, grad) = getObjAndGradStoM(new WeightVector(x), dw, distance, batchSize)
 	    (obj, grad.data )
 	  }    
     }
@@ -61,7 +64,8 @@ object MLP_MNIST extends Workspace with Optimizable{
     xDataM = data._1
     yDataM = data._2
     
-    val (_, theta) = trainxopt(theta0, 40, SoftMaxDistance, batchSize) 
+    val (_, theta) = trainxopt(theta0, 1, SoftMaxDistance, batchSize)
+    println((yDataM.argmaxCol().data :== nn(xDataM, null).argmaxCol().data).activeSize / xDataM.cols.toDouble)
     xDataM = null
     yDataM = null
     xDataMList = null

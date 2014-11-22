@@ -21,7 +21,7 @@ class SGDmTrain (momentum: Double = 0.9, lr: Double = 0.01, maxIter: Int = 500){
 	    val (fval, grad) = f.calculate(x)
 	    stat = stat + fval
 	    u *= momentum
-	    u -= (grad * lr)
+	    u -= (grad *= lr)
 	    x += u
 	    if ((i+1) % statCount == 0) {
 	      if ((stat/statCount) < lowest) lowest = (stat/statCount)
