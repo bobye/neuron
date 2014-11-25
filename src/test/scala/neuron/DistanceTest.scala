@@ -22,15 +22,8 @@ class DistanceTest extends FunSuite with Optimizable with Workspace {
 	  yData(i) :/= yData(i).sum
 	}
 	
-	val w = gradCheck(xData, yData, 1E-3, SoftMaxDistance)
+	gradCheck(xData, yData, 1E-3, SoftMaxDistance)
 	
-	// train
-	/*
-	val time = System.currentTimeMillis()
-	val (obj3, w2) = train(w, 100, HistogramIntersectionKernelDistance)
-	println(System.currentTimeMillis() - time, obj3)
-	* 
-	*/
   }
   
   test("test batch distance") {
@@ -42,7 +35,7 @@ class DistanceTest extends FunSuite with Optimizable with Workspace {
 	val xDataM = new NeuronMatrix(nn.inputDimension, numOfSamples, new Uniform(-1,1))
     val yDataM = new NeuronMatrix(nn.outputDimension, numOfSamples, new Uniform(0,1))
 	
-	val w = gradCheckM(xDataM, yDataM, 1E-3, HistogramIntersectionKernelDistance)
+	gradCheckM(xDataM, yDataM, 1E-3, HistogramIntersectionKernelDistance)
 	 
   }
 

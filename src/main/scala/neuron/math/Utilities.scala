@@ -35,7 +35,10 @@ abstract trait Optimizable {
     rv
   }
   
-  def getObj(xData: Array[NeuronVector], yData: Array[NeuronVector], w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
+  def getObj(xData: Array[NeuronVector], 
+		  	 yData: Array[NeuronVector], 
+		  	 w: WeightVector, 
+		  	 distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
     val size = xData.length
     assert (size >= 1 && size == yData.length)
     var totalCost: Double = 0.0
@@ -44,11 +47,11 @@ abstract trait Optimizable {
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yData != null) {//supervised
       totalCost = (0 until size).par.map(i => {
-    	  distance(nn(xData(i), initMemory()), yData(i))
+    	  distance(nn(xData(i), null), yData(i))
       }).reduce(_+_)
     } else {//unsupervised
       totalCost = (0 until size).par.map(i => {
-          nn(xData(i), initMemory()); 0.0
+          nn(xData(i), null); 0.0
       }).reduce(_+_)
     }
     
@@ -56,9 +59,11 @@ abstract trait Optimizable {
     totalCost/size + regCost
   }
   
-  def getObjAndGrad (xData: Array[NeuronVector], yData: Array[NeuronVector], 
+  def getObjAndGrad (xData: Array[NeuronVector], 
+		  			 yData: Array[NeuronVector], 
 		  			 w: WeightVector, dw0: WeightVector,
-		  			 distance:DistanceFunction = L2Distance, batchSize: Int = 0): (Double, NeuronVector) = {
+		  			 distance:DistanceFunction = L2Distance, 
+		  			 batchSize: Int = 0): (Double, NeuronVector) = {
     val size = xData.length
     assert(size >= 1 && (null == yData || size == yData.length))
     var totalCost:Double = 0.0
@@ -104,7 +109,10 @@ abstract trait Optimizable {
     //println(totalCost/size, regCost)
     (totalCost/sampleArray.size + regCost, dw/sampleArray.size)
   }
-  def getObjM(xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
+  def getObjM(xDataM: NeuronMatrix, 
+		  	  yDataM:NeuronMatrix, 
+		  	  w: WeightVector, 
+		  	  distance:DistanceFunction = L2Distance) : Double = { // doesnot compute gradient or backpropagation
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
     var totalCost:Double = 0.0
@@ -113,9 +121,9 @@ abstract trait Optimizable {
 
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yDataM != null) {//supervised
-    	totalCost = distance(nn(xDataM, initMemory()), yDataM)
+    	totalCost = distance(nn(xDataM, null), yDataM)
     } else {//unsupervised
-      nn(xDataM, initMemory());
+      nn(xDataM, null);
       totalCost = 0.0
     }
     
@@ -128,7 +136,8 @@ abstract trait Optimizable {
     (0 until (numOfBlock-1)).map(i => blockSize*i until blockSize*(i+1)) :+ (blockSize*(numOfBlock-1) until size)
   }
   
-  def getObjAndGradM (xDataM: NeuronMatrix, yDataM:NeuronMatrix, 
+  def getObjAndGradM (xDataM: NeuronMatrix, 
+		  			  yDataM:NeuronMatrix, 
 		  			  w: WeightVector, 
 		  			  dw0: WeightVector,
 		  			  distance:DistanceFunction = L2Distance, 
@@ -166,7 +175,12 @@ abstract trait Optimizable {
   
   
     //var currentIndex: Int = 0 
-  def getObjAndGradM2L (xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, distance:DistanceFunction = new KernelDistance(SquareFunction), batchSize: Int = 0, bufferSize: Int = 600): (Double, NeuronVector) = {
+  def getObjAndGradM2L (xDataM: NeuronMatrix, 
+		  				yDataM:NeuronMatrix, 
+		  				w: WeightVector, 
+		  				distance:DistanceFunction = new KernelDistance(SquareFunction), 
+		  				batchSize: Int = 0, 
+		  				bufferSize: Int = 600): (Double, NeuronVector) = {
     val size = xDataM.cols
     assert(size >= 1 && (null == yDataM || size == yDataM.cols))
     val rangesAll = partitionDataRanges(size, bufferSize).par  
@@ -213,7 +227,10 @@ abstract trait Optimizable {
     (totalCost/size + regCost, dw/size)
   }
   
-  def getApproximateObjAndGrad (xData: Array[NeuronVector], yData: Array[NeuronVector], w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
+  def getApproximateObjAndGrad (xData: Array[NeuronVector], 
+		  						yData: Array[NeuronVector], 
+		  						w: WeightVector, 
+		  						distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
     // Compute gradient using numerical approximation
     var dW = w.copy()
     for (i<- 0 until w.length) {
@@ -228,7 +245,10 @@ abstract trait Optimizable {
 	}
     (getObj(xData, yData, w, distance), dW)
   }
-  def getApproximateObjAndGradM (xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
+  def getApproximateObjAndGradM (xDataM: NeuronMatrix, 
+		  						 yDataM:NeuronMatrix, 
+		  						 w: WeightVector, 
+		  						 distance:DistanceFunction = L2Distance) : (Double, NeuronVector) = {
     // Compute gradient using numerical approximation
     var dW = w.copy()
     for (i<- 0 until w.length) {
@@ -267,7 +287,12 @@ abstract trait Optimizable {
    * Please NOTE there is no regularization penalty in training 
    * Regularization usually is done in distributed modules
    */ 
-  def train(xData: Array[NeuronVector], yData: Array[NeuronVector], w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 0, opt: String = "lbfgs"): (Double, WeightVector) = {
+  def train(xData: Array[NeuronVector], 
+		  	yData: Array[NeuronVector], 
+		  	w: WeightVector, maxIter:Int = 400, 
+		  	distance: DistanceFunction = L2Distance, 
+		  	batchSize: Int = 0, 
+		  	opt: String = "lbfgs"): (Double, WeightVector) = {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
@@ -292,7 +317,13 @@ abstract trait Optimizable {
     }
     (f(w2.data), w2)    
   }
-  def trainx(xDataM: NeuronMatrix, yDataM:NeuronMatrix, w: WeightVector, maxIter:Int = 400, distance: DistanceFunction = L2Distance, batchSize: Int = 512, opt: String = "lbfgs"): (Double, WeightVector) = {
+  def trainx(xDataM: NeuronMatrix, 
+		  	 yDataM:NeuronMatrix, 
+		  	 w: WeightVector, 
+		  	 maxIter:Int = 400, 
+		  	 distance: DistanceFunction = L2Distance, 
+		  	 batchSize: Int = 512, 
+		  	 opt: String = "lbfgs"): (Double, WeightVector) = {
 
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {
@@ -323,7 +354,10 @@ abstract trait Optimizable {
     (f(w2.data), w2)    
   }
 
-  def test(xData: Array[NeuronVector], yData: Array[NeuronVector], w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
+  def test(xData: Array[NeuronVector], 
+           yData: Array[NeuronVector], 
+           w:WeightVector, 
+           distance: DistanceFunction = L2Distance): Double = {
     val size = xData.length
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     val totalCost = (0 until size).par.map(i => {
@@ -332,31 +366,63 @@ abstract trait Optimizable {
     totalCost / size
   }
   
-  def testx(xDataM: NeuronMatrix, yDataM:NeuronMatrix, w:WeightVector, distance: DistanceFunction = L2Distance): Double = {
+  def testx(xDataM: NeuronMatrix, 
+		    yDataM:NeuronMatrix, 
+		    w:WeightVector, 
+		    distance: DistanceFunction = L2Distance): Double = {
     val size = xDataM.cols
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     val totalCost = distance(nn(xDataM, null), yDataM)
     totalCost / size
   }  
   
-  def gradCheck(xData: Array[NeuronVector], yData: Array[NeuronVector], tolerant: Double, distance: DistanceFunction = L2Distance): WeightVector ={
+  
+  
+  /* Gradient checking for all types of neural networks */
+  
+  def gradCheck(xData: Array[NeuronVector], 
+		  		yData: Array[NeuronVector],
+		  		tolerant: Double,
+		  		distance: DistanceFunction): WeightVector ={
     assert(tolerant > 0)
-	  val w = getRandomWeightVector()
-	  
-	  val (obj, grad) = getObjAndGrad(xData, yData, w, null, distance)
-	  val (obj2, grad2) = getApproximateObjAndGrad(xData, yData, w, distance)
+    val w = getRandomWeightVector()
+	val (obj, grad) = getObjAndGrad(xData, yData, w, null, distance)
+	val (obj2, grad2) = getApproximateObjAndGrad(xData, yData, w, distance)
 
-	  assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
-	  w
+	assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
+	w    
   }
-  def gradCheckM(xDataM: NeuronMatrix, yDataM:NeuronMatrix, tolerant: Double, distance: DistanceFunction = L2Distance): WeightVector ={
-    assert(tolerant > 0)
-	  val w = getRandomWeightVector()
-	  
+  def gradCheck(n: Int,
+		  		tolerant: Double, 
+		  		distance: DistanceFunction = L2Distance): WeightVector ={
+ 
+	  val xData = new Array[NeuronVector](n); 
+	  val yData = new Array[NeuronVector](n)
+	  for (i<- 0 until n) {
+	    xData(i) = new NeuronVector(nn.inputDimension, new Uniform(-1,1)) 
+	    yData(i) = new NeuronVector(nn.outputDimension, new Uniform(-1,1))
+	  }
+	  gradCheck(xData, yData, tolerant, distance)
+  }
+  def gradCheckM(xDataM: NeuronMatrix,
+		  		 yDataM: NeuronMatrix,
+		  		 tolerant: Double,
+		  		 distance: DistanceFunction): WeightVector ={
+      assert(tolerant > 0)
+      val w = getRandomWeightVector()
 	  val (obj, grad) = getObjAndGradM(xDataM, yDataM, w, null, distance)
 	  val (obj2, grad2) = getApproximateObjAndGradM(xDataM, yDataM, w, distance)
 
 	  assert(scala.math.abs(obj - obj2) < tolerant && grad.checkDiff(grad2, tolerant))    
-	  w
+	  w    
+  }
+  def gradCheckM(n: Int,
+		  		 tolerant: Double, 
+		  		 distance: DistanceFunction = L2Distance): WeightVector ={
+	  
+	  val xDataM = new NeuronMatrix(nn.inputDimension, n, new Uniform(-1,1))
+	  val yDataM = new NeuronMatrix(nn.outputDimension, n, new Uniform(-1,1))
+      
+	  gradCheckM(xDataM, yDataM, tolerant, distance)
   }  
 }
