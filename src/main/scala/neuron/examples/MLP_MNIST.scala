@@ -34,7 +34,7 @@ object MLP_MNIST extends Workspace with Optimizable{
 		  		distance: DistanceFunction = L2Distance,
 		  		batchSize: Int = 0): (Double, WeightVector) = {
     val dw = new WeightVector(w.length) // pre-allocate memory
-    val mem = initMemory(nn)
+    //val mem = initMemory(nn)
     
     val f = new DiffFunction[DenseVector[Double]] {
 	  def calculate(x: DenseVector[Double]) = {

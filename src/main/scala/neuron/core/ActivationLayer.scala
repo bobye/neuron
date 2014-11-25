@@ -83,8 +83,8 @@ class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
     if (mem != null) {
         val dropout = new NeuronVector(outputDimension, new Bernoulli(NN.rate))
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
-        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
-        output :* dropout
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = (NN.func.grad(x, output) :*= dropout)
+        output :*= dropout
     }else {
       output
     }
@@ -98,8 +98,8 @@ class InstanceOfDropoutSingleLayerNN(override val NN: DropoutSingleLayerNN)
     if (mem != null) {
         val dropout = new NeuronMatrix(outputDimension, xs.cols, new Bernoulli(NN.rate))
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
-    	output :* dropout
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = (NN.func.grad(xs, output) :*= dropout)
+    	output :*= dropout
     } else {
       output
     }
@@ -124,9 +124,9 @@ class InstanceOfStochasticSingleLayerNN(override val NN: StochasticSingleLayerNN
     val dropout = output.binarized()
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
-        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = (NN.func.grad(x, output) :*= dropout)
     }
-    output :* dropout
+    output :*= dropout
   }
   
   override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
@@ -136,9 +136,9 @@ class InstanceOfStochasticSingleLayerNN(override val NN: StochasticSingleLayerNN
     val dropout = output.binarized()
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = (NN.func.grad(xs, output) :*= dropout)
     }
-    output :* dropout    
+    output :*= dropout    
   }  
 }
 
@@ -159,9 +159,9 @@ class InstanceOfMaxoutSingleLayerNN(override val NN: MaxoutSingleLayerNN)
     val dropout = output.argtopk(NN.maxout_k)
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors    
-        mem(key).gradientBuffer(mem(key).mirrorIndex) = NN.func.grad(x, output) :* dropout
+        mem(key).gradientBuffer(mem(key).mirrorIndex) = (NN.func.grad(x, output) :*= dropout)
     }
-    output :* dropout
+    output :*= dropout
   }
   
   override def apply(xs: NeuronMatrix, mem: SetOfMemorables) = {
@@ -171,9 +171,9 @@ class InstanceOfMaxoutSingleLayerNN(override val NN: MaxoutSingleLayerNN)
     val dropout = output.argtopk(NN.maxout_k)
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
-    	mem(key).gradientBufferM(mem(key).mirrorIndex) = NN.func.grad(xs, output) :* dropout
+    	mem(key).gradientBufferM(mem(key).mirrorIndex) = (NN.func.grad(xs, output) :*= dropout)
     }
-    output :* dropout    
+    output :*= dropout    
   }
 }
 
@@ -237,11 +237,11 @@ class InstanceOfSparseSingleLayerNN (override val NN: SparseSingleLayerNN)
   override def backpropagate(eta: NeuronVector, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (eta + NN.penalty.grad(rho/totalUsage) * NN.beta) :* mem(key).gradientBuffer(cIndex)
+    (NN.penalty.grad(rho/totalUsage) * NN.beta :+= eta) :*= mem(key).gradientBuffer(cIndex)
   }
   override def backpropagate(etas: NeuronMatrix, mem:SetOfMemorables) = {
     val cIndex = mem(key).mirrorIndex 
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
-    (etas Add NN.penalty.grad(rho/totalUsage) * NN.beta) :* mem(key).gradientBufferM(cIndex)    
+    (etas Add (NN.penalty.grad(rho/totalUsage) :*= NN.beta)) :*= mem(key).gradientBufferM(cIndex)    
   }
 }

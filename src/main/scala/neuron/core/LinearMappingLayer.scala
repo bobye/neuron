@@ -38,8 +38,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
       status = seed
       // initialize W: it behaves quite different for Gaussian and Uniform Sampling
       val amplitude:Double = scala.math.sqrt(6.0/(outputDimension + inputDimension + 1.0))
-      W := new NeuronMatrix(outputDimension, inputDimension, new Gaussian(0, 1)) 
-      W:*= amplitude// randomly set W 
+      W := (new NeuronMatrix(outputDimension, inputDimension, new Gaussian(0, 1))  :*= amplitude)
       b := 0.0
       W.vec() concatenate b 
     }else {
@@ -97,7 +96,7 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBuffer(mem(key).mirrorIndex) = x
     }
-    W * x + b 
+    (W * x) += b 
   }
   def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
     assert (xs.rows == inputDimension)
@@ -105,13 +104,13 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBufferM(mem(key).mirrorIndex) = xs
     }
-    (W * xs) Add b     
+    (W * xs) AddWith b     
   }
 
   def backpropagate(eta:NeuronVector, mem:SetOfMemorables) = {
     val dWincr = eta CROSS mem(key).inputBuffer(mem(key).mirrorIndex)
-    atomic { implicit txn =>
-    dW() = dW() + dWincr // dgemm and daxpy
+    atomic { implicit txn => 
+    dW() = dW() + dWincr   // dgemm and daxpy
     db() = db() + eta
     }
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
@@ -122,9 +121,8 @@ class InstanceOfLinearNeuralNetwork (override val NN: LinearNeuralNetwork)
     val dWincr = etas MultTrans mem(key).inputBufferM(mem(key).mirrorIndex) // dgemm and daxpy
     val dbincr = etas.sumRow()
     atomic { implicit txn =>
-    //println(key, mem(key).mirrorIndex, eta.data)
-    dW() = dW() + dWincr
-    db() = db() + dbincr
+    dW() = dW() + dWincr // dW() = dW() + dWincr
+    db() = db() + dbincr // db() = db() + dbincr
     }    
     mem(key).mirrorIndex = (mem(key).mirrorIndex + 1) % mem(key).numOfMirrors
     W TransMult etas
@@ -158,7 +156,7 @@ class InstanceOfRegularizedLinearNN (override val NN: RegularizedLinearNN)
       status = seed
       if (NN.lambda > 1E-9) {
     	  atomic { implicit txn =>
-    	    dW() = dW() + (W * (NN.lambda * numOfSamples))
+    	    dW() = dW() + (W * (NN.lambda * numOfSamples)) // change to +=
     	    dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
     	  }
     	  W.euclideanSqrNorm * (NN.lambda /2)
@@ -192,10 +190,10 @@ class InstanceOfSquareRegularizedLinearNN (override val NN: SquareRegularizedLin
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
-      dW() = dW() + (W MultElemTrans Wcs) * (NN.lambda * numOfSamples)
+      dW() = dW() + ((W MultElemTrans Wcs) :*= (NN.lambda * numOfSamples)) // change to +=
       dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
       }      
-      (Wcs :* Wcs).sum() * (NN.lambda / 4)
+      (Wcs *= Wcs).sum() * (NN.lambda / 4)
     } else {
       0.0
     }    
@@ -220,7 +218,7 @@ class InstanceOfLassoRegularizedLinearNN (override val NN: LassoRegularizedLinea
     if (status != seed) {
       status = seed
       atomic { implicit txn =>
-      dW() = dW() + (AbsFunction.grad(W) * (NN.lambda * numOfSamples))
+      dW() = dW() + (AbsFunction.grad(W) :*= (NN.lambda * numOfSamples)) // change to +=
       dw.get(dW(), db())//(dW.vec + W.vec * (NN.lambda)) concatenate db
       }
       AbsFunction(W).sumAll() * (NN.lambda /2)
@@ -249,10 +247,10 @@ class InstanceOfRobustLinearNN (override val NN: RobustLinearNN)
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBuffer(mem(key).mirrorIndex) = x
-    	W * x + b + new NeuronVector(outputDimension, new Gaussian(0, NN.noise))
+    	W * x += b += new NeuronVector(outputDimension, new Gaussian(0, NN.noise))
     }
     else {
-      W * x + b
+      W * x += b
     }    
   }
   override def apply(xs:NeuronMatrix, mem:SetOfMemorables) = {
@@ -261,10 +259,10 @@ class InstanceOfRobustLinearNN (override val NN: RobustLinearNN)
     if (mem != null) {
     	mem(key).mirrorIndex = (mem(key).mirrorIndex - 1 + mem(key).numOfMirrors) % mem(key).numOfMirrors
     	mem(key).inputBufferM(mem(key).mirrorIndex) = xs
-    	((W * xs) Add b) + new NeuronMatrix(outputDimension, xs.cols, new Gaussian(0, NN.noise))
+    	((W * xs) AddWith b) += new NeuronMatrix(outputDimension, xs.cols, new Gaussian(0, NN.noise))
     }
     else {
-      (W * xs) Add b
+      (W * xs) AddWith b
     }
          
   }
