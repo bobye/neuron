@@ -47,7 +47,7 @@ abstract trait Optimizable {
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yData != null) {//supervised
       totalCost = (0 until size).par.map(i => {
-    	  distance(nn(xData(i), null), yData(i))
+    	  distance(nn(xData(i), initMemory()), yData(i))
       }).reduce(_+_)
     } else {//unsupervised
       totalCost = (0 until size).par.map(i => {
@@ -121,7 +121,7 @@ abstract trait Optimizable {
 
     nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
     if (yDataM != null) {//supervised
-    	totalCost = distance(nn(xDataM, null), yDataM)
+    	totalCost = distance(nn(xDataM, initMemory()), yDataM)
     } else {//unsupervised
       nn(xDataM, null);
       totalCost = 0.0
