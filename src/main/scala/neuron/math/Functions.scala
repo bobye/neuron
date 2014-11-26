@@ -182,6 +182,15 @@ class PowerFunction (r: Double) extends NeuronFunction {
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(pow(x.data, r-1)*r)
 }
 
+object ExpFunction extends NeuronFunction {
+  def grad(x: Double) = exp(x)
+  def apply(x: Double) = exp(x)
+  def grad(x:NeuronVector, buf:NeuronVector): NeuronVector = new NeuronVector(exp(x.data))
+  def apply(x:NeuronVector): NeuronVector = new NeuronVector(exp(x.data))
+  def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(exp(x.data))
+  def apply(x:NeuronMatrix) = new NeuronMatrix(exp(x.data))
+}
+
 object SquareFunction extends NeuronFunction {
   def grad(x:Double) = 2*x
   def apply(x:Double) = x*x

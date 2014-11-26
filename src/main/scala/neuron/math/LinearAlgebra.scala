@@ -40,6 +40,8 @@ class NeuronVector (val data: DenseVector[Double]) {
   def :=(that: NeuronVector): NeuronVector = {this.data := that.data; this}
   def +=(that: NeuronVector): NeuronVector = {this.data :+= that.data; this }
   def :+=(that: NeuronVector): NeuronVector = {this.data :+= that.data; this }
+  def -=(that: NeuronVector): NeuronVector = {this.data :-= that.data; this }
+  def :-=(that: NeuronVector): NeuronVector = {this.data :-= that.data; this }
   def :+=(x:Double): NeuronVector = {this.data :+= x; this}
   def :-=(x:Double): NeuronVector = {this.data :-= x; this}
   def :*=(x:Double): NeuronVector = {this.data :*= x; this}
@@ -129,12 +131,14 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def -(that: NeuronMatrix): NeuronMatrix = new NeuronMatrix(this.data - that.data)  
   def Add(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) + that.data)
   def AddTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) + that.data)
-  def AddWith(that: NeuronVector): NeuronMatrix = new NeuronMatrix({this.data(::, breeze.linalg.*) += that.data; data})
-  def AddTransWith(that:NeuronVector): NeuronMatrix = new NeuronMatrix({this.data(breeze.linalg.*, ::) += that.data; data})
+  def AddWith(that: NeuronVector): NeuronMatrix = {this.data(::, breeze.linalg.*) += that.data; this}
+  def AddTransWith(that:NeuronVector): NeuronMatrix = {this.data(breeze.linalg.*, ::) += that.data; this}
   def Minus(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) - that.data)
   def MinusTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) - that.data)
   def MultElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :* that.data)
   def MultElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) :* that.data)
+  def MultElemWith(that: NeuronVector): NeuronMatrix = {this.data(::, breeze.linalg.*) :*= that.data; this}
+  def MultElemTransWith(that:NeuronVector): NeuronMatrix = {this.data(breeze.linalg.*, ::) :*= that.data; this}
   def DivElem(that: NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(::, breeze.linalg.*) :/ that.data)
   def DivElemTrans(that:NeuronVector): NeuronMatrix = new NeuronMatrix(this.data(breeze.linalg.*, ::) :/ that.data)
   def Mult(x:NeuronVector) = new NeuronVector(data * x.data) //this * x
@@ -154,6 +158,8 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def :=(that:NeuronMatrix): NeuronMatrix = {this.data := that.data; this}
   def +=(that:NeuronMatrix): NeuronMatrix = {this.data :+= that.data; this}
   def :+=(that:NeuronMatrix): NeuronMatrix = {this.data :+= that.data; this}
+  def -=(that:NeuronMatrix): NeuronMatrix = {this.data :-= that.data; this}
+  def :-=(that:NeuronMatrix): NeuronMatrix = {this.data :-= that.data; this}
   def :+=(x:Double): NeuronMatrix = {this.data :+= x; this}
   def :-=(x:Double): NeuronMatrix = {this.data :-= x; this}  
   def :*=(x:Double): NeuronMatrix = {this.data :*= x; this}
@@ -165,7 +171,7 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def transpose = new NeuronMatrix(data.t)
   def euclideanSqrNorm: Double = {sum(data :* data)}
   def euclideanSqrNormCol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(::,breeze.linalg.*)).toDenseVector)}
-  def euclideanSqrNormRol: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(breeze.linalg.*, ::)).toDenseVector)}
+  def euclideanSqrNormRow: NeuronVector = {val z = data:*data; new NeuronVector(sum(z(breeze.linalg.*, ::)).toDenseVector)}
   def sumCol() = new NeuronVector(sum(data(::,breeze.linalg.*)).toDenseVector)
   def sumRow() = new NeuronVector(sum(data(breeze.linalg.*,::)).toDenseVector)
   def sumAll():Double = sum(data)

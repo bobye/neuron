@@ -150,7 +150,7 @@ abstract trait Optimizable {
     
     val dw: WeightVector = if (dw0 == null) new WeightVector(w.length) else dw0
     
-    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w)
+    nn.setWeights(((randomGenerator.nextInt()*System.currentTimeMillis())%100000).toString, w) // clear internal caches of nn
     if (yDataM != null) {//supervised
       totalCost = ranges.map(r => {
         val mem = initMemory()
