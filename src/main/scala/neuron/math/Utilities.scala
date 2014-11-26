@@ -51,7 +51,7 @@ abstract trait Optimizable {
       }).reduce(_+_)
     } else {//unsupervised
       totalCost = (0 until size).par.map(i => {
-          nn(xData(i), null); 0.0
+          nn(xData(i), initMemory()); 0.0
       }).reduce(_+_)
     }
     
@@ -123,7 +123,7 @@ abstract trait Optimizable {
     if (yDataM != null) {//supervised
     	totalCost = distance(nn(xDataM, initMemory()), yDataM)
     } else {//unsupervised
-      nn(xDataM, null);
+      nn(xDataM, initMemory());
       totalCost = 0.0
     }
     
