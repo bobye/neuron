@@ -10,46 +10,50 @@ object MLP_MNIST extends Workspace with Optimizable{
   var xDataM : NeuronMatrix = null
   var yDataM : NeuronMatrix = null
   
+  // Baseline: Gaussian Random Walk
   private def RandomWalkDynamics(x0: NeuronMatrix, y0: NeuronMatrix, alpha: Double, copies: Int): 
 	  (NeuronMatrix, NeuronMatrix) = {
-    val z = new NeuronMatrix(x0.rows * x0.cols, copies, new Gaussian(0, alpha))
-    val w = new NeuronMatrix(y0.rows * y0.cols, copies)
-    ((z AddWith x0.vec(false)).reshape(x0.rows, x0.cols * copies),
-     (w AddWith y0.vec(false)).reshape(y0.rows, y0.cols * copies))
+    val z = new NeuronMatrix(x0.rows * x0.cols, copies+1, new Gaussian(0, alpha))
+    z.colVec(0) := 0
+    val w = new NeuronMatrix(y0.rows * y0.cols, copies+1)
+    ((z AddWith x0.vec(false)).reshape(x0.rows, x0.cols * (copies+1)),
+     (w AddWith y0.vec(false)).reshape(y0.rows, y0.cols * (copies+1)))
   }	
+  
+  // HMC corruption
   private def HamiltonianDynamics(x0: NeuronMatrix, 
 		  						  y0: NeuronMatrix,
 		  						  deltaT: Double,
 		  						  ticks: Int,
 		  						  alpha: Double,
 		  						  copies: Int): (NeuronMatrix, NeuronMatrix) = {
+    
     val x = x0.copy();
-    val sigma2 = alpha*alpha
-    val x_out = new NeuronMatrix(x0.rows, x0.cols * copies)
+    val sigma2 = alpha*alpha // alpha control the pushing force in HMC
+    val x_out = new NeuronMatrix(x0.rows, x0.cols * (copies)) // store corrupted samples
     
     
-    
-    val mem = initMemory();
+    val mem = initMemory(); //allocate
     val f: NeuronMatrix => NeuronMatrix = {xx =>      
       val (cost1, zz1) = SoftMaxDistance.applyWithGradV(nn(xx, mem), y0);
       val (cost2, zz2) = L2Distance.applyWithGradV(xx, x0)
-      //val costex = ExpFunction(cost1)
 
       val grad1 = nn.backpropagate(zz1 MultElemTransWith cost2, mem)
       val grad2 = (zz2 MultElemTransWith cost1)
-      //println(grad1.euclideanSqrNormCol)
-      //println(grad2.euclideanSqrNormCol)
       grad1 += grad2
     }
     
     
-    val beta: Double  = 10.0
-    val cost0 = new NeuronVector(x0.cols)
-    for (iter <- 0 until copies) {
+    val beta: Double  = 10 // this parameter control probability decreasing speed; beta = 0 means uniform probability
+    val cost0 = new NeuronVector(x0.cols) // cache start energy
+    for (iter <- -100 to (copies-1)*10) { // there is a burn-in stage
       val z = new NeuronMatrix(x0.rows, x0.cols, new Gaussian(0, alpha))
       cost0 += (z.euclideanSqrNormCol :/= (2*sigma2)) 
-      val xs = x.copy()
-      // leapfrog iteration      
+      val xs = x.copy() // cache x
+      
+      /* leapfrog iteration      
+       * it may diverge quickly so ticks should be small
+       * */
       z -= f(x) * (deltaT * beta/2)
       for (i <- 0 until ticks) {      
         x += z * (deltaT / sigma2)
@@ -62,14 +66,16 @@ object MLP_MNIST extends Workspace with Optimizable{
       //println(cost0(0 until 10).data)
       //println(costN1(0 until 10).data)
       //println(costN2(0 until 10).data)
-      val u0 = ExpFunction(cost0 -= costN1 -= costN2)
+      val u0 = ExpFunction(cost0 -= costN1 -= costN2) // Metropolis Algorithm
       println(u0(0 until 10).data)
       
-      xs := x select (xs, u0 -= new NeuronVector(x0.cols, new Uniform(0,1)))
+      x select (xs, u0 -= new NeuronVector(x0.cols, new Uniform(0,1)))
     
-      cost0 := SoftMaxDistance.applyV(nn(xs, mem), y0) *= L2Distance.applyV(xs, x0) :*= beta
-      
-      x_out.Cols(iter*x0.cols until (iter+1)* x0.cols) := xs
+      cost0 := SoftMaxDistance.applyV(nn(x, mem), y0) *= L2Distance.applyV(x, x0) :*= beta
+      if (iter >= 0 && (iter % 10 == 0)) {
+          val idx = iter / 10;
+    	  x_out.Cols(idx*x0.cols until (idx+1)* x0.cols) := x
+      }
     }
     
     val w = new NeuronMatrix(y0.rows * y0.cols, copies)
@@ -84,8 +90,8 @@ object MLP_MNIST extends Workspace with Optimizable{
     // Load Dataset
     val data = LoadData.mnistDataM(setType, setMeta)
     
-    xDataM = data._1.Cols(0 until 1000)
-    yDataM = data._2.Cols(0 until 1000)
+    xDataM = data._1.Cols(0 until 4000)
+    yDataM = data._2.Cols(0 until 4000)
     
     import neuron.misc.IO
     IO.writeImage("tmp/samples")(
@@ -93,13 +99,13 @@ object MLP_MNIST extends Workspace with Optimizable{
                               (28, 28),
                               (20, 20),
                               (2, 2), false))     
-    //val co = RandomWalkDynamics(xDataM, yDataM, 0.5, 10) 
-    val co = HamiltonianDynamics(xDataM, yDataM, 0.002, 100, 0.4, 10)
+    val co = RandomWalkDynamics(xDataM, yDataM, 0.5, 1) 
+    //val co = HamiltonianDynamics(xDataM, yDataM, 0.1, 10, 5, 1)
     xDataM = co._1
     yDataM = co._2
     import neuron.misc.IO
     IO.writeImage("tmp/corrupted_samples")(
-        IO.tile_raster_images(xDataM.Cols(9000 until 10000), 
+        IO.tile_raster_images(xDataM.Cols(4000 until 5000), 
                               (28, 28),
                               (20, 20),
                               (2, 2), false))    
@@ -113,21 +119,31 @@ object MLP_MNIST extends Workspace with Optimizable{
     theta
   }
   
+  def test(setType: String, setMeta: String): Double = {
+    val dataTest = LoadData.mnistDataM(setType, setMeta)
+    val xDataTestM = dataTest._1
+    val yDataTestM = dataTest._2
+    /* compute test accuracy */
+    val err = 1.0 - (yDataTestM.argmaxCol().data :== nn(xDataTestM, null).argmaxCol().data).activeSize / xDataTestM.cols.toDouble
+    println(err)
+    err
+  }
+  
   val L1 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(784,10).create()
   //val L2 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(100,10).create()  
   def main(args: Array[String]): Unit = {
     // Create NN structure
-
-    nn = L1.create() // (L2 ** L1).create()
+	nn = L1.create()
+    //nn = (L2 ** L1).create()
     
-    process(500, args(0), args(1))
-        
-    val dataTest = LoadData.mnistDataM(args(2), args(3))
-    val xDataTestM = dataTest._1
-    val yDataTestM = dataTest._2
-    /* compute test accuracy */
-    println((yDataTestM.argmaxCol().data :== nn(xDataTestM, null).argmaxCol().data).activeSize / xDataTestM.cols.toDouble)
+    val result = for (i<- 0 until 1) yield {
+    	process(500, args(0), args(1))    
+    	test(args(2), args(3))
+    }
     
+    val mean = result.sum / (result.length);
+    val std = scala.math.sqrt(result.map(x=> (x - mean) * (x - mean)).sum / (result.length - 1))
+    println(mean, std*1.96)
     /* export learned weights */
     import java.io._
     import neuron.misc.IO

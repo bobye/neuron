@@ -113,9 +113,9 @@ class NeuronVector (val data: DenseVector[Double]) {
     b
   }
   def select(that: NeuronVector, check: NeuronVector): NeuronVector = {
-    val b = new NeuronVector(length)
-    for(i<- 0 until length) b.data(i) = if (check.data(i) >= 0) this.data(i) else that.data(i)
-    b
+    for(i<- 0 until length) 
+      if (check.data(i) < 0) data(i) = that.data(i)
+    this
   }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
@@ -261,12 +261,11 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
     b
   }
   def select(that: NeuronMatrix, check: NeuronVector): NeuronMatrix = {
-    val b = this.copy()
     for(i<- 0 until cols) 
       if (check.data(i) < 0) {
-        b.data(::, i) :=  that.data(::, i)
+        data(::, i) :=  that.data(::, i)
       }
-    b
+    this
   }
   
   def writeMat(filename: String, dataname: String): Unit = {
