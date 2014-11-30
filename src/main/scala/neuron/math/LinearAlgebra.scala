@@ -112,6 +112,11 @@ class NeuronVector (val data: DenseVector[Double]) {
     for(i<-0 until length) b.data(i) = I(new Bernoulli(data(i)).draw())
     b
   }
+  def select(that: NeuronVector, check: NeuronVector): NeuronVector = {
+    val b = new NeuronVector(length)
+    for(i<- 0 until length) b.data(i) = if (check.data(i) >= 0) this.data(i) else that.data(i)
+    b
+  }
 }
 class NeuronMatrix (val data:DenseMatrix[Double]){
   def rows = data.rows
@@ -255,6 +260,15 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
       b.data := I(data :> threshold)
     b
   }
+  def select(that: NeuronMatrix, check: NeuronVector): NeuronMatrix = {
+    val b = this.copy()
+    for(i<- 0 until cols) 
+      if (check.data(i) < 0) {
+        b.data(::, i) :=  that.data(::, i)
+      }
+    b
+  }
+  
   def writeMat(filename: String, dataname: String): Unit = {
     import com.jmatio.io._
     import com.jmatio.types._
