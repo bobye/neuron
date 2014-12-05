@@ -37,6 +37,7 @@ object MLP_MNIST extends Workspace with Optimizable{
     val f: NeuronMatrix => NeuronMatrix = {xx =>      
       val (cost1, zz1) = SoftMaxDistance.applyWithGradV(nn(xx, mem), y0);
       val (cost2, zz2) = L2Distance.applyWithGradV(xx, x0)
+      
 
       val grad1 = nn.backpropagate(zz1 MultElemTransWith cost2, mem)
       val grad2 = (zz2 MultElemTransWith cost1)
@@ -46,7 +47,7 @@ object MLP_MNIST extends Workspace with Optimizable{
     
     val beta: Double  = 10 // this parameter control probability decreasing speed; beta = 0 means uniform probability
     val cost0 = new NeuronVector(x0.cols) // cache start energy
-    for (iter <- -100 to (copies-1)*10) { // there is a burn-in stage
+    for (iter <- -10 to (copies-1)*10) { // there is a burn-in stage
       val z = new NeuronMatrix(x0.rows, x0.cols, new Gaussian(0, alpha))
       cost0 += (z.euclideanSqrNormCol :/= (2*sigma2)) 
       val xs = x.copy() // cache x
@@ -90,8 +91,9 @@ object MLP_MNIST extends Workspace with Optimizable{
     // Load Dataset
     val data = LoadData.mnistDataM(setType, setMeta)
     
-    xDataM = data._1.Cols(0 until 4000)
-    yDataM = data._2.Cols(0 until 4000)
+    val num = 1000
+    xDataM = data._1.Cols(0 until num)
+    yDataM = data._2.Cols(0 until num)
     
     import neuron.misc.IO
     IO.writeImage("tmp/samples")(
@@ -99,18 +101,18 @@ object MLP_MNIST extends Workspace with Optimizable{
                               (28, 28),
                               (20, 20),
                               (2, 2), false))     
-    val co = RandomWalkDynamics(xDataM, yDataM, 0.5, 1) 
-    //val co = HamiltonianDynamics(xDataM, yDataM, 0.1, 10, 5, 1)
+    //val co = RandomWalkDynamics(xDataM, yDataM, 0.5, 3) 
+    val co = HamiltonianDynamics(xDataM, yDataM, 0.1, 10, 10, 1)
     xDataM = co._1
     yDataM = co._2
     import neuron.misc.IO
     IO.writeImage("tmp/corrupted_samples")(
-        IO.tile_raster_images(xDataM.Cols(4000 until 5000), 
+        IO.tile_raster_images(xDataM.Cols((num-1000) until num), 
                               (28, 28),
                               (20, 20),
                               (2, 2), false))    
     
-     
+    
     
     val (_, theta) = trainx(xDataM, yDataM, theta0, 500, SoftMaxDistance)
     println((yDataM.argmaxCol().data :== nn(xDataM, null).argmaxCol().data).activeSize / xDataM.cols.toDouble)
@@ -129,14 +131,14 @@ object MLP_MNIST extends Workspace with Optimizable{
     err
   }
   
-  val L1 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(784,10).create()
+  val L1 = new LinearNeuralNetwork(784,10).create()
   //val L2 = new SingleLayerNeuralNetwork(10) ** new LinearNeuralNetwork(100,10).create()  
   def main(args: Array[String]): Unit = {
     // Create NN structure
 	nn = L1.create()
     //nn = (L2 ** L1).create()
     
-    val result = for (i<- 0 until 1) yield {
+    val result = for (i<- 0 until 10) yield {
     	process(500, args(0), args(1))    
     	test(args(2), args(3))
     }
