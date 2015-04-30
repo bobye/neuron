@@ -515,7 +515,3 @@ class InstanceOfMultipliedNeuralNetwork[Type1 <: Operationable, Type2 <: Operati
   }  
   override def toString() = "(" + firstInstance.toString + ") * (" + secondInstance.toString + ")"  
 }
-
-
-
-

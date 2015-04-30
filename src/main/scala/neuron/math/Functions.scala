@@ -243,4 +243,3 @@ class KL_divergenceFunction(val rho: Double) extends NeuronFunction {
   def grad(x:NeuronMatrix, buf:NeuronMatrix): NeuronMatrix = new NeuronMatrix(dKLdfunc(x.data))
   def apply(x:NeuronMatrix): NeuronMatrix = new NeuronMatrix(KLdiv(x.data))
 }
-

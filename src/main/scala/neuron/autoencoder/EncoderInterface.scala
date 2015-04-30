@@ -4,13 +4,12 @@ import neuron.math._
 
 // Encoder and Recursive Neural Network
 abstract trait EncoderWorkspace {
-  implicit class extractClass [T<:EncodeClass]( x:T) {
-    def extract() = x match {
-      case _:Encoder => new EncoderNeuralNetwork[T](x)
-      case _:InstanceOfEncoder => new InstanceOfEncoderNeuralNetwork[T](x)
-      case _ => x // others
-    }
+  implicit class extractEncoder [T<:Encoder]( x:T) {
+    def extract() = new EncoderNeuralNetwork[T](x)
   }  
+  implicit class extractInstanceOfEncoder [T<:InstanceOfEncoder] (x: T) {
+    def extract() = new InstanceOfEncoderNeuralNetwork[T](x)
+  }
 }
 
 class EncoderMemorable extends Memorable {

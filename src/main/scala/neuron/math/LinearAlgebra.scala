@@ -124,8 +124,8 @@ class NeuronMatrix (val data:DenseMatrix[Double]){
   def this(rows:Int, cols:Int) = this(DenseMatrix.zeros[Double](rows,cols))
   def this(rows:Int, cols:Int, rand: Rand[Double]) = this(DenseMatrix.rand(rows, cols, rand)) // will be fixed in next release
   def this(rows:Int, cols:Int, rand: => Rand[Boolean]) = this(I(DenseMatrix.rand(rows, cols, rand)))
-  def this(rows:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, arr, offset))
-  def this(rows:Int, cols:Int, arr: Array[Double], offset: Int = 0) = this(new DenseMatrix(rows, cols, arr, offset))
+  def this(rows:Int, arr: Array[Double]) = this(new DenseMatrix(rows, arr, 0))
+  def this(rows:Int, cols:Int, arr: Array[Double]) = this(new DenseMatrix(rows, cols, arr, 0))
   def this(rows:Int, cols:Int, arr: Array[Double], offset: Int, majorStride: Int) = 
     this(new DenseMatrix(rows, cols, arr, offset, majorStride))
   def apply(row:Int, col:Int) = data(row,col)

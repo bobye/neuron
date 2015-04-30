@@ -157,10 +157,12 @@ object HistogramIntersectionKernelDistance extends KernelFunction {
     }
     g / (x.cols)
   }
+  
   override def apply(x: NeuronMatrix, y: NeuronMatrix): Double = {
     (for (i<-0 until x.cols) yield {      
-       sum(min(x.data(::, *), x.data(::,i))) + sum(min(y.data(::,*), y.data(::,i))) - 
-       2.0*sum(min(y.data(::,*), x.data(::,i)))       
+       sum((x.data(::, *) + x.data(::,i)) - abs(x.data(::, *) - x.data(::,i)))/2.0 + 
+       sum((y.data(::,*) + y.data(::,i)) - abs(y.data(::,*) - y.data(::,i)))/2.0 - 
+       sum((y.data(::,*) + x.data(::,i)) - abs(y.data(::,*) - x.data(::,i)))       
     }).sum / (x.cols)
   }
 }

@@ -1,13 +1,13 @@
 name := "neuron"
 
-scalaVersion := "2.10.3"
+scalaVersion := "2.11.4"
 
 libraryDependencies  ++= Seq(
             // other dependencies here
-            "org.scalanlp" % "breeze_2.10" % "0.9",
-            // native libraries are not included by default. add this if you want them (as of 0.9)
+            "org.scalanlp" % "breeze_2.11" % "0.11.2",
+            // native libraries are not included by default. add this if you want them
             // native libraries greatly improve performance, but increase jar sizes.
-            "org.scalanlp" % "breeze-natives_2.10" % "0.9",
+            "org.scalanlp" % "breeze-natives_2.11" % "0.11.2",
 	    // Logging
             "org.slf4j" % "slf4j-simple" % "1.7.6",
             // STM
@@ -22,5 +22,5 @@ resolvers ++= Seq(
             // other resolvers here
             // if you want to use snapshot builds, use this.
             // "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/snapshots/",
-            "Sonatype Snapshots" at "https://oss.sonatype.org/content/repositories/releases/"
+            "Sonatype Releases" at "https://oss.sonatype.org/content/repositories/releases/"
 )
