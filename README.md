@@ -4,8 +4,6 @@ neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](h
 
 This project is a _work-in-progress_, which provides a flexible framework to experiment and run neural network of heterogeneous topologies. A preliminary release will be visible soon. neuron is written in Scala which adopts the so-called ["define-by-run" scheme](https://github.com/bobye/neuron/wiki/Basics#design-rationale). 
 
-Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
-
 ### Features
  - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)
  - neural network [operators](https://github.com/bobye/neuron/wiki/Basics#operators)
@@ -78,7 +76,7 @@ Also have a look at
 ----
 The MIT License (MIT)
 
-Copyright (c) 2014 Jianbo Ye
+Copyright (c) 2014 - 2015 Jianbo Ye
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
 of this software and associated documentation files (the "Software"), to deal
