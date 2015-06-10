@@ -18,9 +18,48 @@ Creator: [Jianbo Ye](http://www.personal.psu.edu/jxy198)
  - recursive neural network
 
 ### Documentation
+The simplest example to train a regularized multi-layer perceptron 
+to predict handwritten digits from MNIST dataset. It takes around ten minutes.
+```scala
+package neuron.examples
+
+import neuron.core._
+import neuron.math._
+import breeze.stats.distributions._
+
+object MLP_MNIST_min extends Workspace with Optimizable {
+    def main(args: Array[String]): Unit = {
+      // set @MLP=784-200-10, @weight_decay=1E-4
+      nn = (new RegularizedLinearNN(200, 10, 1E-4) **
+            new SingleLayerNeuralNetwork(200) **
+            new RegularizedLinearNN(784, 200, 1E-4)).create() // nn is declared in trait @Optimizable
+            
+      // load standard MNIST training data
+      val (xData, yData) = LoadData.mnistDataM("std", "train")
+      
+      // generate random weight and initialize
+      val theta0 = nn.getRandomWeights("get random weights").toWeightVector()
+      nn.setWeights("set weight", theta0);
+      
+      // full-batch training (@maxIter=200, @distance=SoftMaxDistance)
+      val (_, theta) = trainx(xData, yData, theta0, 200, SoftMaxDistance)
+      
+      // load standard MNIST testing data
+      val (xDataTest, yDataTest) = LoadData.mnistDataM("std", "t10k")
+      
+      // estimate accuracy
+      val accuracy = (yDataTest.argmaxCol().data :== nn(xDataTest, null).argmaxCol().data)
+                        .activeSize / xDataTest.cols.toDouble
+      println(accuracy)
+    }
+}
+/* Accuracy: 0.9806 */
+```
+
+Also have a look at
 - [Basics](https://github.com/bobye/neuron/wiki/Basics): explains the most fundamental ideas for the use of neuron, and why they featured neuron as a good choice for prototyping neural networks that leverage flexibility, simplicity and efficiency. 
 - [Auto-Encoder](https://github.com/bobye/neuron/wiki/Auto-Encoder): a special family of unsupervised neural network.
-- [Examples](https://github.com/bobye/neuron/wiki/Examples): Please see more examples under folder `src/main/scala/neuron/tutorials/`
+- [Examples](https://github.com/bobye/neuron/wiki/Examples): we have more examples under folder `src/main/scala/neuron/tutorials/`
 - [Scaladoc](https://colourbrain.com/api/neuron): TBA
 
 ### FAQ
