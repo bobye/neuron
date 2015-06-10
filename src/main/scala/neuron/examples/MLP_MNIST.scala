@@ -3,7 +3,6 @@ package neuron.examples
 
 import neuron.core._
 import neuron.math._
-import breeze.stats.distributions._
 
 /**
  * @author bobye

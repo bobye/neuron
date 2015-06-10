@@ -25,7 +25,6 @@ package neuron.examples
 
 import neuron.core._
 import neuron.math._
-import breeze.stats.distributions._
 
 object MLP_MNIST_min extends Workspace with Optimizable {
     def main(args: Array[String]): Unit = {
