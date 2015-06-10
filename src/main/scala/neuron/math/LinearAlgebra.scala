@@ -13,6 +13,7 @@ class LabelVector(val data:DenseVector[Int]) {
   def length = data.length
   def concatenate (that: LabelVector) = new LabelVector(DenseVector.vertcat(this.data, that.data))
   def splice(num: Int) : (LabelVector, LabelVector) = (new LabelVector(this.data(0 until num)), new LabelVector(this.data(num to -1)))
+  def countEquals(that: LabelVector): Int = (this.data :== that.data).activeSize;
 }
 class NeuronVector (val data: DenseVector[Double]) {
   def length = data.length

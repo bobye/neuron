@@ -47,8 +47,7 @@ object MLP_MNIST extends Workspace with Optimizable {
       val (xDataTest, yDataTest) = LoadData.mnistDataM("std", "t10k")
       
       // estimate accuracy
-      val accuracy = (yDataTest.argmaxCol().data :== nn(xDataTest, null).argmaxCol().data)
-                        .activeSize / xDataTest.cols.toDouble
+      val accuracy = (yDataTest.argmaxCol() countEquals nn(xDataTest, null).argmaxCol()) / xDataTest.cols.toDouble
       println(accuracy)
     }
 }
