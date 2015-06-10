@@ -26,7 +26,7 @@ package neuron.examples
 import neuron.core._
 import neuron.math._
 
-object MLP_MNIST_min extends Workspace with Optimizable {
+object MLP_MNIST extends Workspace with Optimizable {
     def main(args: Array[String]): Unit = {
       // set @MLP=784-200-10, @weight_decay=1E-4
       nn = (new RegularizedLinearNN(200, 10, 1E-4) **
