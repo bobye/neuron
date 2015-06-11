@@ -2,7 +2,12 @@
 neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](https://travis-ci.org/bobye/neuron)
 ========
 
-This project is a _work-in-progress_, which provides a flexible framework to experiment and run neural network of heterogeneous topologies. A preliminary release will be visible soon. neuron is written in Scala which adopts the so-called ["define-by-run" scheme](https://github.com/bobye/neuron/wiki/Basics#design-rationale). 
+This project is a _work-in-progress_, which provides a 
+[flexible](https://github.com/bobye/neuron/wiki/What's-fun) framework to 
+experiment and run neural network of heterogeneous topologies. 
+A preliminary release will be visible soon. 
+neuron is written in Scala which adopts the so-called 
+["define-by-run" scheme](https://github.com/bobye/neuron/wiki/Basics#design-rationale). 
 
 ### Features
  - [template vs. module](https://github.com/bobye/neuron/wiki/Basics#template-vs-module)

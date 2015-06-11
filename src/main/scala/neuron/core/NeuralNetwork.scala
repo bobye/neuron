@@ -409,13 +409,13 @@ class InstanceOfShareNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
   override def toString() = "(" + firstInstance.toString + ") & (" + secondInstance.toString + ")"
 }
 
-/** {f + g} (x) := f(x) .+ g(x) */
+/** {f + g} (x, y) := f(x) .+ g(y) */
 class AddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationable]
 		(override val first: Type1, override val second: Type2)
 		extends MergedNeuralNetwork[Type1, Type2](first, second) {
-  assert (first.inputDimension == second.inputDimension && first.outputDimension == second.outputDimension)
+  assert (first.outputDimension == second.outputDimension)
   type InstanceType <: InstanceOfAddedNeuralNetwork[Type1, Type2]
-  def inputDimension = first.inputDimension
+  def inputDimension = first.inputDimension + second.inputDimension
   def outputDimension = first.outputDimension
   def create(): InstanceOfAddedNeuralNetwork[Type1, Type2] = new InstanceOfAddedNeuralNetwork(this)
   override def toString() = "(" + first.toString +") + (" + second.toString() + ")"
@@ -425,22 +425,29 @@ class InstanceOfAddedNeuralNetwork[Type1 <: Operationable, Type2 <: Operationabl
 		(override val NN:AddedNeuralNetwork[Type1, Type2])
 		extends InstanceOfMergedNeuralNetwork(NN) {
   type StructureType <: AddedNeuralNetwork[Type1, Type2]
-  def apply(x:NeuronVector, mem: SetOfMemorables) = {
-    val secondVec = secondInstance(x, mem)
-    val firstVec  = firstInstance(x, mem)
+  def apply (x: NeuronVector, mem:SetOfMemorables)  = {
+    val (first, second) = x.splice(NN.first.inputDimension)
+    // first compute secondInstance, then compute firstInstance
+    // which is the inverse order of backpropagation
+    val secondVec=  secondInstance(second, mem)
+    val firstVec =  firstInstance(first, mem)
     firstVec + secondVec
   }
-  def apply(x:NeuronMatrix, mem:SetOfMemorables) = {
-    val secondMat = secondInstance(x, mem)
-    val firstMat = firstInstance(x, mem)
+  
+  def apply (xs: NeuronMatrix, mem:SetOfMemorables) = {
+    val (first, second) = xs.spliceRow(NN.first.inputDimension)
+    val secondMat=  secondInstance(second, mem)
+    val firstMat =  firstInstance(first, mem)
     firstMat + secondMat
   }
-  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {
-    firstInstance.backpropagate(eta, mem) + secondInstance.backpropagate(eta, mem)
+
+  def backpropagate(eta: NeuronVector, mem: SetOfMemorables) = {    
+    firstInstance.backpropagate(eta, mem) concatenate secondInstance.backpropagate(eta, mem)
   }
+  
   def backpropagate(etas: NeuronMatrix, mem: SetOfMemorables) = {
-	firstInstance.backpropagate(etas, mem) + secondInstance.backpropagate(etas, mem)
-  }  
+    firstInstance.backpropagate(etas, mem) padRow secondInstance.backpropagate(etas, mem)
+  } 
   override def toString() = "(" + firstInstance.toString + ") + (" + secondInstance.toString + ")"  
 }
 

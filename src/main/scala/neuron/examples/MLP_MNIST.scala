@@ -9,6 +9,15 @@ import neuron.math._
  */
 object MLP_MNIST extends Workspace with Optimizable {
     def main(args: Array[String]): Unit = {
+      /**      
+      // you may try fractal neural network instead :)
+      import neuron.misc._
+      val fnn = new FractalNeuralNetwork(5, 
+      new LinearNeuralNetwork(10,10) ** new SingleLayerNeuralNetwork(10))
+    
+      nn = (fnn ** new RegularizedLinearNN(784, fnn.inputDimension, 1E-4)).create()
+      */
+      
       // set @MLP=784-200-10, @weight_decay=1E-4
       nn = (new RegularizedLinearNN(200, 10, 1E-4) **
             new SingleLayerNeuralNetwork(200) **
