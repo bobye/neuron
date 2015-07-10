@@ -12,5 +12,4 @@ sbt_args: -Dcom.github.fommil.netlib.BLAS=com.github.fommil.netlib.F2jBLAS -Dcom
 cache:
   directories:
   - $HOME/.ivy2
-after_success: 
-  - coveralls
+script: "sbt clean coverage test"
