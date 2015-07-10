@@ -1,5 +1,5 @@
 
-neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](https://travis-ci.org/bobye/neuron)
+neuron [![Build Status](https://travis-ci.org/bobye/neuron.svg?branch=master)](https://travis-ci.org/bobye/neuron) [![Coverage Status](https://coveralls.io/repos/bobye/neuron/badge.svg?branch=master&service=github)](https://coveralls.io/github/bobye/neuron?branch=master)
 ========
 
 This project is a _work-in-progress_, which provides a 
