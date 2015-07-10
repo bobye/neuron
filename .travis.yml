@@ -11,3 +11,5 @@ sbt_args: -Dcom.github.fommil.netlib.BLAS=com.github.fommil.netlib.F2jBLAS -Dcom
 cache:
   directories:
   - $HOME/.ivy2
+script: "sbt -J-Xmx2g -J-XX:+UseConcMarkSweepGC test"  
+after_success: "sbt -J-Xmx2g -J-XX:+UseConcMarkSweepGC coveralls"
