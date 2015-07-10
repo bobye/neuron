@@ -3,7 +3,6 @@ scala:
    - 2.11.4
 jdk:
    - oraclejdk7
-   - openjdk7
 before_install:
  - sudo apt-get update -qq
  - sudo apt-get install -qq libatlas3gf-base libopenblas-base
@@ -11,5 +10,5 @@ sbt_args: -Dcom.github.fommil.netlib.BLAS=com.github.fommil.netlib.F2jBLAS -Dcom
 cache:
   directories:
   - $HOME/.ivy2
-script: "sbt -J-Xmx2g -J-XX:+UseConcMarkSweepGC test"  
-after_success: "sbt -J-Xmx2g -J-XX:+UseConcMarkSweepGC coveralls"
+after_success: 
+  - coveralls
