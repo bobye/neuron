@@ -209,32 +209,32 @@ class KernelDistanceU(kernel: NeuronFunction, mu: Double = 0.0) extends KernelFu
 	  (kernel(x dot x) - 2 * kernel(x dot y) + kernel(y dot y))/2.0
 	
 	def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = {
+	  if (x.cols == 1)
+	    return new NeuronMatrix(x.rows, x.cols)
 	  val xxtensor = kernel.grad(x TransMult x); xxtensor.diagonal():=0.0
-	  val yxtensor = kernel.grad(y TransMult x); // yxtensor.diagonal():=0.0
-	  (x * xxtensor) / (x.cols -1.0) - (y * yxtensor) / (x.cols)
+	  val yxtensor = kernel.grad(y TransMult x); yxtensor.diagonal():=0.0
+	  (x * xxtensor - y * yxtensor) / (x.cols - 1)
 	}
 	
-    override def apply(x: NeuronMatrix, y:NeuronMatrix): Double = {
+  override def apply(x: NeuronMatrix, y:NeuronMatrix): Double = {
+    if (x.cols == 1)
+	    return 0
 	  val xxtensor = kernel(x TransMult x); xxtensor.diagonal():=0.0
-	  val yxtensor = kernel(y TransMult x); //yxtensor.diagonal():=0.0
+	  val yxtensor = kernel(y TransMult x); yxtensor.diagonal():=0.0
 	  val yytensor = kernel(y TransMult y); yytensor.diagonal():=0.0
-	  (xxtensor.sumAll + yytensor.sumAll) / ( 2* (x.cols -1.0)) - yxtensor.sumAll / (x.cols)
+	  (xxtensor.sumAll + yytensor.sumAll -  2* yxtensor.sumAll) / (2*(x.cols -1))
 	}
 	
 	override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
+	  if (x.cols == 1)
+	    return (0, new NeuronMatrix(x.rows, x.cols))
 	  val xxtensor = x TransMult x; val xxdiag = xxtensor.diagonal().sum(); xxtensor.diagonal():= 0.0
-	  val yxtensor = y TransMult x; val yxdiag = yxtensor.diagonal().sum()
+	  val yxtensor = y TransMult x; val yxdiag = yxtensor.diagonal().sum(); yxtensor.diagonal():= 0.0
 	  val yytensor = y TransMult y; val yydiag = yytensor.diagonal().sum(); yytensor.diagonal():= 0.0
 	  
-	  val Ustat = (kernel(xxtensor).sumAll + kernel(yytensor).sumAll) / ( 2* (x.cols -1.0)) - kernel(yxtensor).sumAll/(x.cols)
+	  val Ustat = (kernel(xxtensor).sumAll + kernel(yytensor).sumAll - 2 * kernel(yxtensor).sumAll) / ( 2* (x.cols -1))
 	  
-	  if (Ustat > 0)
-		  (Ustat +
-	       ((xxdiag + yydiag) / (2.0) - yxdiag) * (mu / x.cols)
-	      , (x * kernel.grad(xxtensor)) / (x.cols -1) - (y * kernel.grad(yxtensor)) / (x.cols) + (x - y) * (mu / x.cols) )
-	  else
-	    (((xxdiag + yydiag) / (2.0) - yxdiag) * (mu / x.cols), 
-	        (x - y) * (mu / x.cols))
+		(Ustat, (x * kernel.grad(xxtensor)) / (x.cols -1) - (y * kernel.grad(yxtensor)) / (x.cols-1) + (x - y) * (mu / x.cols) )
 	}
 	  
 }
