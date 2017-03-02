@@ -14,6 +14,20 @@ class LinearAutoEncoder (lambda: Double = 0.0,
 	extends AutoEncoder(regCoeff, 
 			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer), outputLayer, distance)	
 
+
+class ReLUAutoEncoder (lambda: Double = 0.0, 
+     					 regCoeff: Double = 0.0, 
+    					 val func:NeuronFunction = SigmoidFunction,
+    					 override val distance: DistanceFunction = L2Distance) 
+	(dimension:Int, val hiddenDimension:Int)
+	(val inputLayer: InstanceOfRegularizedLinearNN = 
+	  new RegularizedLinearNN(dimension, hiddenDimension, lambda).create(),
+	 val outputLayer: InstanceOfRegularizedLinearNN = 
+	  new RegularizedLinearNN(hiddenDimension, dimension, lambda).create())
+	extends AutoEncoder(regCoeff, 
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(hiddenDimension, func), inputLayer), 
+			new ChainNeuralNetwork(new SingleLayerNeuralNetwork(dimension, ReLUFunction), outputLayer), distance)	
+
 class SimpleAutoEncoder (var lambda: Double = 0.0, 
      					 regCoeff: Double = 0.0, 
     					 val func:NeuronFunction = SigmoidFunction) 

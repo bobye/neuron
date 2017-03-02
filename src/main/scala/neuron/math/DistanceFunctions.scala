@@ -79,6 +79,39 @@ object SoftMaxDistance extends DistanceFunction {
   }
 }
 
+class BlockKernelDistance (d: KernelFunction, blocks: List[Range]) extends KernelFunction {
+	def grad(x:NeuronVector, y:NeuronVector) = null // not useful
+	
+	def apply(x:NeuronVector, y:NeuronVector) = 0 // not useful
+	
+	def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = {
+	  val gradmat = new NeuronMatrix(x.rows, x.cols)
+	  for (block <- blocks) {
+	    gradmat.Rows(block) :+= d.grad(x.Rows(block), y.Rows(block))
+	  }
+	  gradmat
+	}
+	
+	override def apply(x: NeuronMatrix, y:NeuronMatrix): Double = {
+	  val value: Double = 0
+	  blocks.map(
+	    block => d(x.Rows(block), y.Rows(block))
+	  ).reduce(_ + _)
+	}
+	
+	override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
+	  val gradmat = new NeuronMatrix(x.rows, x.cols)
+	  var value = 0.0
+	  for (block <- blocks) {
+	    val tmp = d.applyWithGrad(x.Rows(block), y.Rows(block))
+	    value = value + tmp._1
+	    gradmat.Rows(block) :+= tmp._2
+	  }
+	  (value, gradmat)
+	}
+		
+}
+
 class SquaredKernelDistance (mu:Double = 0.0) extends KernelFunction {
 	def grad(x:NeuronVector, y:NeuronVector) = null // not useful
 	
@@ -98,7 +131,7 @@ class SquaredKernelDistance (mu:Double = 0.0) extends KernelFunction {
 	}
 	
 	// mu makes differences
-    def applyScalarWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
+   override def applyWithGrad(x: NeuronMatrix, y:NeuronMatrix): (Double, NeuronMatrix) = {
 	  val xxtensor = x TransMult x; 
 	  val yxtensor = y TransMult x;
 	  val yytensor = y TransMult y; 
