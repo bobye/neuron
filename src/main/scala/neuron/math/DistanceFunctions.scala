@@ -87,7 +87,7 @@ class BlockKernelDistance (d: KernelFunction, blocks: List[Range]) extends Kerne
 	def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = {
 	  val gradmat = new NeuronMatrix(x.rows, x.cols)
 	  for (block <- blocks) {
-	    gradmat.Rows(block) :+= d.grad(x.Rows(block), y.Rows(block))
+	    gradmat.Rows(block) :+= (d.grad(x.Rows(block), y.Rows(block)) :/= (block.length * block.length))
 	  }
 	  gradmat
 	}
@@ -95,7 +95,7 @@ class BlockKernelDistance (d: KernelFunction, blocks: List[Range]) extends Kerne
 	override def apply(x: NeuronMatrix, y:NeuronMatrix): Double = {
 	  val value: Double = 0
 	  blocks.map(
-	    block => d(x.Rows(block), y.Rows(block))
+	    block => d(x.Rows(block), y.Rows(block)) / (block.length * block.length)
 	  ).reduce(_ + _)
 	}
 	
@@ -104,8 +104,8 @@ class BlockKernelDistance (d: KernelFunction, blocks: List[Range]) extends Kerne
 	  var value = 0.0
 	  for (block <- blocks) {
 	    val tmp = d.applyWithGrad(x.Rows(block), y.Rows(block))
-	    value = value + tmp._1
-	    gradmat.Rows(block) :+= tmp._2
+	    value = value + tmp._1 / (block.length * block.length)
+	    gradmat.Rows(block) :+= (tmp._2 :/= (block.length * block.length))
 	  }
 	  (value, gradmat)
 	}
@@ -119,15 +119,15 @@ class SquaredKernelDistance (mu:Double = 0.0) extends KernelFunction {
 	
 	def grad(x:NeuronMatrix, y:NeuronMatrix): NeuronMatrix = {
 	  val xxtensor = (x TransMult x); 
-	  val yxtensor = (y TransMult x);
+	  val yxtensor = (y TransMult x); 
 	  ((x * xxtensor) / (x.cols) - (y * yxtensor) / (x.cols / 2.0)) 
 	}
 	
 	override def apply(x: NeuronMatrix, y:NeuronMatrix): Double = {
-	  val xxtensor = x TransMult x; 
-	  val yxtensor = y TransMult x;
-	  val yytensor = y TransMult y; 
-	  ((xxtensor :* xxtensor).sumAll + (yytensor :* yytensor).sumAll) / (2* x.cols) - (yxtensor :* yxtensor).sumAll / (x.cols)
+	  val xxtensor = x TransMult x; xxtensor.diagonal():=0.0
+	  val yxtensor = y TransMult x; yxtensor.diagonal():=0.0
+	  val yytensor = y TransMult y; yytensor.diagonal():=0.0
+	  ((xxtensor :* xxtensor).sumAll + (yytensor :* yytensor).sumAll) / (2* x.cols-2) - (yxtensor :* yxtensor).sumAll / (x.cols-1)
 	}
 	
 	// mu makes differences
@@ -139,9 +139,18 @@ class SquaredKernelDistance (mu:Double = 0.0) extends KernelFunction {
 	  (((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols) - (yxtensor:*yxtensor).sumAll/x.cols +
 			 ((xxtensor.diagonal().sum() + yytensor.diagonal().sum()) / (2.0) - yxtensor.diagonal().sum()) * mu,
 	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0) + (x - y) * mu)
-	  else 
-	  (((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols) - (yxtensor:*yxtensor).sumAll/x.cols,
-	      (x * xxtensor- y * yxtensor) / (x.cols / 2.0) )  
+	  else {
+	    val grad = (x * xxtensor- y * yxtensor) / (x.cols / 2.0)
+	    xxtensor.diagonal():=0.0
+	    yxtensor.diagonal():=0.0
+	    yytensor.diagonal():=0.0
+	    val value = if (x.cols > 1) {
+	      ((xxtensor:*xxtensor).sumAll + (yytensor:*yytensor).sumAll) / (2*x.cols-2) - (yxtensor:*yxtensor).sumAll/(x.cols-1) 
+	    } else {
+	      0.0
+	    }
+	    (value, grad)
+	  }
 	}
 	    
 }
